@@ -1,0 +1,1941 @@
+2026-05-12 21:55:03 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:22:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:49:18)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:156:84
+2026-05-12 21:55:07 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async razorpayFetch (C:\Users\admin\Desktop\FP\Backend\controllers\razorpay.statements.conroller.js:19:15)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\razorpay.statements.conroller.js:51:34
+2026-05-12 21:55:07 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async razorpayFetch (C:\Users\admin\Desktop\FP\Backend\controllers\razorpay.statements.conroller.js:19:15)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\razorpay.statements.conroller.js:132:16
+2026-05-12 21:55:33 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:22:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:49:18)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:156:84
+2026-05-12 21:55:35 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async razorpayFetch (C:\Users\admin\Desktop\FP\Backend\controllers\razorpay.statements.conroller.js:19:15)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\razorpay.statements.conroller.js:132:16
+2026-05-12 21:55:35 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async razorpayFetch (C:\Users\admin\Desktop\FP\Backend\controllers\razorpay.statements.conroller.js:19:15)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\razorpay.statements.conroller.js:51:34
+2026-05-12 21:56:19 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async razorpayFetch (C:\Users\admin\Desktop\FP\Backend\controllers\razorpay.statements.conroller.js:19:15)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\razorpay.statements.conroller.js:51:34
+2026-05-12 21:56:19 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async razorpayFetch (C:\Users\admin\Desktop\FP\Backend\controllers\razorpay.statements.conroller.js:19:15)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\razorpay.statements.conroller.js:132:16
+2026-05-12 21:56:32 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async razorpayFetch (C:\Users\admin\Desktop\FP\Backend\controllers\razorpay.statements.conroller.js:19:15)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\razorpay.statements.conroller.js:51:34
+2026-05-12 21:56:32 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async razorpayFetch (C:\Users\admin\Desktop\FP\Backend\controllers\razorpay.statements.conroller.js:19:15)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\razorpay.statements.conroller.js:132:16
+2026-05-12 21:57:41 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async razorpayFetch (C:\Users\admin\Desktop\FP\Backend\controllers\razorpay.statements.conroller.js:19:15)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\razorpay.statements.conroller.js:51:34
+2026-05-12 21:57:41 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async razorpayFetch (C:\Users\admin\Desktop\FP\Backend\controllers\razorpay.statements.conroller.js:19:15)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\razorpay.statements.conroller.js:132:16
+2026-05-12 21:58:08 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:22:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:49:18)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:156:84
+2026-05-12 21:58:10 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async razorpayFetch (C:\Users\admin\Desktop\FP\Backend\controllers\razorpay.statements.conroller.js:19:15)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\razorpay.statements.conroller.js:51:34
+2026-05-12 21:58:10 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async razorpayFetch (C:\Users\admin\Desktop\FP\Backend\controllers\razorpay.statements.conroller.js:19:15)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\razorpay.statements.conroller.js:132:16
+2026-05-12 23:13:54 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:22:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:49:18)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:156:84
+2026-05-13 09:44:54 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async razorpayFetch (C:\Users\admin\Desktop\FP\Backend\controllers\razorpay.statements.conroller.js:19:15)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\razorpay.statements.conroller.js:51:34
+2026-05-13 09:44:54 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async razorpayFetch (C:\Users\admin\Desktop\FP\Backend\controllers\razorpay.statements.conroller.js:19:15)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\razorpay.statements.conroller.js:132:16
+2026-05-13 18:56:23 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async razorpayFetch (C:\Users\admin\Desktop\FP\Backend\controllers\razorpay.statements.conroller.js:19:15)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\razorpay.statements.conroller.js:51:34
+2026-05-13 18:56:23 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async razorpayFetch (C:\Users\admin\Desktop\FP\Backend\controllers\razorpay.statements.conroller.js:19:15)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\razorpay.statements.conroller.js:132:16
+2026-05-13 18:56:23 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:22:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:49:18)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:156:84
+2026-05-13 21:56:02 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async razorpayFetch (C:\Users\admin\Desktop\FP\Backend\controllers\razorpay.statements.conroller.js:19:15)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\razorpay.statements.conroller.js:132:16
+2026-05-13 21:56:02 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async razorpayFetch (C:\Users\admin\Desktop\FP\Backend\controllers\razorpay.statements.conroller.js:19:15)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\razorpay.statements.conroller.js:51:34
+2026-05-13 21:56:02 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:22:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:49:18)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:156:84
+2026-05-13 21:56:18 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async razorpayFetch (C:\Users\admin\Desktop\FP\Backend\controllers\razorpay.statements.conroller.js:19:15)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\razorpay.statements.conroller.js:51:34
+2026-05-13 21:56:18 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async razorpayFetch (C:\Users\admin\Desktop\FP\Backend\controllers\razorpay.statements.conroller.js:19:15)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\razorpay.statements.conroller.js:132:16
+2026-05-13 21:56:18 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:22:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:49:18)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:156:84
+2026-05-13 21:56:37 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async razorpayFetch (C:\Users\admin\Desktop\FP\Backend\controllers\razorpay.statements.conroller.js:19:15)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\razorpay.statements.conroller.js:51:34
+2026-05-13 21:56:37 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async razorpayFetch (C:\Users\admin\Desktop\FP\Backend\controllers\razorpay.statements.conroller.js:19:15)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\razorpay.statements.conroller.js:132:16
+2026-05-13 21:56:37 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:22:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:49:18)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:156:84
+2026-05-14 12:34:37 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:22:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:49:18)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:162:84
+2026-05-14 15:13:49 [[31merror[39m] [Unhandled] TimeoutError: The operation was aborted due to timeout
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:39:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:57:18)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:272:25
+2026-05-14 17:29:08 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:39:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:57:18)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:272:25
+2026-05-14 17:29:08 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:39:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:57:18)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:352:34
+2026-05-14 17:29:08 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async razorpayFetch (C:\Users\admin\Desktop\FP\Backend\controllers\razorpay.statements.conroller.js:19:15)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\razorpay.statements.conroller.js:51:34
+2026-05-14 17:29:09 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:39:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:57:18)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:272:25
+2026-05-14 17:29:09 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:39:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:57:18)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:352:34
+2026-05-14 17:29:09 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async razorpayFetch (C:\Users\admin\Desktop\FP\Backend\controllers\razorpay.statements.conroller.js:19:15)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\razorpay.statements.conroller.js:51:34
+2026-05-14 21:09:13 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:39:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:57:18)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:272:25
+2026-05-14 21:09:13 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:39:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:57:18)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:352:34
+2026-05-14 21:09:14 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async razorpayFetch (C:\Users\admin\Desktop\FP\Backend\controllers\razorpay.statements.conroller.js:19:15)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\razorpay.statements.conroller.js:51:34
+2026-05-15 10:54:24 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:39:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:57:18)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:272:25
+2026-05-15 10:54:24 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:39:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:57:18)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:352:34
+2026-05-15 10:54:24 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async razorpayFetch (C:\Users\admin\Desktop\FP\Backend\controllers\razorpay.statements.conroller.js:19:15)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\razorpay.statements.conroller.js:51:34
+2026-05-15 12:36:24 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at runNextTicks (node:internal/process/task_queues:69:3)
+    at process.processImmediate (node:internal/timers:459:9)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:39:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:57:18)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:352:34
+2026-05-15 12:36:24 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:39:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:57:18)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:272:25
+2026-05-15 12:38:45 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at runNextTicks (node:internal/process/task_queues:69:3)
+    at process.processImmediate (node:internal/timers:459:9)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:39:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:57:18)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:352:34
+2026-05-15 12:38:45 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:39:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:57:18)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:272:25
+2026-05-15 12:38:55 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at runNextTicks (node:internal/process/task_queues:69:3)
+    at process.processImmediate (node:internal/timers:459:9)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:39:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:57:18)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:272:25
+2026-05-15 12:38:55 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:39:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:57:18)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:352:34
+2026-05-15 12:38:58 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at runNextTicks (node:internal/process/task_queues:69:3)
+    at process.processImmediate (node:internal/timers:459:9)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:39:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:57:18)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:272:25
+2026-05-15 12:38:58 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:39:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:57:18)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:352:34
+2026-05-15 12:39:03 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:39:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:57:18)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:481:25
+2026-05-15 12:39:21 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at runNextTicks (node:internal/process/task_queues:69:3)
+    at process.processImmediate (node:internal/timers:459:9)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:39:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:57:18)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:272:25
+2026-05-15 12:39:21 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at runNextTicks (node:internal/process/task_queues:69:3)
+    at process.processImmediate (node:internal/timers:459:9)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:39:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:57:18)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:481:25
+2026-05-15 12:39:21 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:39:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:57:18)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:352:34
+2026-05-15 12:39:26 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at runNextTicks (node:internal/process/task_queues:69:3)
+    at process.processImmediate (node:internal/timers:459:9)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:39:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:57:18)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:352:34
+2026-05-15 12:39:26 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:39:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:57:18)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:272:25
+2026-05-15 12:39:31 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:39:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:57:18)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:481:25
+2026-05-15 12:41:09 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at runNextTicks (node:internal/process/task_queues:69:3)
+    at process.processImmediate (node:internal/timers:459:9)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:39:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:57:18)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:352:34
+2026-05-15 12:41:09 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:39:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:57:18)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:272:25
+2026-05-15 12:41:26 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at runNextTicks (node:internal/process/task_queues:69:3)
+    at process.processImmediate (node:internal/timers:459:9)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:39:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:57:18)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:352:34
+2026-05-15 12:41:26 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:39:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:57:18)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:272:25
+2026-05-15 12:41:42 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at runNextTicks (node:internal/process/task_queues:69:3)
+    at process.processImmediate (node:internal/timers:459:9)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:39:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:57:18)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:352:34
+2026-05-15 12:41:43 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at runNextTicks (node:internal/process/task_queues:69:3)
+    at process.processImmediate (node:internal/timers:459:9)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:39:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:57:18)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:272:25
+2026-05-15 12:41:43 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:39:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:57:18)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:481:25
+2026-05-15 12:41:56 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at runNextTicks (node:internal/process/task_queues:69:3)
+    at process.processImmediate (node:internal/timers:459:9)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:39:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:57:18)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:352:34
+2026-05-15 12:41:56 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:39:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:57:18)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:272:25
+2026-05-15 12:42:09 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at runNextTicks (node:internal/process/task_queues:69:3)
+    at process.processImmediate (node:internal/timers:459:9)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:39:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:57:18)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:352:34
+2026-05-15 12:42:09 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:39:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:57:18)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:272:25
+2026-05-15 12:42:28 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at runNextTicks (node:internal/process/task_queues:69:3)
+    at process.processImmediate (node:internal/timers:459:9)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:39:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:57:18)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:352:34
+2026-05-15 12:42:28 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:39:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:57:18)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:272:25
+2026-05-15 12:42:30 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:39:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:57:18)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:481:25
+2026-05-15 12:42:36 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at runNextTicks (node:internal/process/task_queues:69:3)
+    at process.processImmediate (node:internal/timers:459:9)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:39:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:57:18)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:272:25
+2026-05-15 12:42:36 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:39:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:57:18)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:352:34
+2026-05-15 12:46:09 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at runNextTicks (node:internal/process/task_queues:69:3)
+    at process.processImmediate (node:internal/timers:459:9)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:39:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:57:18)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:352:34
+2026-05-15 12:46:09 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:39:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:57:18)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:272:25
+2026-05-15 12:46:19 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at runNextTicks (node:internal/process/task_queues:69:3)
+    at process.processImmediate (node:internal/timers:459:9)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:39:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:57:18)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:352:34
+2026-05-15 12:46:19 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:39:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:57:18)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:272:25
+2026-05-15 12:47:35 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at runNextTicks (node:internal/process/task_queues:69:3)
+    at process.processImmediate (node:internal/timers:459:9)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:39:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:57:18)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:352:34
+2026-05-15 12:47:35 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:39:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:57:18)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:272:25
+2026-05-15 12:48:09 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at runNextTicks (node:internal/process/task_queues:69:3)
+    at process.processImmediate (node:internal/timers:459:9)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:39:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:57:18)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:352:34
+2026-05-15 12:48:09 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:39:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:57:18)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:272:25
+2026-05-15 12:48:35 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at runNextTicks (node:internal/process/task_queues:69:3)
+    at process.processImmediate (node:internal/timers:459:9)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:39:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:57:18)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:352:34
+2026-05-15 12:48:35 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:39:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:57:18)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:272:25
+2026-05-15 12:52:09 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at runNextTicks (node:internal/process/task_queues:69:3)
+    at process.processImmediate (node:internal/timers:459:9)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:39:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:57:18)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:352:34
+2026-05-15 12:52:09 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:39:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:57:18)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:272:25
+2026-05-15 12:58:40 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at runNextTicks (node:internal/process/task_queues:69:3)
+    at process.processImmediate (node:internal/timers:459:9)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:39:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:57:18)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:352:34
+2026-05-15 12:58:40 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:39:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:57:18)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:272:25
+2026-05-20 15:15:48 [[31merror[39m] [Unhandled] ValidationError: Tenant validation failed: role: `tenant` is not a valid enum value for path `role`.
+    at Document.invalidate (C:\Users\admin\Desktop\FP\Backend\node_modules\mongoose\lib\document.js:3381:32)
+    at C:\Users\admin\Desktop\FP\Backend\node_modules\mongoose\lib\document.js:3142:17
+    at C:\Users\admin\Desktop\FP\Backend\node_modules\mongoose\lib\schemaType.js:1443:9
+    at process.processTicksAndRejections (node:internal/process/task_queues:85:11)
+2026-05-21 13:25:19 [[31merror[39m] [Unhandled] ValidationError: Tenant validation failed: password: Path `password` is required.
+    at Document.invalidate (C:\Users\admin\Desktop\FP\Backend\node_modules\mongoose\lib\document.js:3381:32)
+    at C:\Users\admin\Desktop\FP\Backend\node_modules\mongoose\lib\document.js:3142:17
+    at C:\Users\admin\Desktop\FP\Backend\node_modules\mongoose\lib\schemaType.js:1443:9
+    at process.processTicksAndRejections (node:internal/process/task_queues:85:11)
+2026-05-21 13:25:26 [[31merror[39m] [Unhandled] ValidationError: Tenant validation failed: password: Path `password` is required.
+    at Document.invalidate (C:\Users\admin\Desktop\FP\Backend\node_modules\mongoose\lib\document.js:3381:32)
+    at C:\Users\admin\Desktop\FP\Backend\node_modules\mongoose\lib\document.js:3142:17
+    at C:\Users\admin\Desktop\FP\Backend\node_modules\mongoose\lib\schemaType.js:1443:9
+    at process.processTicksAndRejections (node:internal/process/task_queues:85:11)
+2026-05-21 13:25:34 [[31merror[39m] [Unhandled] ValidationError: Tenant validation failed: password: Path `password` is required.
+    at Document.invalidate (C:\Users\admin\Desktop\FP\Backend\node_modules\mongoose\lib\document.js:3381:32)
+    at C:\Users\admin\Desktop\FP\Backend\node_modules\mongoose\lib\document.js:3142:17
+    at C:\Users\admin\Desktop\FP\Backend\node_modules\mongoose\lib\schemaType.js:1443:9
+    at process.processTicksAndRejections (node:internal/process/task_queues:85:11)
+2026-05-21 14:44:05 [[31merror[39m] [Unhandled] ValidationError: Tenant validation failed: password: Path `password` is required.
+    at Document.invalidate (C:\Users\admin\Desktop\FP\Backend\node_modules\mongoose\lib\document.js:3381:32)
+    at C:\Users\admin\Desktop\FP\Backend\node_modules\mongoose\lib\document.js:3142:17
+    at C:\Users\admin\Desktop\FP\Backend\node_modules\mongoose\lib\schemaType.js:1443:9
+    at process.processTicksAndRejections (node:internal/process/task_queues:85:11)
+2026-05-21 18:12:45 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:39:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:57:18)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:272:25
+2026-05-21 18:12:46 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:39:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:57:18)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:352:34
+2026-05-21 18:12:46 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async razorpayFetch (C:\Users\admin\Desktop\FP\Backend\controllers\razorpay.statements.conroller.js:19:15)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\razorpay.statements.conroller.js:51:34
+2026-05-22 16:01:03 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:39:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:57:18)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:272:25
+2026-05-22 16:01:03 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:39:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:57:18)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:352:34
+2026-05-22 16:01:03 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async razorpayFetch (C:\Users\admin\Desktop\FP\Backend\controllers\razorpay.statements.conroller.js:19:15)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\razorpay.statements.conroller.js:51:34
+2026-05-25 11:40:44 [[31merror[39m] [Unhandled] ValidationError: Tenant validation failed: password: Path `password` is required.
+    at Document.invalidate (C:\Users\admin\Desktop\FP\Backend\node_modules\mongoose\lib\document.js:3381:32)
+    at C:\Users\admin\Desktop\FP\Backend\node_modules\mongoose\lib\document.js:3142:17
+    at C:\Users\admin\Desktop\FP\Backend\node_modules\mongoose\lib\schemaType.js:1443:9
+    at process.processTicksAndRejections (node:internal/process/task_queues:85:11)
+2026-05-25 11:40:53 [[31merror[39m] [Unhandled] ValidationError: Tenant validation failed: password: Path `password` is required.
+    at Document.invalidate (C:\Users\admin\Desktop\FP\Backend\node_modules\mongoose\lib\document.js:3381:32)
+    at C:\Users\admin\Desktop\FP\Backend\node_modules\mongoose\lib\document.js:3142:17
+    at C:\Users\admin\Desktop\FP\Backend\node_modules\mongoose\lib\schemaType.js:1443:9
+    at process.processTicksAndRejections (node:internal/process/task_queues:85:11)
+2026-05-25 11:50:11 [[31merror[39m] [Member] Invite email failed for gvasanth365@gmail.com: FRONTEND_BASE is not defined
+2026-05-25 11:53:14 [[31merror[39m] [Member] Invite email failed for gvasanth365@gmail.com: FRONTEND_BASE is not defined
+2026-05-25 12:16:37 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-05-25 12:16:37 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-05-25 12:16:37 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-05-25 12:16:37 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-05-25 12:16:50 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-05-25 12:16:57 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-05-25 12:17:42 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-05-25 12:17:42 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-05-25 12:17:42 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-05-25 12:17:42 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-05-25 12:17:45 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-05-25 12:20:37 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-05-25 12:20:37 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-05-25 12:20:37 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-05-25 12:20:37 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-05-25 12:22:16 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-05-25 12:22:16 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-05-25 12:22:16 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-05-25 12:22:16 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-05-25 12:22:19 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-05-25 12:41:15 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-05-25 12:41:15 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-05-25 12:41:15 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-05-25 12:41:15 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-05-25 12:41:21 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-05-25 12:41:21 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-05-25 12:41:24 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-05-25 12:41:42 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-05-25 12:42:06 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-05-25 12:42:06 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-05-25 12:42:06 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-05-25 12:42:06 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-05-25 12:42:08 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-05-25 16:56:17 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-05-25 16:56:17 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-05-25 16:56:17 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-05-25 16:56:17 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-05-25 16:58:18 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-05-25 16:58:18 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-05-25 16:58:18 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-05-25 16:58:18 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-05-25 16:59:35 [[31merror[39m] [ResetPassword] Tenant validation failed: crm.provider: `prospectconnect` is not a valid enum value for path `provider`.
+2026-05-25 16:59:48 [[31merror[39m] [ResetPassword] Tenant validation failed: crm.provider: `prospectconnect` is not a valid enum value for path `provider`.
+2026-05-25 17:00:18 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-05-25 17:00:18 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-05-25 17:00:18 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-05-25 17:00:18 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-05-25 17:02:18 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-05-25 17:02:18 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-05-25 17:02:18 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-05-25 17:02:18 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-05-25 17:04:18 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-05-25 17:04:18 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-05-25 17:04:18 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-05-25 17:04:18 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-05-25 17:06:18 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-05-25 17:06:18 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-05-25 17:06:18 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-05-25 17:06:18 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-05-25 17:08:18 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-05-25 17:08:18 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-05-25 17:08:18 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-05-25 17:08:18 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-05-25 17:10:38 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-05-25 17:10:38 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-05-25 17:10:38 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-05-25 17:10:38 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-05-25 17:12:38 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-05-25 17:12:38 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-05-25 17:12:38 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-05-25 17:12:38 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-05-25 17:14:38 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-05-25 17:14:38 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-05-25 17:14:38 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-05-25 17:14:38 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-05-25 17:16:38 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-05-25 17:16:38 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-05-25 17:16:38 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-05-25 17:16:38 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-05-25 17:18:38 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-05-25 17:18:38 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-05-25 17:18:38 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-05-25 17:18:38 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-05-25 17:20:07 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-05-25 17:20:07 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-05-25 17:20:07 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-05-25 17:20:07 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-05-25 17:20:20 [[31merror[39m] [ResetPassword] Tenant validation failed: crm.provider: `prospectconnect` is not a valid enum value for path `provider`.
+2026-05-25 17:24:07 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-05-25 17:24:07 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-05-25 17:24:07 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-05-25 17:24:08 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-05-25 17:26:07 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-05-25 17:26:07 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-05-25 17:26:07 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-05-25 17:26:07 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-05-25 17:28:07 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-05-25 17:28:07 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-05-25 17:28:07 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-05-25 17:28:07 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-05-25 17:30:47 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-05-25 17:30:47 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-05-25 17:30:47 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-05-25 17:30:47 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-05-25 17:30:48 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-05-25 17:30:48 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-05-25 17:30:48 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-05-25 17:30:48 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-05-25 18:21:15 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:39:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:57:18)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:272:25
+2026-05-25 18:21:15 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:39:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:57:18)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:352:34
+2026-05-25 18:21:15 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async razorpayFetch (C:\Users\admin\Desktop\FP\Backend\controllers\razorpay.statements.conroller.js:19:15)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\razorpay.statements.conroller.js:51:34
+2026-05-25 18:21:18 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:39:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:57:18)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:272:25
+2026-05-25 18:21:18 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:39:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:57:18)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:352:34
+2026-05-25 18:21:18 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async razorpayFetch (C:\Users\admin\Desktop\FP\Backend\controllers\razorpay.statements.conroller.js:19:15)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\razorpay.statements.conroller.js:51:34
+2026-05-26 12:32:50 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:39:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:57:18)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:272:25
+2026-05-26 12:32:50 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:39:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:57:18)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:352:34
+2026-05-26 12:32:50 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async razorpayFetch (C:\Users\admin\Desktop\FP\Backend\controllers\razorpay.statements.conroller.js:19:15)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\razorpay.statements.conroller.js:51:34
+2026-05-26 12:35:28 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at runNextTicks (node:internal/process/task_queues:69:3)
+    at process.processImmediate (node:internal/timers:459:9)
+    at async razorpayFetch (C:\Users\admin\Desktop\FP\Backend\controllers\razorpay.statements.conroller.js:19:15)
+    at async Promise.all (index 1)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\razorpay.statements.conroller.js:51:34
+2026-05-26 12:35:28 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at runNextTicks (node:internal/process/task_queues:69:3)
+    at process.processImmediate (node:internal/timers:459:9)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:39:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:57:18)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:352:34
+2026-05-26 12:35:28 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:39:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:57:18)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:272:25
+2026-05-26 12:37:17 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async razorpayFetch (C:\Users\admin\Desktop\FP\Backend\controllers\razorpay.statements.conroller.js:19:15)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\razorpay.statements.conroller.js:51:34
+2026-05-26 12:37:28 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at runNextTicks (node:internal/process/task_queues:69:3)
+    at process.processImmediate (node:internal/timers:459:9)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:39:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:57:18)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:352:34
+2026-05-26 12:37:28 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:39:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:57:18)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:272:25
+2026-05-26 12:39:17 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:39:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:57:18)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:272:25
+2026-05-26 12:39:17 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:39:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:57:18)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:352:34
+2026-05-26 12:39:17 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async razorpayFetch (C:\Users\admin\Desktop\FP\Backend\controllers\razorpay.statements.conroller.js:19:15)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\razorpay.statements.conroller.js:51:34
+2026-05-26 12:41:17 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:39:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:57:18)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:272:25
+2026-05-26 12:41:17 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:39:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:57:18)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:352:34
+2026-05-26 12:41:17 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async razorpayFetch (C:\Users\admin\Desktop\FP\Backend\controllers\razorpay.statements.conroller.js:19:15)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\razorpay.statements.conroller.js:51:34
+2026-05-26 12:43:48 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at runNextTicks (node:internal/process/task_queues:69:3)
+    at process.processImmediate (node:internal/timers:459:9)
+    at async razorpayFetch (C:\Users\admin\Desktop\FP\Backend\controllers\razorpay.statements.conroller.js:19:15)
+    at async Promise.all (index 1)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\razorpay.statements.conroller.js:51:34
+2026-05-26 12:43:48 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at runNextTicks (node:internal/process/task_queues:69:3)
+    at process.processImmediate (node:internal/timers:459:9)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:39:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:57:18)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:352:34
+2026-05-26 12:43:48 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:39:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:57:18)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:272:25
+2026-05-26 12:49:38 [[31merror[39m] [Unhandled] TimeoutError: The operation was aborted due to timeout
+    at node:internal/deps/undici/undici:13502:13
+    at runNextTicks (node:internal/process/task_queues:65:5)
+    at listOnTimeout (node:internal/timers:555:9)
+    at process.processTimers (node:internal/timers:529:7)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:39:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:57:18)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:272:25
+2026-05-26 12:49:38 [[31merror[39m] [Unhandled] TimeoutError: The operation was aborted due to timeout
+    at node:internal/deps/undici/undici:13502:13
+    at runNextTicks (node:internal/process/task_queues:65:5)
+    at listOnTimeout (node:internal/timers:555:9)
+    at process.processTimers (node:internal/timers:529:7)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:39:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:57:18)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:352:34
+2026-05-26 12:49:38 [[31merror[39m] [Unhandled] TimeoutError: The operation was aborted due to timeout
+    at node:internal/deps/undici/undici:13502:13
+    at runNextTicks (node:internal/process/task_queues:65:5)
+    at listOnTimeout (node:internal/timers:555:9)
+    at process.processTimers (node:internal/timers:529:7)
+    at async razorpayFetch (C:\Users\admin\Desktop\FP\Backend\controllers\razorpay.statements.conroller.js:19:15)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\razorpay.statements.conroller.js:51:34
+2026-05-26 12:49:49 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at runNextTicks (node:internal/process/task_queues:69:3)
+    at process.processImmediate (node:internal/timers:459:9)
+    at async razorpayFetch (C:\Users\admin\Desktop\FP\Backend\controllers\razorpay.statements.conroller.js:19:15)
+    at async Promise.all (index 1)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\razorpay.statements.conroller.js:51:34
+2026-05-26 12:49:49 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at runNextTicks (node:internal/process/task_queues:69:3)
+    at process.processImmediate (node:internal/timers:459:9)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:39:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:57:18)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:272:25
+2026-05-26 12:49:49 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at runNextTicks (node:internal/process/task_queues:69:3)
+    at process.processImmediate (node:internal/timers:459:9)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:39:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:57:18)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:352:34
+2026-05-26 12:50:01 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:39:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:57:18)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:272:25
+2026-05-26 12:50:01 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:39:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:57:18)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:352:34
+2026-05-26 12:50:01 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async razorpayFetch (C:\Users\admin\Desktop\FP\Backend\controllers\razorpay.statements.conroller.js:19:15)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\razorpay.statements.conroller.js:51:34
+2026-05-26 12:59:27 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:39:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:57:18)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:272:25
+2026-05-26 12:59:27 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:39:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:57:18)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:352:34
+2026-05-26 12:59:27 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async razorpayFetch (C:\Users\admin\Desktop\FP\Backend\controllers\razorpay.statements.conroller.js:19:15)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\razorpay.statements.conroller.js:51:34
+2026-05-26 13:00:03 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:39:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:57:18)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:272:25
+2026-05-26 13:00:03 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:39:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:57:18)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:352:34
+2026-05-26 13:00:03 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async razorpayFetch (C:\Users\admin\Desktop\FP\Backend\controllers\razorpay.statements.conroller.js:19:15)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\razorpay.statements.conroller.js:51:34
+2026-05-26 13:02:10 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:39:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:57:18)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:272:25
+2026-05-26 13:02:10 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:39:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:57:18)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:352:34
+2026-05-26 13:02:10 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async razorpayFetch (C:\Users\admin\Desktop\FP\Backend\controllers\razorpay.statements.conroller.js:19:15)
+    at async Promise.all (index 1)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\razorpay.statements.conroller.js:51:34
+2026-05-26 13:04:03 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:39:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:57:18)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:272:25
+2026-05-26 13:04:03 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:39:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:57:18)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:352:34
+2026-05-26 13:04:03 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async razorpayFetch (C:\Users\admin\Desktop\FP\Backend\controllers\razorpay.statements.conroller.js:19:15)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\razorpay.statements.conroller.js:51:34
+2026-05-26 13:06:04 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:39:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:57:18)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:352:34
+2026-05-26 13:06:04 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:39:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:57:18)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:272:25
+2026-05-26 13:06:04 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async razorpayFetch (C:\Users\admin\Desktop\FP\Backend\controllers\razorpay.statements.conroller.js:19:15)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\razorpay.statements.conroller.js:51:34
+2026-05-26 13:08:16 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at runNextTicks (node:internal/process/task_queues:69:3)
+    at process.processImmediate (node:internal/timers:459:9)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:39:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:57:18)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:352:34
+2026-05-26 13:08:16 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at runNextTicks (node:internal/process/task_queues:69:3)
+    at process.processImmediate (node:internal/timers:459:9)
+    at async razorpayFetch (C:\Users\admin\Desktop\FP\Backend\controllers\razorpay.statements.conroller.js:19:15)
+    at async Promise.all (index 1)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\razorpay.statements.conroller.js:51:34
+2026-05-26 13:08:16 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at runNextTicks (node:internal/process/task_queues:69:3)
+    at process.processImmediate (node:internal/timers:459:9)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:39:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:57:18)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:272:25
+2026-05-26 13:10:05 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:39:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:57:18)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:272:25
+2026-05-26 13:10:05 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:39:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:57:18)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:352:34
+2026-05-26 13:10:05 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async razorpayFetch (C:\Users\admin\Desktop\FP\Backend\controllers\razorpay.statements.conroller.js:19:15)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\razorpay.statements.conroller.js:51:34
+2026-05-26 13:12:28 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:39:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:57:18)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:272:25
+2026-05-26 13:12:28 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:39:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:57:18)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:352:34
+2026-05-26 13:12:28 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async razorpayFetch (C:\Users\admin\Desktop\FP\Backend\controllers\razorpay.statements.conroller.js:19:15)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\razorpay.statements.conroller.js:51:34
+2026-05-27 09:59:35 [[31merror[39m] [Admin] Welcome email failed for gvasanth365@gmail.com: sendWelcomeEmail is not a function
+2026-05-27 10:09:37 [[31merror[39m] [Admin] Welcome email failed for gvasanth365@gmail.com: sendWelcomeEmail is not a function
+2026-05-27 10:18:41 [[31merror[39m] [Admin] Welcome email failed for gvasanth365@gmail.com: sendWelcomeEmail is not a function
+2026-05-27 10:20:48 [[31merror[39m] [Admin] Welcome email failed for gvasanth365@gmail.com: sendWelcomeEmail is not a function
+2026-05-27 10:26:29 [[31merror[39m] [Admin] Welcome email failed for gvasanth365@gmail.com: sendWelcomeEmail is not exported. Available: [sendVerificationEmail, sendPasswordResetEmail, sendPasswordChangedEmail, sendPaymentConfirmation, sendSubUserInviteEmail, sendMemberAssignedEmail]
+2026-05-27 10:28:47 [[31merror[39m] [Settings.get] Cannot read properties of undefined (reading 'sub')
+2026-05-27 10:29:38 [[31merror[39m] [Settings.razorpay] Cannot read properties of undefined (reading 'sub')
+2026-05-27 10:29:54 [[31merror[39m] [Settings.razorpay] Cannot read properties of undefined (reading 'sub')
+2026-05-27 10:31:05 [[31merror[39m] [Settings.razorpay] Cannot read properties of undefined (reading 'sub')
+2026-05-27 10:49:30 [[31merror[39m] [Unhandled] ReferenceError: apiUrl is not defined
+    at C:\Users\admin\Desktop\FP\Backend\controllers\tenantController.js:193:30
+    at C:\Users\admin\Desktop\FP\Backend\controllers\tenantController.js:9:19
+    at Layer.handle [as handle_request] (C:\Users\admin\Desktop\FP\Backend\node_modules\express\lib\router\layer.js:95:5)
+    at next (C:\Users\admin\Desktop\FP\Backend\node_modules\express\lib\router\route.js:149:13)
+    at validate (C:\Users\admin\Desktop\FP\Backend\routes\index.js:38:3)
+    at Layer.handle [as handle_request] (C:\Users\admin\Desktop\FP\Backend\node_modules\express\lib\router\layer.js:95:5)
+    at next (C:\Users\admin\Desktop\FP\Backend\node_modules\express\lib\router\route.js:149:13)
+    at middleware (C:\Users\admin\Desktop\FP\Backend\node_modules\express-validator\lib\middlewares\check.js:16:13)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+2026-05-27 11:00:14 [[31merror[39m] [Unhandled] ValidationError: Tenant validation failed: crm.provider: `prospectconnect` is not a valid enum value for path `provider`.
+    at Document.invalidate (C:\Users\admin\Desktop\FP\Backend\node_modules\mongoose\lib\document.js:3381:32)
+    at Subdocument.invalidate (C:\Users\admin\Desktop\FP\Backend\node_modules\mongoose\lib\types\subdocument.js:257:12)
+    at C:\Users\admin\Desktop\FP\Backend\node_modules\mongoose\lib\document.js:3142:17
+    at C:\Users\admin\Desktop\FP\Backend\node_modules\mongoose\lib\schemaType.js:1443:9
+    at process.processTicksAndRejections (node:internal/process/task_queues:85:11)
+2026-05-27 11:00:15 [[31merror[39m] [Unhandled] ValidationError: Tenant validation failed: crm.provider: `prospectconnect` is not a valid enum value for path `provider`.
+    at Document.invalidate (C:\Users\admin\Desktop\FP\Backend\node_modules\mongoose\lib\document.js:3381:32)
+    at Subdocument.invalidate (C:\Users\admin\Desktop\FP\Backend\node_modules\mongoose\lib\types\subdocument.js:257:12)
+    at C:\Users\admin\Desktop\FP\Backend\node_modules\mongoose\lib\document.js:3142:17
+    at C:\Users\admin\Desktop\FP\Backend\node_modules\mongoose\lib\schemaType.js:1443:9
+    at process.processTicksAndRejections (node:internal/process/task_queues:85:11)
+2026-05-27 11:01:46 [[31merror[39m] [Unhandled] ValidationError: Tenant validation failed: crm.provider: `prospectconnect` is not a valid enum value for path `provider`.
+    at Document.invalidate (C:\Users\admin\Desktop\FP\Backend\node_modules\mongoose\lib\document.js:3381:32)
+    at Subdocument.invalidate (C:\Users\admin\Desktop\FP\Backend\node_modules\mongoose\lib\types\subdocument.js:257:12)
+    at C:\Users\admin\Desktop\FP\Backend\node_modules\mongoose\lib\document.js:3142:17
+    at C:\Users\admin\Desktop\FP\Backend\node_modules\mongoose\lib\schemaType.js:1443:9
+    at process.processTicksAndRejections (node:internal/process/task_queues:85:11)
+2026-05-27 11:02:24 [[31merror[39m] [Unhandled] ReferenceError: buildSettingsPayload is not defined
+    at C:\Users\admin\Desktop\FP\Backend\controllers\tenantController.js:217:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+2026-05-27 11:04:01 [[31merror[39m] [Unhandled] ReferenceError: buildSettingsPayload is not defined
+    at C:\Users\admin\Desktop\FP\Backend\controllers\tenantController.js:217:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+2026-05-27 11:17:25 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-05-27 11:19:21 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-05-27 11:19:54 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-05-27 11:22:48 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-05-27 11:22:54 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-05-27 11:27:11 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-05-27 11:27:14 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-05-27 11:29:14 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-05-27 11:29:19 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-05-27 11:29:21 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 11:47:46 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 11:47:46 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 11:47:46 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 11:47:46 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 11:47:49 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 12:34:31 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 12:36:28 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 12:36:28 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 12:36:28 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 12:36:28 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 12:36:32 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 12:36:43 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 12:36:47 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 12:36:47 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 12:36:47 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 12:36:47 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 12:36:48 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 12:36:52 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 12:36:56 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 12:36:56 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 12:36:56 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 12:36:56 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 12:37:00 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 12:37:06 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 12:37:06 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 12:37:06 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 12:37:06 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 12:37:10 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 12:37:14 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 12:37:15 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 12:37:15 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 12:37:17 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 12:37:17 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 12:37:17 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 12:37:18 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 12:37:19 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 12:37:19 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 12:37:20 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 12:37:20 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 12:37:20 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 12:37:20 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 12:37:21 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 12:44:11 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 12:44:21 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 12:44:21 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 12:44:21 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 12:44:21 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 12:44:23 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 12:44:26 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 12:44:27 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 12:44:27 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 12:44:30 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 12:44:30 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 12:44:31 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 12:44:31 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 12:44:31 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 12:44:31 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 12:44:32 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 12:44:32 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 12:44:40 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 12:44:40 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 12:44:40 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 12:44:40 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 12:45:05 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 12:45:05 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 12:45:05 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 12:45:05 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 12:45:09 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 12:45:11 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 12:45:12 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 12:45:12 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 12:45:12 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 12:45:14 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 12:45:14 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 12:45:14 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 12:45:14 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 12:45:21 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 12:45:24 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 12:45:27 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 12:45:32 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 12:45:32 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 12:45:32 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 12:45:32 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 12:45:33 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 12:45:39 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 12:45:39 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 12:45:40 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 12:45:40 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 12:45:40 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 12:45:41 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 12:45:41 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 12:45:41 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 12:45:41 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 12:45:53 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 12:45:53 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 12:45:53 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 12:45:53 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 12:45:55 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 12:45:55 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 12:45:55 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 12:45:55 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 12:45:57 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 12:45:59 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 12:46:08 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 12:46:08 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 12:46:08 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 12:46:08 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 12:46:09 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 12:46:15 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 12:46:15 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 12:46:16 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 12:46:17 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 12:46:17 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 12:46:17 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 12:46:17 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 12:46:19 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 12:46:19 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 12:46:20 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 12:46:21 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 12:46:21 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 12:46:22 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 12:46:22 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 12:46:22 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 12:46:22 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 12:46:24 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 12:46:24 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 12:46:24 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 12:46:25 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 12:46:33 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 12:46:33 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 12:46:33 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 12:46:33 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 12:46:34 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 12:57:56 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 12:57:56 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 12:57:56 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 12:57:56 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 12:57:59 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 12:58:02 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 13:08:05 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 13:08:05 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 13:08:05 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 13:08:05 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 13:08:07 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 13:08:12 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 13:08:13 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 13:08:13 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 13:08:13 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 13:08:13 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 13:08:14 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 13:08:14 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 13:08:14 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 13:08:15 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 13:08:15 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 13:08:16 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 13:08:16 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 13:08:17 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 13:13:25 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 13:13:25 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 13:13:25 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 13:13:25 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 13:13:25 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 13:13:25 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 13:13:26 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 13:35:07 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 13:35:07 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 13:35:07 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 13:35:07 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 13:35:09 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 13:35:11 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 13:35:13 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 13:35:21 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 13:35:21 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 13:35:21 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 13:35:21 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 13:35:22 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 13:35:24 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 13:35:25 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 13:35:28 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 13:35:28 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 13:35:29 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 13:43:35 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 13:43:35 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 13:43:35 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 13:43:35 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 13:43:38 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 13:43:40 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 13:43:46 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 13:43:47 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 13:43:47 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 13:43:48 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 13:43:49 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 13:43:49 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 13:43:50 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 13:43:50 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 13:43:50 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 13:43:50 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 13:43:51 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-16 13:43:52 [[31merror[39m] [AuthMiddleware] Cannot read properties of undefined (reading 'findById')
+2026-06-17 10:17:27 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:39:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:57:18)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:272:25
+2026-06-17 10:17:27 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:39:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:57:18)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:352:34
+2026-06-17 10:17:27 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async razorpayFetch (C:\Users\admin\Desktop\FP\Backend\controllers\razorpay.statements.conroller.js:21:15)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\razorpay.statements.conroller.js:60:34
+2026-06-17 10:17:50 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async razorpayFetch (C:\Users\admin\Desktop\FP\Backend\controllers\razorpay.statements.conroller.js:21:15)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\razorpay.statements.conroller.js:60:34
+2026-06-17 10:17:50 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async razorpayFetch (C:\Users\admin\Desktop\FP\Backend\controllers\razorpay.statements.conroller.js:21:15)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\razorpay.statements.conroller.js:131:17
+2026-06-17 10:17:52 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:39:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:57:18)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:272:25
+2026-06-17 10:17:52 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:39:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:57:18)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:352:34
+2026-06-17 10:17:52 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async razorpayFetch (C:\Users\admin\Desktop\FP\Backend\controllers\razorpay.statements.conroller.js:21:15)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\razorpay.statements.conroller.js:60:34
+2026-06-17 10:18:08 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:39:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:57:18)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:272:25
+2026-06-17 10:18:08 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:39:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:57:18)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:352:34
+2026-06-17 10:18:08 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async razorpayFetch (C:\Users\admin\Desktop\FP\Backend\controllers\razorpay.statements.conroller.js:21:15)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\razorpay.statements.conroller.js:60:34
+2026-06-17 10:18:17 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:39:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:57:18)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:272:25
+2026-06-17 10:18:17 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:39:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:57:18)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:352:34
+2026-06-17 10:18:18 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:39:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:57:18)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:272:25
+2026-06-17 10:18:20 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async razorpayFetch (C:\Users\admin\Desktop\FP\Backend\controllers\razorpay.statements.conroller.js:21:15)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\razorpay.statements.conroller.js:60:34
+2026-06-17 10:18:20 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async razorpayFetch (C:\Users\admin\Desktop\FP\Backend\controllers\razorpay.statements.conroller.js:21:15)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\razorpay.statements.conroller.js:131:17
+2026-06-17 10:18:35 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:39:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:57:18)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:272:25
+2026-06-17 10:18:35 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:39:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:57:18)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:352:34
+2026-06-17 10:18:35 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async razorpayFetch (C:\Users\admin\Desktop\FP\Backend\controllers\razorpay.statements.conroller.js:21:15)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\razorpay.statements.conroller.js:60:34
+2026-06-17 10:20:37 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:39:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:57:18)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:272:25
+2026-06-17 10:20:37 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:39:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:57:18)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:352:34
+2026-06-17 10:20:37 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async razorpayFetch (C:\Users\admin\Desktop\FP\Backend\controllers\razorpay.statements.conroller.js:21:15)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\razorpay.statements.conroller.js:60:34
+2026-06-17 10:20:39 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:39:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:57:18)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:272:25
+2026-06-17 10:20:39 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:39:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:57:18)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:352:34
+2026-06-17 10:20:39 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async razorpayFetch (C:\Users\admin\Desktop\FP\Backend\controllers\razorpay.statements.conroller.js:21:15)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\razorpay.statements.conroller.js:60:34
+2026-06-17 10:20:42 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:39:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:57:18)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:272:25
+2026-06-17 10:20:42 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:39:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:57:18)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:352:34
+2026-06-17 10:20:42 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async razorpayFetch (C:\Users\admin\Desktop\FP\Backend\controllers\razorpay.statements.conroller.js:21:15)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\razorpay.statements.conroller.js:60:34
+2026-06-17 10:20:48 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async razorpayFetch (C:\Users\admin\Desktop\FP\Backend\controllers\razorpay.statements.conroller.js:21:15)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\razorpay.statements.conroller.js:60:34
+2026-06-17 10:20:48 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async razorpayFetch (C:\Users\admin\Desktop\FP\Backend\controllers\razorpay.statements.conroller.js:21:15)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\razorpay.statements.conroller.js:131:17
+2026-06-17 10:21:38 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:39:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:57:18)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:272:25
+2026-06-17 10:21:39 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:39:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:57:18)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:272:25
+2026-06-17 10:21:39 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:39:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:57:18)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:352:34
+2026-06-17 17:55:39 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at runNextTicks (node:internal/process/task_queues:69:3)
+    at process.processImmediate (node:internal/timers:459:9)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:39:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:57:18)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:352:34
+2026-06-17 17:55:39 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at runNextTicks (node:internal/process/task_queues:69:3)
+    at process.processImmediate (node:internal/timers:459:9)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:39:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:57:18)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:272:25
+2026-06-17 17:55:39 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at runNextTicks (node:internal/process/task_queues:69:3)
+    at process.processImmediate (node:internal/timers:459:9)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:39:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:57:18)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:352:34
+2026-06-17 17:55:39 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:39:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:57:18)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:272:25
+2026-06-22 18:52:39 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:39:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:57:18)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:272:25
+2026-06-22 18:52:39 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:39:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:57:18)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:352:34
+2026-06-22 18:52:39 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async razorpayFetch (C:\Users\admin\Desktop\FP\Backend\controllers\razorpay.statements.conroller.js:21:15)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\razorpay.statements.conroller.js:60:34
+2026-06-22 18:52:39 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:39:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:57:18)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:272:25
+2026-06-22 18:52:39 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:39:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:57:18)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:352:34
+2026-06-22 18:52:39 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async razorpayFetch (C:\Users\admin\Desktop\FP\Backend\controllers\razorpay.statements.conroller.js:21:15)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\razorpay.statements.conroller.js:60:34
+2026-06-22 18:52:40 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:39:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:57:18)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:272:25
+2026-06-22 18:52:40 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:39:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:57:18)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:352:34
+2026-06-22 18:52:40 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async razorpayFetch (C:\Users\admin\Desktop\FP\Backend\controllers\razorpay.statements.conroller.js:21:15)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\razorpay.statements.conroller.js:60:34
+2026-06-22 18:52:40 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:39:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:57:18)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:272:25
+2026-06-22 18:52:40 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:39:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:57:18)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:352:34
+2026-06-22 18:52:40 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async razorpayFetch (C:\Users\admin\Desktop\FP\Backend\controllers\razorpay.statements.conroller.js:21:15)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\razorpay.statements.conroller.js:60:34
+2026-06-22 18:55:03 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:39:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:57:18)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:272:25
+2026-06-22 18:55:03 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:39:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:57:18)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:352:34
+2026-06-22 18:55:03 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async razorpayFetch (C:\Users\admin\Desktop\FP\Backend\controllers\razorpay.statements.conroller.js:21:15)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\razorpay.statements.conroller.js:60:34
+2026-06-22 18:55:04 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:39:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:57:18)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:272:25
+2026-06-22 18:55:04 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:39:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:57:18)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:352:34
+2026-06-22 18:55:04 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async razorpayFetch (C:\Users\admin\Desktop\FP\Backend\controllers\razorpay.statements.conroller.js:21:15)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\razorpay.statements.conroller.js:60:34
+2026-06-22 18:55:05 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async razorpayFetch (C:\Users\admin\Desktop\FP\Backend\controllers\razorpay.statements.conroller.js:21:15)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\razorpay.statements.conroller.js:60:34
+2026-06-22 18:55:05 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:39:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:57:18)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:352:34
+2026-06-22 18:55:05 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:39:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:57:18)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:272:25
+2026-06-22 18:55:05 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:39:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:57:18)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:272:25
+2026-06-22 18:55:05 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:39:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:57:18)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:352:34
+2026-06-22 18:55:05 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async razorpayFetch (C:\Users\admin\Desktop\FP\Backend\controllers\razorpay.statements.conroller.js:21:15)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\razorpay.statements.conroller.js:60:34
+2026-06-22 19:23:10 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:39:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:57:18)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:272:25
+2026-06-22 19:23:10 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:39:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:57:18)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:352:34
+2026-06-22 19:23:10 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async razorpayFetch (C:\Users\admin\Desktop\FP\Backend\controllers\razorpay.statements.conroller.js:21:15)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\razorpay.statements.conroller.js:60:34
+2026-06-22 19:23:11 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:39:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:57:18)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:272:25
+2026-06-22 19:23:11 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:39:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:57:18)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:352:34
+2026-06-22 19:23:11 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async razorpayFetch (C:\Users\admin\Desktop\FP\Backend\controllers\razorpay.statements.conroller.js:21:15)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\razorpay.statements.conroller.js:60:34
+2026-06-30 18:33:13 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:39:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:57:18)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:272:25
+2026-06-30 18:33:13 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:39:15)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:57:18)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:352:34
+2026-06-30 18:33:13 [[31merror[39m] [Unhandled] TypeError: fetch failed
+    at node:internal/deps/undici/undici:13502:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async razorpayFetch (C:\Users\admin\Desktop\FP\Backend\controllers\razorpay.statements.conroller.js:21:15)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\razorpay.statements.conroller.js:60:34
+2026-07-02 12:05:56 [[31merror[39m] [Unhandled] Error: ProspectConnect 500: Server Error
+    at fetchPage (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:47:25)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async fetchAllQuotes (C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:57:18)
+    at async Promise.all (index 0)
+    at async C:\Users\admin\Desktop\FP\Backend\controllers\crm.quotes.controller.js:272:25

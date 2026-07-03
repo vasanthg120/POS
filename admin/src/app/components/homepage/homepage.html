@@ -1,0 +1,158 @@
+<!-- NAV -->
+<nav [class.scrolled]="isScrolled">
+  <div class="nav-inner">
+
+    <a routerLink="/" class="logo-wrap">
+      <div class="logo-text">
+        <img src="../../../assets/images/fp.png" alt="Fully Promoted Logo">
+      </div>
+    </a>
+
+    <ul class="nav-links">
+      <li><a href="#services"   (click)="scrollTo($event,'services')">Services</a></li>
+      <li><a href="#about"      (click)="scrollTo($event,'about')">About Us</a></li>
+      <li><a href="#process"    (click)="scrollTo($event,'process')">How It Works</a></li>
+      <li><a href="#industries" (click)="scrollTo($event,'industries')">Industries</a></li>
+      <li><a href="#contact"    (click)="scrollTo($event,'contact')">Contact</a></li>
+    </ul>
+
+    <div class="nav-cta">
+      <a routerLink="/auth/login" class="btn-nav btn-nav-fill">
+        Sign in
+        <svg viewBox="0 0 16 16" fill="none" width="14" height="14">
+          <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </a>
+    </div>
+
+    <button class="nav-hamburger" (click)="toggleMenu()" [attr.aria-expanded]="menuOpen" aria-label="Toggle menu">
+      <span [class.open]="menuOpen"></span>
+      <span [class.open]="menuOpen"></span>
+      <span [class.open]="menuOpen"></span>
+    </button>
+  </div>
+
+  <!-- Mobile Drawer -->
+  <div class="mobile-drawer" [class.open]="menuOpen">
+    <a href="#services"   (click)="scrollTo($event,'services')">Services</a>
+    <a href="#about"      (click)="scrollTo($event,'about')">About Us</a>
+    <a href="#process"    (click)="scrollTo($event,'process')">How It Works</a>
+    <a href="#industries" (click)="scrollTo($event,'industries')">Industries</a>
+    <a href="#contact"    (click)="scrollTo($event,'contact')">Contact</a>
+  </div>
+</nav>
+
+<!-- ═══ HERO ═══════════════════════════════════════════════════ -->
+<section class="hero" id="home">
+  <div class="hero-bg"><div class="hero-grid"></div></div>
+  <div class="hero-inner">
+    <div class="hero-left">
+      <div class="hero-badge">
+        <span class="hero-badge-dot"></span>
+        India's #1 Promotional Products Franchise
+      </div>
+      <h1 class="hero-h1">
+        Your Brand,<br/>
+        <em>Everywhere</em><br/>
+        <span>It Matters.</span>
+      </h1>
+      <p class="hero-sub">
+        From <strong>custom apparel</strong> to <strong>corporate gifts</strong>,
+        screen printing to full-scale event branding. Fully Promoted India
+        delivers merchandise that makes your brand unforgettable.
+      </p>
+      <div class="hero-actions">
+        <a href="#services" (click)="scrollTo($event,'services')" class="btn-hero-secondary">Explore Services</a>
+      </div>
+    </div>
+
+    <div class="hero-right">
+      <div class="hero-card-grid">
+        <div class="hero-card" *ngFor="let card of heroCards">
+          <div class="hero-card-icon" [innerHTML]="card.icon"></div>
+          <div class="hero-card-title">{{ card.title }}</div>
+          <div class="hero-card-desc">{{ card.desc }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ SERVICES ════════════════════════════════════════════════ -->
+<section id="services">
+  <div class="section-inner">
+    <div class="services-head">
+      <div>
+        <div class="section-tag">What We Do</div>
+        <h2 class="section-h2">End-to-End Branding<br/>Solutions</h2>
+      </div>
+      <p class="section-sub">Everything you need to build a visible, memorable brand. Designed, produced, and delivered from our studio.</p>
+    </div>
+    <div class="services-grid">
+      <div class="svc-card" *ngFor="let svc of services">
+        <div class="svc-icon" [innerHTML]="svc.icon"></div>
+        <div class="svc-title">{{ svc.title }}</div>
+        <div class="svc-desc">{{ svc.desc }}</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ PROCESS ══════════════════════════════════════════════════ -->
+<section id="process">
+  <div class="section-inner">
+    <div class="process-head">
+      <div class="section-tag">How It Works</div>
+      <h2 class="section-h2">From Brief to Brand in 5 Steps</h2>
+      <p class="section-sub">A streamlined, transparent process so you always know exactly where your order is.</p>
+    </div>
+    <div class="process-steps">
+      <div class="process-step" *ngFor="let step of processSteps">
+        <div class="process-num">{{ step.num }}</div>
+        <div class="process-step-title">{{ step.title }}</div>
+        <div class="process-step-desc">{{ step.desc }}</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ INDUSTRIES ═══════════════════════════════════════════════ -->
+<section id="industries">
+  <div class="section-inner">
+    <div class="industries-head">
+      <div>
+        <div class="section-tag">Industries We Serve</div>
+        <h2 class="section-h2">Every Sector,<br/>Every Scale</h2>
+      </div>
+      <p class="section-sub">From tech startups to hospitality chains, we've helped brands across every industry make a lasting impression.</p>
+    </div>
+    <div class="industries-grid">
+      <div class="ind-card" *ngFor="let ind of industries">
+        <div class="ind-icon" [innerHTML]="ind.icon"></div>
+        <div class="ind-name">{{ ind.name }}</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ CTA BAND ═════════════════════════════════════════════════ -->
+<div class="cta-band">
+  <div class="cta-band-inner">
+    <h2>Ready to <span>Promote</span><br/>Your Brand?</h2>
+  </div>
+</div>
+
+<!-- ═══ FOOTER ═══════════════════════════════════════════════════ -->
+<footer>
+  <div class="footer-inner">
+    <a routerLink="/" class="logo-wrap">
+      <div class="logo-text">
+        <img src="../../../assets/images/fp.png" alt="Fully Promoted Logo">
+      </div>
+    </a>
+    <div class="footer-copy">© 2026 Fully Promoted India. All rights reserved.</div>
+    <div class="footer-badges">
+      <span class="footer-badge">Secure Payments</span>
+    </div>
+  </div>
+</footer>

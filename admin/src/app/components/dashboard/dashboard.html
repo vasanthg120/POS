@@ -1,0 +1,567 @@
+<!-- dashboard.html -->
+<div class="dash-root" [class.is-loading]="loading()">
+
+  <!-- ── Tooltip ──────────────────────────────────────────────────────── -->
+  @if (tooltip()) {
+  <div class="chart-tooltip" [style.left.px]="tooltip()!.x" [style.top.px]="tooltip()!.y">
+    <span class="tooltip-label">{{ tooltip()!.label }}</span>
+    <span class="tooltip-val">{{ tooltip()!.value }}</span>
+  </div>
+  }
+
+  <!-- ── Page Header ──────────────────────────────────────────────────── -->
+  <div class="dash-header">
+    <div class="dash-header-left">
+      <div class="dash-eyebrow">
+        <span class="eyebrow-pulse"></span>
+        Enterprise Analytics
+      </div>
+      <h1 class="dash-title">Command Center</h1>
+      <p class="dash-sub">Real-time business intelligence across payments, quotations &amp; tenants</p>
+    </div>
+    <div class="dash-header-right">
+      <div class="last-updated" *ngIf="!loading()">
+        <svg viewBox="0 0 24 24">
+          <path [attr.d]="iconPath('clock')" />
+        </svg>
+        Updated {{ lastUpdated() | date:'h:mm a' }}
+      </div>
+      <button class="btn-refresh" (click)="fetchAll()" [disabled]="loading()">
+        <svg viewBox="0 0 24 24" [class.spinning]="loading()">
+          <path [attr.d]="iconPath('refresh')" />
+        </svg>
+        Refresh
+      </button>
+    </div>
+  </div>
+
+  <!-- ── Error Banner ─────────────────────────────────────────────────── -->
+  @if (error()) {
+  <div class="error-banner">
+    <svg viewBox="0 0 24 24">
+      <path
+        d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0zM12 9v4M12 17h.01" />
+    </svg>
+    {{ error() }}
+    <button (click)="fetchAll()">Retry</button>
+  </div>
+  }
+
+  <!-- ── Tabs ─────────────────────────────────────────────────────────── -->
+  <div class="tab-bar">
+    <button class="tab-btn" [class.active]="activeTab()==='overview'" (click)="setTab('overview')">
+      <svg viewBox="0 0 24 24">
+        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+      </svg>
+      Overview
+    </button>
+    <button class="tab-btn" [class.active]="activeTab()==='payments'" (click)="setTab('payments')">
+      <svg viewBox="0 0 24 24">
+        <path [attr.d]="iconPath('credit-card')" />
+      </svg>
+      Payments
+    </button>
+    <button class="tab-btn" [class.active]="activeTab()==='quotes'" (click)="setTab('quotes')">
+      <svg viewBox="0 0 24 24">
+        <path [attr.d]="iconPath('doc')" />
+      </svg>
+      Quotations
+    </button>
+    <button class="tab-btn" [class.active]="activeTab()==='tenants'" (click)="setTab('tenants')">
+      <svg viewBox="0 0 24 24">
+        <path [attr.d]="iconPath('users')" />
+      </svg>
+      Tenants
+    </button>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════
+       KPI CARDS
+  ══════════════════════════════════════════════════════════════════ -->
+  <div class="kpi-grid">
+    @for (card of kpiCards(); track card.id) {
+    <div class="kpi-card kpi-{{ card.color }}" [class.skeleton]="card.loading">
+      <div class="kpi-icon-wrap">
+        <svg viewBox="0 0 24 24" class="kpi-icon">
+          <path [attr.d]="iconPath(card.icon)" />
+        </svg>
+      </div>
+      <div class="kpi-body">
+        <p class="kpi-label">{{ card.label }}</p>
+        @if (card.loading) {
+        <div class="kpi-skel-val"></div>
+        } @else {
+        <!-- FIX #1 & #7: was card.value which didn't exist on KpiCard (was displayValue).
+             Interface now uses `value`. Currency cards store raw paise → divide by 100 here. -->
+        <p class="kpi-value">
+          @if (card.id === 'revenue' || card.id === 'month-rev' || card.id === 'avg') {
+          ₹{{ fmtNum(+card.value / 100) }}
+          } @else {
+          {{ card.value | number }}
+          }
+        </p>
+        }
+        <p class="kpi-sub" *ngIf="card.sub && !card.loading">
+          <span class="kpi-trend" [class.up]="(card.trend ?? 0) > 0" [class.down]="(card.trend ?? 0) < 0">
+            {{ card.sub }}
+          </span>
+        </p>
+      </div>
+      @if ((card.trend ?? 0) !== 0 && !card.loading) {
+      <div class="kpi-badge" [class.pos]="(card.trend ?? 0) > 0" [class.neg]="(card.trend ?? 0) < 0">
+        {{ pctLabel(card.trend ?? null) }}
+      </div>
+      }
+    </div>
+    }
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════
+       OVERVIEW TAB
+  ══════════════════════════════════════════════════════════════════ -->
+  @if (activeTab() === 'overview') {
+  <div class="section-grid-2">
+
+    <!-- Daily Revenue Trend -->
+    <div class="chart-card span-2">
+      <div class="chart-card-header">
+        <div>
+          <h3 class="chart-title">Revenue Trend</h3>
+          <p class="chart-sub">Daily collection — last 14 days</p>
+        </div>
+        <div class="legend-row">
+          <span class="legend-dot" style="background: var(--sky)"></span>
+          <span>Revenue (₹)</span>
+        </div>
+      </div>
+      <div class="bar-chart" [class.skeleton-chart]="loading()">
+        @for (bar of dailyTrendBars(); track bar.label) {
+        <div class="bar-col" (mouseenter)="onBarHover($event, bar, '₹')" (mouseleave)="clearTooltip()">
+          <div class="bar-fill sky" [style.height.%]="bar.pct">
+            <div class="bar-glow"></div>
+          </div>
+          <span class="bar-label">{{ bar.label }}</span>
+        </div>
+        }
+        @if (dailyTrendBars().length === 0 && !loading()) {
+        <div class="chart-empty">No trend data yet</div>
+        }
+      </div>
+    </div>
+
+    <!-- Payment Method Distribution -->
+    <div class="chart-card">
+      <div class="chart-card-header">
+        <div>
+          <h3 class="chart-title">Payment Methods</h3>
+          <p class="chart-sub">Breakdown by gateway method</p>
+        </div>
+      </div>
+      <div class="donut-wrap" [class.skeleton-chart]="loading()">
+        <div class="donut-ring">
+          @for (slice of methodSlices(); track slice.label; let i = $index) {
+          <div class="donut-slice-label">
+            <span class="slice-dot" [style.background]="slice.color"></span>
+            <span class="slice-name">{{ slice.label }}</span>
+            <span class="slice-pct">{{ slice.pct }}%</span>
+          </div>
+          }
+          @if (methodSlices().length === 0 && !loading()) {
+          <p class="chart-empty">No method data</p>
+          }
+        </div>
+        <div class="method-bars">
+          @for (slice of methodSlices(); track slice.label) {
+          <div class="method-bar-row"
+            (mouseenter)="onBarHover($event, {label: slice.label, value: slice.value, pct: slice.pct}, '₹')"
+            (mouseleave)="clearTooltip()">
+            <span class="method-bar-label">{{ slice.label }}</span>
+            <div class="method-bar-track">
+              <div class="method-bar-fill" [style.width.%]="slice.pct" [style.background]="slice.color"></div>
+            </div>
+            <span class="method-bar-pct">{{ slice.pct }}%</span>
+          </div>
+          }
+        </div>
+      </div>
+    </div>
+
+    <!-- Quotation Status Distribution -->
+    <div class="chart-card">
+      <div class="chart-card-header">
+        <div>
+          <h3 class="chart-title">Quote Pipeline</h3>
+          <p class="chart-sub">Status distribution across all quotes</p>
+        </div>
+      </div>
+      <div class="status-grid" [class.skeleton-chart]="loading()">
+        @for (slice of quoteStatusSlices(); track slice.label) {
+        <div class="status-pill" [style.border-color]="slice.color + '44'">
+          <div class="status-pill-bar" [style.width.%]="slice.pct" [style.background]="slice.color + '22'"></div>
+          <span class="status-pill-dot" [style.background]="slice.color"></span>
+          <span class="status-pill-label">{{ slice.label }}</span>
+          <span class="status-pill-count">{{ slice.value }}</span>
+          <span class="status-pill-pct">{{ slice.pct }}%</span>
+        </div>
+        }
+        @if (quoteStatusSlices().length === 0 && !loading()) {
+        <p class="chart-empty">No quote data available</p>
+        }
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ── Bottom Row: Activity + Top Tenants ── -->
+  <div class="section-grid-2 mt-section">
+
+    <!-- Recent Activity Feed -->
+    <div class="chart-card activity-card">
+      <div class="chart-card-header">
+        <div>
+          <h3 class="chart-title">Live Activity</h3>
+          <p class="chart-sub">Latest transactions &amp; events</p>
+        </div>
+        <span class="live-badge">
+          <span class="live-dot"></span> Live
+        </span>
+      </div>
+      <div class="activity-feed" [class.skeleton-chart]="loading()">
+        @for (item of recentActivity(); track item.id) {
+        <div class="activity-item act-{{ item.type }}">
+          <div class="act-icon-wrap act-{{ item.type }}">
+            <svg viewBox="0 0 24 24">
+              @if (item.type === 'payment') {
+              <path [attr.d]="iconPath('credit-card')" />
+              } @else if (item.type === 'quote') {
+              <path [attr.d]="iconPath('doc')" />
+              } @else if (item.type === 'tenant') {
+              <path [attr.d]="iconPath('users')" />
+              } @else {
+              <path [attr.d]="iconPath('zap')" />
+              }
+            </svg>
+          </div>
+          <div class="act-body">
+            <p class="act-title">{{ item.title }}</p>
+            <p class="act-sub">{{ item.sub }}</p>
+          </div>
+          <div class="act-right">
+            <span class="act-badge {{ item.badgeClass }}">{{ item.badge }}</span>
+            <span class="act-time">{{ item.time }}</span>
+          </div>
+        </div>
+        }
+        @if (recentActivity().length === 0 && !loading()) {
+        <div class="empty-feed">
+          <svg viewBox="0 0 24 24">
+            <path [attr.d]="iconPath('clock')" />
+          </svg>
+          <p>No recent activity</p>
+        </div>
+        }
+      </div>
+    </div>
+
+    <!-- Top Tenants -->
+    <div class="chart-card">
+      <div class="chart-card-header">
+        <div>
+          <h3 class="chart-title">Top Performers</h3>
+          <p class="chart-sub">Tenants by revenue &amp; payment volume</p>
+        </div>
+      </div>
+      <div class="top-tenant-list" [class.skeleton-chart]="loading()">
+        <!-- FIX #2 & #10: TopTenant interface now has revenue and payments fields,
+             populated from the payment list in ingestTenants() -->
+        @for (t of topTenants(); track t.email; let i = $index) {
+        <div class="top-tenant-row">
+          <div class="top-rank">{{ i + 1 }}</div>
+          <div class="top-avatar">{{ (t.name || 'T')[0].toUpperCase() }}</div>
+          <div class="top-info">
+            <p class="top-name">{{ t.name }}</p>
+            <p class="top-email">{{ t.email }}</p>
+          </div>
+          <div class="top-stats">
+            <p class="top-rev">₹{{ fmtNum(t.revenue) }}</p>
+            <p class="top-pays">{{ t.payments }} payments</p>
+          </div>
+        </div>
+        }
+        @if (topTenants().length === 0 && !loading()) {
+        <div class="empty-feed">
+          <svg viewBox="0 0 24 24">
+            <path [attr.d]="iconPath('users')" />
+          </svg>
+          <p>No tenant data yet</p>
+        </div>
+        }
+      </div>
+    </div>
+  </div>
+  }
+
+  <!-- ══════════════════════════════════════════════════════════════
+       PAYMENTS TAB
+  ══════════════════════════════════════════════════════════════════ -->
+  @if (activeTab() === 'payments') {
+  <div class="section-grid-3 mt-section">
+
+    <!-- Payment status summary cards -->
+    <div class="stat-card stat-success">
+      <p class="stat-label">Successful</p>
+      <p class="stat-num">{{ successPayments() | number }}</p>
+      <p class="stat-sub">Captured &amp; verified</p>
+    </div>
+    <div class="stat-card stat-warning">
+      <p class="stat-label">Pending</p>
+      <p class="stat-num">{{ pendingPayments() | number }}</p>
+      <p class="stat-sub">Awaiting capture</p>
+    </div>
+    <div class="stat-card stat-error">
+      <p class="stat-label">Failed</p>
+      <p class="stat-num">{{ failedPayments() | number }}</p>
+      <p class="stat-sub">Declined / timed out</p>
+    </div>
+
+    <!-- Weekly revenue bars -->
+    <div class="chart-card span-3">
+      <div class="chart-card-header">
+        <div>
+          <h3 class="chart-title">Weekly Revenue</h3>
+          <p class="chart-sub">Payment collection by calendar week</p>
+        </div>
+      </div>
+      <div class="bar-chart" [class.skeleton-chart]="loading()">
+        @for (bar of weeklyRevBars(); track bar.label) {
+        <div class="bar-col" (mouseenter)="onBarHover($event, bar, '₹')" (mouseleave)="clearTooltip()">
+          <div class="bar-fill indigo" [style.height.%]="bar.pct"></div>
+          <span class="bar-label">{{ bar.label }}</span>
+        </div>
+        }
+        @if (weeklyRevBars().length === 0 && !loading()) {
+        <div class="chart-empty">No weekly data</div>
+        }
+      </div>
+    </div>
+
+    <!-- Conversion metrics -->
+    <div class="chart-card span-2">
+      <div class="chart-card-header">
+        <h3 class="chart-title">Payment Funnel</h3>
+      </div>
+      <div class="funnel">
+        <div class="funnel-step">
+          <div class="funnel-bar-wrap">
+            <div class="funnel-bar" style="width:100%; background: var(--sky-light); border: 1px solid var(--sky-mid)">
+              <span>{{ totalPayments() | number }} Initiated</span>
+            </div>
+          </div>
+        </div>
+        <div class="funnel-step">
+          <div class="funnel-bar-wrap">
+            <div class="funnel-bar" [style.width.%]="totalPayments() ? (successPayments() / totalPayments()) * 100 : 0"
+              style="background: var(--success-bg); border: 1px solid var(--success-border)">
+              <span>{{ successPayments() | number }} Captured</span>
+            </div>
+          </div>
+        </div>
+        <div class="funnel-step">
+          <div class="funnel-bar-wrap">
+            <div class="funnel-bar" [style.width.%]="conversionRate()"
+              style="background: var(--indigo-light); border: 1px solid #c7d2fe">
+              <span>{{ conversionRate() }}% Conversion</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Refund summary -->
+    <div class="chart-card">
+      <div class="chart-card-header">
+        <h3 class="chart-title">Refund Overview</h3>
+      </div>
+      <div class="refund-block">
+        <!-- FIX #3 & #8: totalRevenueRs is now mapped to totalRevPaise in component.
+             totalRefundsRs() is a computed that returns paise/100.
+             Both sides of the percentage calculation are now consistent. -->
+        <p class="refund-amt">₹{{ fmtNum(totalRefundsRs()) }}</p>
+        <p class="refund-label">Total Refunded</p>
+        <div class="refund-meter">
+          <!-- FIX #5: Math.min now works because component exposes `Math = Math` -->
+          <div class="refund-fill"
+            [style.width.%]="totalRevenueRs() ? Math.min(100, (totalRefundsRs() / totalRevRs()) * 100) : 0">
+          </div>
+        </div>
+        <p class="refund-pct">
+          {{ totalRevRs() ? ((totalRefundsRs() / totalRevRs()) * 100).toFixed(1) : 0 }}% of total revenue
+        </p>
+      </div>
+    </div>
+
+  </div>
+  }
+
+  <!-- ══════════════════════════════════════════════════════════════
+       QUOTES TAB
+  ══════════════════════════════════════════════════════════════════ -->
+  @if (activeTab() === 'quotes') {
+  <div class="section-grid-2 mt-section">
+
+    <div class="chart-card span-2">
+      <div class="chart-card-header">
+        <div>
+          <h3 class="chart-title">Quotation Pipeline</h3>
+          <p class="chart-sub">{{ totalQuotes() | number }} total quotes tracked</p>
+        </div>
+        <div class="conv-badge">
+          {{ conversionRate() }}% Conversion
+        </div>
+      </div>
+
+      <div class="pipeline-grid">
+        @for (slice of quoteStatusSlices(); track slice.label) {
+        <div class="pipeline-col">
+          <div class="pipeline-bar-wrap">
+            <div class="pipeline-bar-fill" [style.height.%]="slice.pct" [style.background]="slice.color"></div>
+          </div>
+          <span class="pipeline-label">{{ slice.label }}</span>
+          <span class="pipeline-count">{{ slice.value }}</span>
+          <span class="pipeline-pct" [style.color]="slice.color">{{ slice.pct }}%</span>
+        </div>
+        }
+        @if (quoteStatusSlices().length === 0 && !loading()) {
+        <div class="chart-empty span-all">No quotation data</div>
+        }
+      </div>
+    </div>
+
+    <div class="chart-card">
+      <div class="chart-card-header">
+        <h3 class="chart-title">Status Breakdown</h3>
+      </div>
+      <div class="status-grid">
+        @for (slice of quoteStatusSlices(); track slice.label) {
+        <div class="status-pill" [style.border-color]="slice.color + '55'">
+          <div class="status-pill-bar" [style.width.%]="slice.pct" [style.background]="slice.color + '18'"></div>
+          <span class="status-pill-dot" [style.background]="slice.color"></span>
+          <span class="status-pill-label">{{ slice.label }}</span>
+          <span class="status-pill-count">{{ slice.value }}</span>
+          <span class="status-pill-pct">{{ slice.pct }}%</span>
+        </div>
+        }
+      </div>
+    </div>
+
+    <div class="chart-card">
+      <div class="chart-card-header">
+        <h3 class="chart-title">Quote Metrics</h3>
+      </div>
+      <div class="metric-rows">
+        <div class="metric-row">
+          <span class="metric-key">Total Quotes</span>
+          <span class="metric-val">{{ totalQuotes() | number }}</span>
+        </div>
+        <div class="metric-row">
+          <span class="metric-key">Conversion Rate</span>
+          <span class="metric-val sky">{{ conversionRate() }}%</span>
+        </div>
+        <!-- FIX #4: was avgTicket() / 100 which would be paise/100 already (rupees).
+             avgTicket is now mapped to avgTicketPaise so /100 is correct. -->
+        <div class="metric-row">
+          <span class="metric-key">Avg. Ticket Size</span>
+          <span class="metric-val">₹{{ fmtNum(avgTicket() / 100) }}</span>
+        </div>
+        <div class="metric-row">
+          <span class="metric-key">Active Tenants</span>
+          <span class="metric-val">{{ activeTenants() }}</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  }
+
+  <!-- ══════════════════════════════════════════════════════════════
+       TENANTS TAB
+  ══════════════════════════════════════════════════════════════════ -->
+  @if (activeTab() === 'tenants') {
+  <div class="section-grid-2 mt-section">
+
+    <!-- Tenant Growth Bars -->
+    <div class="chart-card span-2">
+      <div class="chart-card-header">
+        <div>
+          <h3 class="chart-title">Tenant Growth</h3>
+          <p class="chart-sub">Monthly onboarding trend</p>
+        </div>
+        <div class="legend-row">
+          <span class="legend-dot" style="background:#4f46e5"></span>
+          <span>New Tenants</span>
+        </div>
+      </div>
+      <div class="bar-chart" [class.skeleton-chart]="loading()">
+        @for (bar of tenantGrowthBars(); track bar.label) {
+        <div class="bar-col" (mouseenter)="onBarHover($event, bar)" (mouseleave)="clearTooltip()">
+          <div class="bar-fill indigo" [style.height.%]="bar.pct"></div>
+          <span class="bar-label">{{ bar.label }}</span>
+        </div>
+        }
+        @if (tenantGrowthBars().length === 0 && !loading()) {
+        <div class="chart-empty">No tenant growth data</div>
+        }
+      </div>
+    </div>
+
+    <!-- Tenant Summary Cards -->
+    <div class="stat-card stat-sky">
+      <p class="stat-label">Total Tenants</p>
+      <p class="stat-num">{{ totalTenants() | number }}</p>
+      <p class="stat-sub">All registered</p>
+    </div>
+    <div class="stat-card stat-success">
+      <p class="stat-label">Active</p>
+      <p class="stat-num">{{ activeTenants() | number }}</p>
+      <p class="stat-sub">Currently enabled</p>
+    </div>
+
+    <!-- Top Tenants Table -->
+    <div class="chart-card span-2">
+      <div class="chart-card-header">
+        <h3 class="chart-title">Tenant Leaderboard</h3>
+      </div>
+      <div class="top-tenant-list">
+        @for (t of topTenants(); track t.email; let i = $index) {
+        <div class="top-tenant-row">
+          <div class="top-rank">{{ i + 1 }}</div>
+          <div class="top-avatar">{{ (t.name || 'T')[0].toUpperCase() }}</div>
+          <div class="top-info">
+            <p class="top-name">{{ t.name }}</p>
+            <p class="top-email">{{ t.email }}</p>
+          </div>
+          <div class="top-stats">
+            <p class="top-rev">₹{{ fmtNum(t.revenue) }}</p>
+            <p class="top-pays">{{ t.payments }} payments</p>
+          </div>
+          <div class="top-bar-wrap">
+            <div class="top-bar-fill" [style.width.%]="i === 0 ? 100 : 100 - i * 18"></div>
+          </div>
+        </div>
+        }
+        @if (topTenants().length === 0 && !loading()) {
+        <div class="empty-feed">
+          <svg viewBox="0 0 24 24">
+            <path [attr.d]="iconPath('users')" />
+          </svg>
+          <p>No tenant data available</p>
+        </div>
+        }
+      </div>
+    </div>
+
+  </div>
+  }
+
+</div>
+

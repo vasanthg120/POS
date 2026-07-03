@@ -1,0 +1,1052 @@
+<!-- ═══════════════════════════════════════════════════════════
+     settings.html  —  POS Platform v2  (Complete)
+     ═══════════════════════════════════════════════════════════ -->
+<div class="settings-root">
+
+  <!-- ── Page Hero ──────────────────────────────────────────── -->
+  <div class="settings-hero">
+    <div class="hero-content">
+      <div class="hero-eyebrow">
+        <span class="eyebrow-dot"></span>
+        Configuration
+      </div>
+      <h1 class="hero-title">Settings</h1>
+      <p class="hero-sub">Manage your business, payments, and integrations</p>
+    </div>
+    <div class="hero-decoration">
+      <div class="deco-ring ring-1"></div>
+      <div class="deco-ring ring-2"></div>
+      <div class="deco-ring ring-3"></div>
+      <svg class="deco-icon" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="3" />
+        <path
+          d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+      </svg>
+    </div>
+  </div>
+
+  <!-- ── Global Feedback ────────────────────────────────────── -->
+  <div class="feedback-bar feedback-success" *ngIf="success()">
+    <div class="feedback-icon">
+      <svg viewBox="0 0 24 24">
+        <polyline points="20 6 9 17 4 12" />
+      </svg>
+    </div>
+    <span>{{ success() }}</span>
+    <button class="feedback-close" (click)="success.set('')">
+      <svg viewBox="0 0 24 24">
+        <line x1="18" y1="6" x2="6" y2="18" />
+        <line x1="6" y1="6" x2="18" y2="18" />
+      </svg>
+    </button>
+  </div>
+  <div class="feedback-bar feedback-error" *ngIf="error()">
+    <div class="feedback-icon">
+      <svg viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="10" />
+        <line x1="12" y1="8" x2="12" y2="12" />
+        <line x1="12" y1="16" x2="12.01" y2="16" />
+      </svg>
+    </div>
+    <span>{{ error() }}</span>
+    <button class="feedback-close" (click)="error.set('')">
+      <svg viewBox="0 0 24 24">
+        <line x1="18" y1="6" x2="6" y2="18" />
+        <line x1="6" y1="6" x2="18" y2="18" />
+      </svg>
+    </button>
+  </div>
+
+  <!-- ── Two-Column Layout ──────────────────────────────────── -->
+  <div class="settings-layout">
+
+    <!-- LEFT: Navigation Panel -->
+    <aside class="settings-nav-panel">
+
+      <div class="nav-panel-label">CONFIGURATION</div>
+
+      <nav class="settings-nav">
+
+        <!-- Business -->
+        <button class="snav-item" [class.active]="activeTab() === 'business'" (click)="setTab('business')">
+          <div class="snav-icon-wrap" [class.active]="activeTab() === 'business'">
+            <svg viewBox="0 0 24 24">
+              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+              <polyline points="9 22 9 12 15 12 15 22" />
+            </svg>
+          </div>
+          <div class="snav-text">
+            <span class="snav-label">Business Info</span>
+            <span class="snav-desc">Name, address &amp; currency</span>
+          </div>
+          <div class="snav-arrow">
+            <svg viewBox="0 0 24 24">
+              <polyline points="9 18 15 12 9 6" />
+            </svg>
+          </div>
+        </button>
+
+        <!-- Razorpay -->
+        <button class="snav-item" [class.active]="activeTab() === 'razorpay'" (click)="setTab('razorpay')">
+          <div class="snav-icon-wrap" [class.active]="activeTab() === 'razorpay'"
+            [class.connected]="auth.currentTenant()?.razorpay?.isConfigured">
+            <svg viewBox="0 0 24 24">
+              <rect x="2" y="5" width="20" height="14" rx="2" />
+              <path d="M2 10h20" />
+              <circle cx="7" cy="15" r="1" fill="currentColor" />
+            </svg>
+          </div>
+          <div class="snav-text">
+            <span class="snav-label">Razorpay</span>
+            <span class="snav-desc">Payment gateway keys</span>
+          </div>
+          <div class="snav-status-pill" [class.connected]="auth.currentTenant()?.razorpay?.isConfigured"
+            [class.pending]="!auth.currentTenant()?.razorpay?.isConfigured">
+            <span class="pill-dot"></span>
+            {{ auth.currentTenant()?.razorpay?.isConfigured ? 'Live' : 'Setup' }}
+          </div>
+        </button>
+
+        <!-- CRM -->
+        <button class="snav-item" [class.active]="activeTab() === 'crm'" (click)="setTab('crm')">
+          <div class="snav-icon-wrap" [class.active]="activeTab() === 'crm'"
+            [class.connected]="auth.currentTenant()?.crm?.isConfigured">
+            <svg viewBox="0 0 24 24">
+              <circle cx="18" cy="5" r="3" />
+              <circle cx="6" cy="12" r="3" />
+              <circle cx="18" cy="19" r="3" />
+              <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+              <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+            </svg>
+          </div>
+          <div class="snav-text">
+            <span class="snav-label">CRM</span>
+            <span class="snav-desc">Sync quotes &amp; payments</span>
+          </div>
+          <div class="snav-status-pill" [class.connected]="auth.currentTenant()?.crm?.isConfigured"
+            [class.pending]="!auth.currentTenant()?.crm?.isConfigured">
+            <span class="pill-dot"></span>
+            {{ auth.currentTenant()?.crm?.isConfigured ? 'Syncing' : 'Setup' }}
+          </div>
+        </button>
+
+        <!-- Payment Page -->
+        <button class="snav-item" [class.active]="activeTab() === 'payment'"
+          [class.snav-locked]="!isTabAccessible('payment')" (click)="isTabAccessible('payment') && setTab('payment')">
+          <div class="snav-icon-wrap" [class.active]="activeTab() === 'payment'"
+            [class.connected]="auth.currentTenant()?.paymentPageUrl">
+            <svg viewBox="0 0 24 24">
+              <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+              <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+            </svg>
+          </div>
+          <div class="snav-text">
+            <span class="snav-label">Payment Page</span>
+            <span class="snav-desc">Your public payment link</span>
+          </div>
+          <div class="snav-status-pill connected" *ngIf="auth.currentTenant()?.paymentPageUrl">
+            <span class="pill-dot"></span>
+            Live
+          </div>
+          <div class="snav-status-pill pending"
+            *ngIf="!auth.currentTenant()?.paymentPageUrl && isTabAccessible('payment')">
+            <span class="pill-dot"></span>
+            Pending
+          </div>
+          <div class="snav-arrow" *ngIf="!isTabAccessible('payment')">
+            <svg viewBox="0 0 24 24">
+              <rect x="3" y="11" width="18" height="11" rx="2" />
+              <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+            </svg>
+          </div>
+        </button>
+
+        <!-- Security -->
+        <button class="snav-item" [class.active]="activeTab() === 'password'" (click)="setTab('password')">
+          <div class="snav-icon-wrap" [class.active]="activeTab() === 'password'">
+            <svg viewBox="0 0 24 24">
+              <rect x="3" y="11" width="18" height="11" rx="2" />
+              <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+            </svg>
+          </div>
+          <div class="snav-text">
+            <span class="snav-label">Security</span>
+            <span class="snav-desc">Password &amp; sessions</span>
+          </div>
+          <div class="snav-arrow">
+            <svg viewBox="0 0 24 24">
+              <polyline points="9 18 15 12 9 6" />
+            </svg>
+          </div>
+        </button>
+
+      </nav>
+
+      <!-- Tenant info card -->
+      <div class="tenant-card">
+        <div class="tenant-avatar">{{ (auth.currentTenant()?.businessName || 'B')[0].toUpperCase() }}</div>
+        <div class="tenant-info">
+          <strong>{{ auth.currentTenant()?.businessName || 'Your Business' }}</strong>
+          <span>{{ auth.currentTenant()?.city || 'Location not set' }}</span>
+        </div>
+      </div>
+
+    </aside>
+
+    <!-- RIGHT: Content Panel -->
+    <div class="settings-content">
+
+      <!-- ═══ BUSINESS INFO ═══════════════════════════════════ -->
+      <div class="content-panel" *ngIf="activeTab() === 'business'">
+
+        <div class="panel-hero business-hero">
+          <div class="ph-icon">
+            <svg viewBox="0 0 24 24">
+              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+              <polyline points="9 22 9 12 15 12 15 22" />
+            </svg>
+          </div>
+          <div class="ph-text">
+            <h2>Business Information</h2>
+            <p>Shown on all quotes, invoices, and customer-facing documents.</p>
+          </div>
+        </div>
+
+        <form [formGroup]="businessForm" (ngSubmit)="saveBusinessInfo()" class="panel-form">
+
+          <!-- Section: Identity -->
+          <div class="form-section">
+            <div class="form-section-header">
+              <span class="section-number">01</span>
+              <div>
+                <h3>Identity</h3>
+                <p>Core details that identify your business</p>
+              </div>
+            </div>
+            <div class="fields-grid">
+              <div class="field-group">
+                <label class="field-label">
+                  <svg viewBox="0 0 24 24">
+                    <rect x="2" y="7" width="20" height="14" rx="2" />
+                    <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2" />
+                  </svg>
+                  Business Name
+                </label>
+                <div class="field-input-wrap">
+                  <input type="text" formControlName="businessName" placeholder="Acme Pvt Ltd" class="field-input" />
+                </div>
+              </div>
+              <div class="field-group">
+                <label class="field-label">
+                  <svg viewBox="0 0 24 24">
+                    <path
+                      d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.37 2 2 0 0 1 3.57 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.73a16 16 0 0 0 5.61 5.61l.99-.9a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z" />
+                  </svg>
+                  Phone
+                </label>
+                <div class="field-input-wrap">
+                  <input type="tel" formControlName="phone" placeholder="+91 98765 43210" class="field-input" />
+                </div>
+              </div>
+              <div class="field-group field-group--full">
+                <label class="field-label">
+                  <svg viewBox="0 0 24 24">
+                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                    <circle cx="12" cy="10" r="3" />
+                  </svg>
+                  Business Address
+                </label>
+                <div class="field-input-wrap">
+                  <textarea formControlName="businessAddress" rows="2" placeholder="123 Anna Salai, Chennai 600002"
+                    class="field-input field-textarea"></textarea>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-divider"></div>
+
+          <!-- Section: Regional -->
+          <div class="form-section">
+            <div class="form-section-header">
+              <span class="section-number">02</span>
+              <div>
+                <h3>Regional</h3>
+                <p>Localisation and routing preferences</p>
+              </div>
+            </div>
+            <div class="fields-grid">
+              <div class="field-group">
+                <label class="field-label">
+                  <svg viewBox="0 0 24 24">
+                    <polygon points="3 11 22 2 13 21 11 13 3 11" />
+                  </svg>
+                  City
+                  <span class="label-hint">Routes: yourapp.com/chennai</span>
+                </label>
+                <div class="field-input-wrap">
+                  <input type="text" formControlName="city" placeholder="Chennai" class="field-input" />
+                </div>
+              </div>
+              <div class="field-group">
+                <label class="field-label">
+                  <svg viewBox="0 0 24 24">
+                    <line x1="12" y1="1" x2="12" y2="23" />
+                    <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+                  </svg>
+                  Currency
+                </label>
+                <div class="field-input-wrap field-select-wrap">
+                  <select formControlName="currency" class="field-input field-select">
+                    <option value="INR">INR — Indian Rupee</option>
+                    <option value="USD">USD — US Dollar</option>
+                    <option value="EUR">EUR — Euro</option>
+                    <option value="GBP">GBP — British Pound</option>
+                  </select>
+                  <svg class="select-chevron" viewBox="0 0 24 24">
+                    <polyline points="6 9 12 15 18 9" />
+                  </svg>
+                </div>
+              </div>
+              <div class="field-group">
+                <label class="field-label">
+                  <svg viewBox="0 0 24 24">
+                    <rect x="1" y="4" width="22" height="16" rx="2" ry="2" />
+                    <line x1="1" y1="10" x2="23" y2="10" />
+                  </svg>
+                  GST Number
+                </label>
+                <div class="field-input-wrap">
+                  <input type="text" formControlName="gstNumber" placeholder="22AAAAA0000A1Z5" class="field-input" />
+                </div>
+              </div>
+              <div class="field-group">
+                <label class="field-label">
+                  <svg viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="10" />
+                    <polyline points="12 6 12 12 16 14" />
+                  </svg>
+                  Timezone
+                </label>
+                <div class="field-input-wrap field-select-wrap">
+                  <select formControlName="timezone" class="field-input field-select">
+                    <option value="Asia/Kolkata">Asia/Kolkata (IST)</option>
+                    <option value="UTC">UTC</option>
+                    <option value="America/New_York">America/New_York (EST)</option>
+                  </select>
+                  <svg class="select-chevron" viewBox="0 0 24 24">
+                    <polyline points="6 9 12 15 18 9" />
+                  </svg>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel-actions">
+            <div class="action-hint">
+              <svg viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="10" />
+                <line x1="12" y1="16" x2="12" y2="12" />
+                <line x1="12" y1="8" x2="12.01" y2="8" />
+              </svg>
+              Changes apply immediately to all customer-facing documents
+            </div>
+            <button type="submit" class="btn-save" [disabled]="loading()">
+              <span class="btn-spinner" *ngIf="loading()"></span>
+              <svg *ngIf="!loading()" viewBox="0 0 24 24">
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+              {{ loading() ? 'Saving changes…' : 'Save changes' }}
+            </button>
+          </div>
+
+        </form>
+      </div>
+
+      <!-- ═══ RAZORPAY ════════════════════════════════════════ -->
+      <div class="content-panel" *ngIf="activeTab() === 'razorpay'">
+
+        <div class="panel-hero razorpay-hero">
+          <div class="ph-icon razorpay-icon">
+            <svg viewBox="0 0 24 24">
+              <rect x="2" y="5" width="20" height="14" rx="2" />
+              <path d="M2 10h20" />
+              <circle cx="7" cy="15" r="1" fill="currentColor" />
+            </svg>
+          </div>
+          <div class="ph-text">
+            <h2>Razorpay Integration</h2>
+            <p>Collect payments from customers via UPI, cards, and net banking.</p>
+          </div>
+          <div class="encryption-badge">
+            <svg viewBox="0 0 24 24">
+              <rect x="3" y="11" width="18" height="11" rx="2" />
+              <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+            </svg>
+            AES-256 Encrypted
+          </div>
+        </div>
+
+        <div class="panel-form">
+
+          <!-- Connected State -->
+          <div class="integration-connected-card" *ngIf="auth.currentTenant()?.razorpay?.isConfigured">
+            <div class="icc-glow"></div>
+            <div class="icc-header">
+              <div class="icc-status-ring">
+                <div class="ring-pulse"></div>
+                <svg viewBox="0 0 24 24">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+              </div>
+              <div class="icc-info">
+                <strong>Razorpay is active</strong>
+                <span>Payments are being collected successfully</span>
+              </div>
+            </div>
+            <div class="icc-meta">
+              <div class="icc-meta-item">
+                <span class="meta-label">Mode</span>
+                <span class="meta-value live">● Live</span>
+              </div>
+              <div class="icc-meta-item">
+                <span class="meta-label">Status</span>
+                <span class="meta-value">Verified</span>
+              </div>
+              <div class="icc-meta-item">
+                <span class="meta-label">Encryption</span>
+                <span class="meta-value">AES-256</span>
+              </div>
+            </div>
+            <div class="icc-actions">
+              <button class="btn-danger-sm" (click)="removeRazorpay()" type="button">
+                <svg viewBox="0 0 24 24">
+                  <polyline points="3 6 5 6 21 6" />
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+                </svg>
+                Remove Integration
+              </button>
+            </div>
+          </div>
+
+          <!-- Setup State -->
+          <ng-container *ngIf="!auth.currentTenant()?.razorpay?.isConfigured">
+
+            <div class="setup-guide-card">
+              <div class="sgc-step">
+                <span class="sgc-num">1</span>
+                <span>Go to <a href="https://dashboard.razorpay.com/app/keys" target="_blank">Razorpay
+                    Dashboard</a></span>
+              </div>
+              <div class="sgc-step">
+                <span class="sgc-num">2</span>
+                <span>Navigate to <strong>Settings → API Keys</strong></span>
+              </div>
+              <div class="sgc-step">
+                <span class="sgc-num">3</span>
+                <span>Click <strong>Generate Key</strong> and copy both values below</span>
+              </div>
+            </div>
+
+            <form [formGroup]="razorpayForm" (ngSubmit)="saveRazorpay()">
+              <div class="form-section">
+                <div class="fields-grid">
+                  <div class="field-group field-group--full">
+                    <label class="field-label">
+                      <svg viewBox="0 0 24 24">
+                        <path
+                          d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4" />
+                      </svg>
+                      Key ID <span class="required-star">*</span>
+                    </label>
+                    <div class="field-input-wrap"
+                      [class.has-error]="razorpayForm.get('keyId')?.invalid && razorpayForm.get('keyId')?.touched">
+                      <input type="text" formControlName="keyId" placeholder="rzp_live_xxxxxxxxxx"
+                        class="field-input mono-input" />
+                    </div>
+                    <span class="field-error-msg"
+                      *ngIf="razorpayForm.get('keyId')?.invalid && razorpayForm.get('keyId')?.touched">
+                      Key ID is required
+                    </span>
+                  </div>
+
+                  <div class="field-group field-group--full">
+                    <label class="field-label">
+                      <svg viewBox="0 0 24 24">
+                        <rect x="3" y="11" width="18" height="11" rx="2" />
+                        <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                      </svg>
+                      Key Secret <span class="required-star">*</span>
+                    </label>
+                    <div class="field-input-wrap secret-wrap"
+                      [class.has-error]="razorpayForm.get('keySecret')?.invalid && razorpayForm.get('keySecret')?.touched">
+                      <input [type]="showRazorpaySecret() ? 'text' : 'password'" formControlName="keySecret"
+                        placeholder="Your Razorpay secret key" class="field-input mono-input" />
+                      <button type="button" class="secret-toggle"
+                        (click)="showRazorpaySecret.set(!showRazorpaySecret())">
+                        <svg *ngIf="!showRazorpaySecret()" viewBox="0 0 24 24">
+                          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                          <circle cx="12" cy="12" r="3" />
+                        </svg>
+                        <svg *ngIf="showRazorpaySecret()" viewBox="0 0 24 24">
+                          <path
+                            d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+                          <line x1="1" y1="1" x2="23" y2="23" />
+                        </svg>
+                        {{ showRazorpaySecret() ? 'Hide' : 'Show' }}
+                      </button>
+                    </div>
+                    <span class="field-error-msg"
+                      *ngIf="razorpayForm.get('keySecret')?.invalid && razorpayForm.get('keySecret')?.touched">
+                      Key Secret is required
+                    </span>
+                  </div>
+
+                  <div class="field-group field-group--full">
+                    <label class="field-label">
+                      <svg viewBox="0 0 24 24">
+                        <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+                        <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+                      </svg>
+                      Webhook Secret
+                      <span class="label-optional">optional</span>
+                    </label>
+                    <div class="field-input-wrap">
+                      <input type="password" formControlName="webhookSecret"
+                        placeholder="For verifying webhook signatures" class="field-input mono-input" />
+                    </div>
+                    <span class="field-hint-text">Dashboard → Webhooks → Secret</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="panel-actions">
+                <div class="action-hint">
+                  <svg viewBox="0 0 24 24">
+                    <rect x="3" y="11" width="18" height="11" rx="2" />
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                  </svg>
+                  Keys are verified against Razorpay API before saving
+                </div>
+                <button type="submit" class="btn-save" [disabled]="loading()">
+                  <span class="btn-spinner" *ngIf="loading()"></span>
+                  <svg *ngIf="!loading()" viewBox="0 0 24 24">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                    <polyline points="22 4 12 14.01 9 11.01" />
+                  </svg>
+                  {{ loading() ? 'Verifying & saving…' : 'Connect Razorpay' }}
+                </button>
+              </div>
+            </form>
+          </ng-container>
+        </div>
+      </div>
+
+      <!-- ═══ CRM ══════════════════════════════════════════════ -->
+      <div class="content-panel" *ngIf="activeTab() === 'crm'">
+
+        <div class="panel-hero crm-hero">
+          <div class="ph-icon crm-icon">
+            <svg viewBox="0 0 24 24">
+              <circle cx="18" cy="5" r="3" />
+              <circle cx="6" cy="12" r="3" />
+              <circle cx="18" cy="19" r="3" />
+              <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+              <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+            </svg>
+          </div>
+          <div class="ph-text">
+            <h2>CRM Integration</h2>
+            <p>Auto-sync quotes, payments, and customer data with your CRM.</p>
+          </div>
+          <div class="encryption-badge">
+            <svg viewBox="0 0 24 24">
+              <rect x="3" y="11" width="18" height="11" rx="2" />
+              <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+            </svg>
+            AES-256 Encrypted
+          </div>
+        </div>
+
+        <div class="panel-form">
+
+          <!-- Connected State -->
+          <div class="integration-connected-card crm-connected" *ngIf="auth.currentTenant()?.crm?.isConfigured">
+            <div class="icc-glow crm-glow"></div>
+            <div class="icc-header">
+              <div class="icc-status-ring crm-ring">
+                <div class="ring-pulse crm-pulse"></div>
+                <svg viewBox="0 0 24 24">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+              </div>
+              <div class="icc-info">
+                <strong>CRM connected</strong>
+                <span>Quotes and payments syncing automatically</span>
+              </div>
+            </div>
+            <div class="icc-meta">
+              <div class="icc-meta-item">
+                <span class="meta-label">Provider</span>
+                <span class="meta-value">CRM</span>
+              </div>
+              <div class="icc-meta-item">
+                <span class="meta-label">Sync</span>
+                <span class="meta-value live">● Active</span>
+              </div>
+              <div class="icc-meta-item">
+                <span class="meta-label">Encryption</span>
+                <span class="meta-value">AES-256</span>
+              </div>
+            </div>
+            <div class="icc-actions">
+              <button class="btn-test-sm" (click)="testCRM()" [disabled]="testingCRM()" type="button">
+                <svg viewBox="0 0 24 24">
+                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                  <polyline points="22 4 12 14.01 9 11.01" />
+                </svg>
+                {{ testingCRM() ? 'Testing…' : 'Test connection' }}
+              </button>
+              <button class="btn-danger-sm" (click)="removeCRM()" type="button">
+                <svg viewBox="0 0 24 24">
+                  <polyline points="3 6 5 6 21 6" />
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+                </svg>
+                Remove
+              </button>
+            </div>
+          </div>
+
+          <!-- Setup State -->
+          <ng-container *ngIf="!auth.currentTenant()?.crm?.isConfigured">
+
+            <form [formGroup]="crmForm" (ngSubmit)="saveCRM()">
+              <div class="form-section">
+                <div class="fields-grid">
+                  <div class="field-group field-group--full">
+                    <label class="field-label">
+                      <svg viewBox="0 0 24 24">
+                        <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+                        <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+                      </svg>
+                      API URL <span class="required-star">*</span>
+                    </label>
+                    <div class="field-input-wrap"
+                      [class.has-error]="crmForm.get('apiUrl')?.invalid && crmForm.get('apiUrl')?.touched">
+                      <input type="url" formControlName="apiUrl" placeholder="https://your-crm.com/api/v2"
+                        class="field-input mono-input" />
+                    </div>
+                    <span class="field-error-msg"
+                      *ngIf="crmForm.get('apiUrl')?.invalid && crmForm.get('apiUrl')?.touched">
+                      A valid HTTPS URL is required
+                    </span>
+                  </div>
+
+                  <div class="field-group field-group--full">
+                    <label class="field-label">
+                      <svg viewBox="0 0 24 24">
+                        <rect x="3" y="11" width="18" height="11" rx="2" />
+                        <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                      </svg>
+                      API Key <span class="required-star">*</span>
+                    </label>
+                    <div class="field-input-wrap secret-wrap"
+                      [class.has-error]="crmForm.get('apiKey')?.invalid && crmForm.get('apiKey')?.touched">
+                      <input [type]="showCRMKey() ? 'text' : 'password'" formControlName="apiKey"
+                        placeholder="Your CRM API key" class="field-input mono-input" />
+                      <button type="button" class="secret-toggle" (click)="showCRMKey.set(!showCRMKey())">
+                        <svg *ngIf="!showCRMKey()" viewBox="0 0 24 24">
+                          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                          <circle cx="12" cy="12" r="3" />
+                        </svg>
+                        <svg *ngIf="showCRMKey()" viewBox="0 0 24 24">
+                          <path
+                            d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+                          <line x1="1" y1="1" x2="23" y2="23" />
+                        </svg>
+                        {{ showCRMKey() ? 'Hide' : 'Show' }}
+                      </button>
+                    </div>
+                    <span class="field-error-msg"
+                      *ngIf="crmForm.get('apiKey')?.invalid && crmForm.get('apiKey')?.touched">
+                      API key is required
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="panel-actions">
+                <div class="action-hint">
+                  <svg viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="10" />
+                    <line x1="12" y1="16" x2="12" y2="12" />
+                    <line x1="12" y1="8" x2="12.01" y2="8" />
+                  </svg>
+                  A test request is made before saving to verify connectivity
+                </div>
+                <button type="submit" class="btn-save btn-crm" [disabled]="loading()">
+                  <span class="btn-spinner" *ngIf="loading()"></span>
+                  <svg *ngIf="!loading()" viewBox="0 0 24 24">
+                    <circle cx="18" cy="5" r="3" />
+                    <circle cx="6" cy="12" r="3" />
+                    <circle cx="18" cy="19" r="3" />
+                    <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+                    <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+                  </svg>
+                  {{ loading() ? 'Connecting…' : 'Connect CRM' }}
+                </button>
+              </div>
+            </form>
+          </ng-container>
+        </div>
+      </div>
+
+      <!-- ═══ PAYMENT PAGE ════════════════════════════════════ -->
+      <div class="content-panel" *ngIf="activeTab() === 'payment'">
+
+        <div class="panel-hero payment-hero">
+          <div class="ph-icon payment-icon">
+            <svg viewBox="0 0 24 24">
+              <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+              <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+            </svg>
+          </div>
+          <div class="ph-text">
+            <h2>Payment Page</h2>
+            <p>Your public payment link — share it with customers to collect payments instantly.</p>
+          </div>
+          <div class="encryption-badge live-badge" *ngIf="auth.currentTenant()?.paymentPageUrl">
+            <svg viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="10" />
+              <polyline points="12 6 12 12 16 14" />
+            </svg>
+            Live
+          </div>
+        </div>
+
+        <div class="panel-form">
+
+          <!-- Setup incomplete state -->
+          <div class="setup-incomplete-card" *ngIf="!auth.currentTenant()?.paymentPageUrl">
+            <div class="sic-icon">
+              <svg viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="10" />
+                <line x1="12" y1="8" x2="12" y2="12" />
+                <line x1="12" y1="16" x2="12.01" y2="16" />
+              </svg>
+            </div>
+            <div class="sic-text">
+              <strong>Setup not complete</strong>
+              <p>Complete all configuration steps to generate your payment page link.</p>
+            </div>
+            <div class="sic-steps">
+              <div class="sic-step" [class.done]="auth.currentTenant()?.setupStep !== 'business'">
+                <svg viewBox="0 0 24 24" *ngIf="auth.currentTenant()?.setupStep !== 'business'">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+                <span *ngIf="auth.currentTenant()?.setupStep === 'business'">1</span>
+                Business Info
+              </div>
+              <div class="sic-step" [class.done]="auth.currentTenant()?.razorpay?.isConfigured">
+                <svg viewBox="0 0 24 24" *ngIf="auth.currentTenant()?.razorpay?.isConfigured">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+                <span *ngIf="!auth.currentTenant()?.razorpay?.isConfigured">2</span>
+                Razorpay
+              </div>
+              <div class="sic-step" [class.done]="auth.currentTenant()?.crm?.isConfigured">
+                <svg viewBox="0 0 24 24" *ngIf="auth.currentTenant()?.crm?.isConfigured">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+                <span *ngIf="!auth.currentTenant()?.crm?.isConfigured">3</span>
+                CRM
+              </div>
+            </div>
+          </div>
+
+          <!-- Payment link live state -->
+          <ng-container *ngIf="auth.currentTenant()?.paymentPageUrl">
+
+            <!-- Celebration banner -->
+            <div class="payment-live-banner">
+              <div class="plb-glow"></div>
+              <div class="plb-inner">
+                <div class="plb-icon">
+                  <svg viewBox="0 0 24 24">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                    <polyline points="22 4 12 14.01 9 11.01" />
+                  </svg>
+                </div>
+                <div class="plb-text">
+                  <strong>Your payment page is live!</strong>
+                  <span>Customers can pay you directly via this link — no login required.</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- URL card -->
+            <div class="payment-url-card">
+              <div class="puc-label">
+                <svg viewBox="0 0 24 24">
+                  <circle cx="12" cy="12" r="10" />
+                  <line x1="2" y1="12" x2="22" y2="12" />
+                  <path
+                    d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+                </svg>
+                Your Payment Link
+              </div>
+              <div class="puc-url-row">
+                <div class="puc-url">
+                  <span class="puc-domain">https://payment.pantheras.io/pay/</span>
+                  <span class="puc-slug">{{ auth.currentTenant()?.paymentPageSlug }}</span>
+                </div>
+                <div class="puc-actions">
+                  <a [href]="'/pay/' + auth.currentTenant()?.paymentPageSlug" target="_blank" class="btn-open-link"
+                    title="Open payment page">
+                    <svg viewBox="0 0 24 24">
+                      <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                      <polyline points="15 3 21 3 21 9" />
+                      <line x1="10" y1="14" x2="21" y2="3" />
+                    </svg>
+                    Open
+                  </a>
+                  <button class="btn-copy" (click)="copyPaymentUrl()" [class.copied]="copied()">
+                    <svg *ngIf="!copied()" viewBox="0 0 24 24">
+                      <rect x="9" y="9" width="13" height="13" rx="2" />
+                      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                    </svg>
+                    <svg *ngIf="copied()" viewBox="0 0 24 24">
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                    {{ copied() ? 'Copied!' : 'Copy link' }}
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Feature cards -->
+            <div class="payment-features-grid">
+              <div class="pf-card">
+                <div class="pf-icon">
+                  <svg viewBox="0 0 24 24">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                    <circle cx="9" cy="7" r="4" />
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                  </svg>
+                </div>
+                <strong>No login needed</strong>
+                <span>Customers pay without creating an account</span>
+              </div>
+              <div class="pf-card">
+                <div class="pf-icon">
+                  <svg viewBox="0 0 24 24">
+                    <rect x="2" y="5" width="20" height="14" rx="2" />
+                    <path d="M2 10h20" />
+                  </svg>
+                </div>
+                <strong>UPI, Cards &amp; Net Banking</strong>
+                <span>All major payment modes supported via Razorpay</span>
+              </div>
+              <div class="pf-card">
+                <div class="pf-icon">
+                  <svg viewBox="0 0 24 24">
+                    <circle cx="18" cy="5" r="3" />
+                    <circle cx="6" cy="12" r="3" />
+                    <circle cx="18" cy="19" r="3" />
+                    <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+                    <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+                  </svg>
+                </div>
+                <strong>Auto CRM sync</strong>
+                <span>Every payment syncs to your connected CRM</span>
+              </div>
+            </div>
+
+            <!-- Share via -->
+            <div class="share-section">
+              <div class="share-label">Share this link via</div>
+              <div class="share-buttons">
+                <a [href]="'https://wa.me/?text=Pay%20us%20at%20' + auth.currentTenant()?.paymentPageUrl"
+                  target="_blank" class="share-btn share-whatsapp">
+                  <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path
+                      d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
+                  </svg>
+                  WhatsApp
+                </a>
+                <a [href]="'mailto:?subject=Payment%20Link&body=Please%20use%20this%20link%20to%20pay:%20' + auth.currentTenant()?.paymentPageUrl"
+                  class="share-btn share-email">
+                  <svg viewBox="0 0 24 24">
+                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+                    <polyline points="22,6 12,13 2,6" />
+                  </svg>
+                  Email
+                </a>
+                <button class="share-btn share-qr" (click)="showQR.set(!showQR())">
+                  <svg viewBox="0 0 24 24">
+                    <rect x="3" y="3" width="7" height="7" />
+                    <rect x="14" y="3" width="7" height="7" />
+                    <rect x="14" y="14" width="7" height="7" />
+                    <rect x="3" y="14" width="7" height="7" />
+                    <rect x="5" y="5" width="3" height="3" />
+                    <rect x="16" y="5" width="3" height="3" />
+                    <rect x="16" y="16" width="3" height="3" />
+                    <rect x="5" y="16" width="3" height="3" />
+                  </svg>
+                  QR Code
+                </button>
+              </div>
+            </div>
+
+            <!-- ── QR Code Modal ─────────────────────────────────────── -->
+<div class="qr-overlay" *ngIf="showQR()" (click)="showQR.set(false)">
+  <div class="qr-modal" (click)="$event.stopPropagation()">
+    <div class="qr-modal-header">
+      <div>
+        <strong>Scan to Pay</strong>
+        <span>Share this QR code with your customers</span>
+      </div>
+      <button class="qr-close" (click)="showQR.set(false)">
+        <svg viewBox="0 0 24 24">
+          <line x1="18" y1="6" x2="6" y2="18"/>
+          <line x1="6"  y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+    <div class="qr-canvas-wrap">
+      <div id="qr-canvas"></div>
+    </div>
+    <div class="qr-url-label">
+      {{ 'https://payment.pantheras.io/pay/' + auth.currentTenant()?.paymentPageSlug }}
+    </div>
+    <div class="qr-modal-actions">
+      <button class="btn-save" (click)="downloadQR()">
+        <svg viewBox="0 0 24 24">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="7 10 12 15 17 10"/>
+          <line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>
+        Download QR
+      </button>
+    </div>
+  </div>
+</div>
+
+          </ng-container>
+        </div>
+      </div>
+
+      <!-- ═══ SECURITY ════════════════════════════════════════ -->
+      <div class="content-panel" *ngIf="activeTab() === 'password'">
+
+        <div class="panel-hero security-hero">
+          <div class="ph-icon security-icon">
+            <svg viewBox="0 0 24 24">
+              <rect x="3" y="11" width="18" height="11" rx="2" />
+              <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+            </svg>
+          </div>
+          <div class="ph-text">
+            <h2>Security Settings</h2>
+            <p>Update your password. Active sessions remain valid until you sign out.</p>
+          </div>
+        </div>
+
+        <form [formGroup]="passwordForm" (ngSubmit)="changePassword()" class="panel-form">
+
+          <div class="form-section">
+            <div class="form-section-header">
+              <span class="section-number">01</span>
+              <div>
+                <h3>Change Password</h3>
+                <p>Choose a strong password with at least 6 characters</p>
+              </div>
+            </div>
+            <div class="fields-grid">
+
+              <div class="field-group field-group--full">
+                <label class="field-label">
+                  <svg viewBox="0 0 24 24">
+                    <rect x="3" y="11" width="18" height="11" rx="2" />
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                  </svg>
+                  Current Password
+                </label>
+                <div class="field-input-wrap">
+                  <input type="password" formControlName="currentPassword" placeholder="Enter your current password"
+                    class="field-input" />
+                </div>
+              </div>
+
+              <div class="field-group">
+                <label class="field-label">
+                  <svg viewBox="0 0 24 24">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                  </svg>
+                  New Password
+                </label>
+                <div class="field-input-wrap">
+                  <input type="password" formControlName="newPassword" placeholder="Minimum 6 characters"
+                    class="field-input" />
+                </div>
+              </div>
+
+              <div class="field-group">
+                <label class="field-label">
+                  <svg viewBox="0 0 24 24">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                    <polyline points="22 4 12 14.01 9 11.01" />
+                  </svg>
+                  Confirm Password
+                </label>
+                <div class="field-input-wrap"
+                  [class.has-error]="passwordForm.hasError('passwordMismatch') && passwordForm.get('confirmPassword')?.touched">
+                  <input type="password" formControlName="confirmPassword" placeholder="Repeat new password"
+                    class="field-input" />
+                </div>
+                <span class="field-error-msg"
+                  *ngIf="passwordForm.hasError('passwordMismatch') && passwordForm.get('confirmPassword')?.touched">
+                  Passwords do not match
+                </span>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- Password strength hint -->
+          <div class="security-tip-card">
+            <svg viewBox="0 0 24 24">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+            </svg>
+            <div>
+              <strong>Strong password tips</strong>
+              <p>Use uppercase, lowercase, numbers, and symbols. Avoid dictionary words or personal info.</p>
+            </div>
+          </div>
+
+          <div class="panel-actions">
+            <div class="action-hint">
+              <svg viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="10" />
+                <line x1="12" y1="16" x2="12" y2="12" />
+                <line x1="12" y1="8" x2="12.01" y2="8" />
+              </svg>
+              Existing sessions will remain active after this change
+            </div>
+            <button type="submit" class="btn-save btn-security" [disabled]="loading() || passwordForm.invalid">
+              <span class="btn-spinner" *ngIf="loading()"></span>
+              <svg *ngIf="!loading()" viewBox="0 0 24 24">
+                <rect x="3" y="11" width="18" height="11" rx="2" />
+                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+              </svg>
+              {{ loading() ? 'Updating…' : 'Update password' }}
+            </button>
+          </div>
+
+        </form>
+      </div>
+
+    </div>
+  </div>
+</div>

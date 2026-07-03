@@ -1,0 +1,736 @@
+<!-- quotations.html -->
+<div class="quot-root">
+
+  <!-- ══ HERO ══════════════════════════════════════════════════════════ -->
+  <div class="stmt-hero">
+    <div class="hero-bg-mesh"></div>
+    <div class="hero-scanlines"></div>
+    <div class="hero-content">
+      <div class="hero-left">
+        <div class="hero-eyebrow">
+          <span class="live-indicator">
+            <span class="live-ring"></span>
+            <span class="live-core"></span>
+          </span>
+          <span class="eyebrow-text">Live · CRM Intelligence</span>
+        </div>
+        <h1 class="hero-title">Quotations</h1>
+        <p class="hero-sub">Synced from CRM</p>
+      </div>
+      <div class="hero-right">
+        <div class="hero-meta-group">
+          <div class="meta-chip" *ngIf="totalCount() !== null">
+            <svg class="meta-chip__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round">
+              <rect x="3" y="4" width="18" height="18" rx="2" />
+              <line x1="16" y1="2" x2="16" y2="6" />
+              <line x1="8" y1="2" x2="8" y2="6" />
+              <line x1="3" y1="10" x2="21" y2="10" />
+            </svg>
+            <span class="meta-chip__label">Total</span>
+            <span class="meta-chip__value">{{ totalCount() | number }}</span>
+          </div>
+          <div class="meta-chip">
+            <svg class="meta-chip__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round">
+              <circle cx="12" cy="12" r="10" />
+              <polyline points="12 6 12 12 16 14" />
+            </svg>
+            <span class="meta-chip__label">Updated</span>
+            <span class="meta-chip__value">{{ today | date:'HH:mm' }}</span>
+          </div>
+        </div>
+        <button class="btn-refresh" (click)="refresh()" [class.spinning]="loading()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <polyline points="23 4 23 10 17 10" />
+            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
+          </svg>
+          <span>Refresh</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ NOT CONFIGURED ════════════════════════════════════════════════ -->
+  <div class="nc-card" *ngIf="!auth.currentTenant()?.crm?.isConfigured">
+    <div class="nc-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
+        <circle cx="18" cy="5" r="3" />
+        <circle cx="6" cy="12" r="3" />
+        <circle cx="18" cy="19" r="3" />
+        <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+        <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+      </svg>
+    </div>
+    <div class="nc-body">
+      <strong>CRM not connected</strong>
+      <p>Connect your CRM in Settings to load quotations.</p>
+      <a routerLink="/settings" [queryParams]="{tab:'crm'}" class="btn-configure">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <circle cx="12" cy="12" r="3" />
+          <path
+            d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+        </svg>
+        Configure CRM
+      </a>
+    </div>
+  </div>
+
+  <!-- ══ MAIN CONTENT ══════════════════════════════════════════════════ -->
+  <ng-container *ngIf="auth.currentTenant()?.crm?.isConfigured">
+
+    <!-- Error banner -->
+    <div class="error-banner" *ngIf="error()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+        <line x1="12" y1="9" x2="12" y2="13" />
+        <line x1="12" y1="17" x2="12.01" y2="17" />
+      </svg>
+      <span>{{ error() }}</span>
+      <button (click)="refresh()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <polyline points="23 4 23 10 17 10" />
+          <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
+        </svg>
+      </button>
+    </div>
+
+    <!-- ── KPI STRIP ──────────────────────────────────────────────────── -->
+    <div class="kpi-strip" *ngIf="stats() as s">
+
+      <div class="kpi-card kpi-card--featured">
+        <div class="kpi-card__top">
+          <div class="kpi-icon emerald">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <line x1="12" y1="1" x2="12" y2="23" />
+              <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+            </svg>
+          </div>
+          <span class="kpi-badge neutral">{{ quotes().length }} quotes</span>
+        </div>
+        <div class="kpi-card__body">
+          <span class="kpi-label">Total Pipeline Value</span>
+          <div class="kpi-value">
+            <span class="kpi-currency">{{ s.currency }}</span>
+            <span class="kpi-amount">{{ formatAmount(s.totalValue) }}</span>
+          </div>
+          <span class="kpi-sub">All loaded quotes</span>
+        </div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-card__top">
+          <div class="kpi-icon emerald">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <polyline points="20 6 9 17 4 12" />
+            </svg>
+          </div>
+          <span class="kpi-badge emerald-badge">{{ s.conversionRate }}%</span>
+        </div>
+        <div class="kpi-card__body">
+          <span class="kpi-label">Accepted</span>
+          <div class="kpi-value"><span class="kpi-amount">{{ s.acceptedCount }}</span></div>
+          <span class="kpi-sub kpi-sub--emerald">Won quotes</span>
+        </div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-card__top">
+          <div class="kpi-icon sky">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <circle cx="12" cy="12" r="10" />
+              <polyline points="12 6 12 12 16 14" />
+            </svg>
+          </div>
+        </div>
+        <div class="kpi-card__body">
+          <span class="kpi-label">Pending</span>
+          <div class="kpi-value"><span class="kpi-amount">{{ s.pendingCount }}</span></div>
+          <span class="kpi-sub">Awaiting response</span>
+        </div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-card__top">
+          <div class="kpi-icon amber">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <circle cx="12" cy="12" r="10" />
+              <line x1="12" y1="8" x2="12" y2="12" />
+              <line x1="12" y1="16" x2="12.01" y2="16" />
+            </svg>
+          </div>
+        </div>
+        <div class="kpi-card__body">
+          <span class="kpi-label">Expiring Soon</span>
+          <div class="kpi-value"><span class="kpi-amount">{{ s.expiringSoon }}</span></div>
+          <span class="kpi-sub">Within 7 days</span>
+        </div>
+      </div>
+
+      <div class="kpi-card kpi-card--net">
+        <div class="kpi-card__top">
+          <div class="kpi-icon teal">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <line x1="18" y1="20" x2="18" y2="10" />
+              <line x1="12" y1="20" x2="12" y2="4" />
+              <line x1="6" y1="20" x2="6" y2="14" />
+            </svg>
+          </div>
+        </div>
+        <div class="kpi-card__body">
+          <span class="kpi-label">Avg. Value</span>
+          <div class="kpi-value">
+            <span class="kpi-currency">{{ s.currency }}</span>
+            <span class="kpi-amount kpi-amount--net">{{ formatAmount(s.avgValue) }}</span>
+          </div>
+          <span class="kpi-sub">Per quotation</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ── TABLE PANEL ────────────────────────────────────────────────── -->
+    <div class="tbl-panel">
+
+      <!-- Filter Bar -->
+      <div class="filter-bar">
+
+        <!-- Search -->
+        <div class="search-wrap">
+          <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round">
+            <circle cx="11" cy="11" r="8" />
+            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+          </svg>
+          <input class="search-input" type="text" placeholder="Search deal, client, owner…" [value]="searchTerm()"
+            (input)="onSearch($any($event.target).value)" />
+          <button class="search-clear" *ngIf="searchTerm()" (click)="onSearch('')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+        </div>
+
+        <!-- Date Range -->
+        <div class="date-range-wrap" [class.open]="showDateFilter()">
+          <button class="btn-date-range" (click)="toggleDateFilter()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <rect x="3" y="4" width="18" height="18" rx="2" />
+              <line x1="16" y1="2" x2="16" y2="6" />
+              <line x1="8" y1="2" x2="8" y2="6" />
+              <line x1="3" y1="10" x2="21" y2="10" />
+            </svg>
+            <span>{{ (dateFrom() || dateTo()) ? (dateFrom() + ' → ' + dateTo()) : 'Date Range' }}</span>
+            <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round">
+              <polyline points="6 9 12 15 18 9" />
+            </svg>
+          </button>
+          <div class="date-picker-dropdown" *ngIf="showDateFilter()">
+            <div class="date-picker-row">
+              <label>From</label>
+              <input type="date" [value]="dateFrom()" (change)="dateFrom.set($any($event.target).value); onDateChange()"
+                [max]="dateTo() || todayISO" />
+            </div>
+            <div class="date-picker-row">
+              <label>To</label>
+              <input type="date" [value]="dateTo()" (change)="dateTo.set($any($event.target).value); onDateChange()"
+                [min]="dateFrom()" [max]="todayISO" />
+            </div>
+            <div class="date-picker-actions">
+              <button class="dp-btn dp-btn--ghost" (click)="clearDates()">Clear</button>
+              <button class="dp-btn dp-btn--apply" (click)="toggleDateFilter()">Apply</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Status Filter -->
+        <div class="filter-group">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <polyline points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
+          </svg>
+          <select [value]="filterStatus()" (change)="onStatusChange($any($event.target).value)">
+            <option value="">All Approvals</option>
+            <option value="draft">Draft</option>
+            <option value="sent">Sent / Published</option>
+            <option value="accepted">Accepted</option>
+            <option value="rejected">Rejected</option>
+            <option value="expired">Expired</option>
+            <option value="paid">Paid</option>
+          </select>
+        </div>
+
+        <!-- Active filter pills -->
+        <div class="active-filters" *ngIf="hasActiveFilters()">
+          <span class="filter-pill" *ngIf="filterStatus()">
+            {{ filterStatus() | titlecase }}
+            <button (click)="filterStatus.set(''); loadQuotes()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            </button>
+          </span>
+          <span class="filter-pill" *ngIf="dateFrom() || dateTo()">
+            Date filtered
+            <button (click)="clearDates()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            </button>
+          </span>
+          <button class="clear-all-btn" (click)="clearFilters()">Clear all</button>
+        </div>
+
+        <div class="filter-spacer"></div>
+
+        <div class="tbl-title-row">
+          <h3 class="tbl-title">Quotations</h3>
+          <span class="record-count" *ngIf="filteredQuotes().length">
+            {{ filteredQuotes().length }}<ng-container *ngIf="totalCount()"> of {{ totalCount() | number
+              }}</ng-container>
+          </span>
+        </div>
+
+        <button class="btn-export" (click)="exportCSV()" [disabled]="!filteredQuotes().length" title="Export CSV">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+            <polyline points="7 10 12 15 17 10" />
+            <line x1="12" y1="15" x2="12" y2="3" />
+          </svg>
+          <span class="btn-label">Export</span>
+        </button>
+      </div>
+
+      <!-- Skeleton loader -->
+      <div class="tbl-skel" *ngIf="loading() && quotes().length === 0">
+        <div class="skel-row" *ngFor="let i of [1,2,3,4,5,6,7]">
+          <div class="skel-cell" style="flex:1.6"></div>
+          <div class="skel-cell" style="flex:1.1"></div>
+          <div class="skel-cell" style="flex:1.0"></div>
+          <div class="skel-cell" style="flex:0.9"></div>
+          <div class="skel-cell" style="flex:0.8"></div>
+          <div class="skel-cell" style="flex:0.8"></div>
+          <div class="skel-cell" style="flex:0.7"></div>
+        </div>
+      </div>
+
+      <!-- Table -->
+      <div class="tbl-scroll" *ngIf="!loading() || quotes().length > 0">
+        <table class="data-table" *ngIf="filteredQuotes().length; else emptyTpl">
+          <thead>
+            <tr>
+              <!-- Quote / Deal -->
+              <th (click)="toggleSort('quoteId')" class="sortable">
+                Deal / Quote
+                <span class="sort-icon" [class.asc]="sortField()==='quoteId'&&sortDir()==='asc'"
+                  [class.desc]="sortField()==='quoteId'&&sortDir()==='desc'">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                    <polyline points="18 15 12 9 6 15" />
+                  </svg>
+                </span>
+              </th>
+              <!-- Client -->
+              <th (click)="toggleSort('customer')" class="sortable">
+                Client
+                <span class="sort-icon" [class.asc]="sortField()==='customer'&&sortDir()==='asc'"
+                  [class.desc]="sortField()==='customer'&&sortDir()==='desc'">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                    <polyline points="18 15 12 9 6 15" />
+                  </svg>
+                </span>
+              </th>
+              <!-- Owner -->
+              <th>Owner</th>
+              <!-- Amount -->
+              <th (click)="toggleSort('amount')" class="sortable num">
+                Amount
+                <span class="sort-icon" [class.asc]="sortField()==='amount'&&sortDir()==='asc'"
+                  [class.desc]="sortField()==='amount'&&sortDir()==='desc'">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                    <polyline points="18 15 12 9 6 15" />
+                  </svg>
+                </span>
+              </th>
+              <!-- Created -->
+              <th (click)="toggleSort('createdAt')" class="sortable">
+                Created
+                <span class="sort-icon" [class.asc]="sortField()==='createdAt'&&sortDir()==='asc'"
+                  [class.desc]="sortField()==='createdAt'&&sortDir()==='desc'">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                    <polyline points="18 15 12 9 6 15" />
+                  </svg>
+                </span>
+              </th>
+              <!-- Expires -->
+              <th>Expires</th>
+              <!-- Approval -->
+              <th (click)="toggleSort('status')" class="sortable">
+                Approval
+                <span class="sort-icon" [class.asc]="sortField()==='status'&&sortDir()==='asc'"
+                  [class.desc]="sortField()==='status'&&sortDir()==='desc'">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                    <polyline points="18 15 12 9 6 15" />
+                  </svg>
+                </span>
+              </th>
+              <th class="act-th"></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let q of pagedQuotes(); let idx = index" class="data-row"
+              [class.row-active]="selectedQuote()?.id === q.id || selectedQuote()?.quoteId === q.quoteId"
+              (click)="openDetail(q)" [style.animation-delay]="idx * 16 + 'ms'">
+
+              <!-- ── Deal / Quote ── -->
+              <td>
+                <div class="cell-deal">
+                  <span class="deal-name" [title]="getDealName(q)">{{ getDealName(q) }}</span>
+                  <div class="deal-meta">
+                    <code class="quote-num">#{{ getQuoteId(q) }}</code>
+                  </div>
+                </div>
+              </td>
+
+              <!-- ── Client ── -->
+              <td>
+                <div class="cell-client">
+                  <div class="avatar" [style.background]="getAvatarColor(getCustomer(q))">
+                    {{ getCustomer(q)[0]?.toUpperCase() || '?' }}
+                  </div>
+                  <div class="client-stack">
+                    <span class="client-name" [title]="getCustomer(q)">{{ getCustomer(q) }}</span>
+                    <span class="client-email" *ngIf="q.email && q.email !== getCustomer(q)">{{ q.email }}</span>
+                  </div>
+                </div>
+              </td>
+
+              <!-- ── Owner ── -->
+              <td>
+                <div class="cell-owner" *ngIf="getOwner(q); else dashOwner">
+                  <div class="owner-avatar">{{ getOwnerInitial(q) }}</div>
+                  <span class="owner-name" [title]="getOwner(q)">{{ getOwner(q) }}</span>
+                </div>
+                <ng-template #dashOwner><span class="dash">—</span></ng-template>
+              </td>
+
+              <!-- ── Amount ── -->
+              <td class="num">
+                <span class="amount-val">
+                  <span class="amount-cur">{{ getCurrency(q) }}</span>
+                  {{ formatAmount(getAmount(q)) }}
+                </span>
+              </td>
+
+              <!-- ── Created ── -->
+              <td>
+                <div class="cell-date" *ngIf="getDate(q.createdAt); else dashDate">
+                  <span class="date-main">{{ getDate(q.createdAt) | date:'dd MMM yyyy' }}</span>
+                  <span class="date-time">{{ getDate(q.createdAt) | date:'HH:mm' }}</span>
+                </div>
+                <ng-template #dashDate><span class="dash">—</span></ng-template>
+              </td>
+
+              <!-- ── Expires ── -->
+              <!-- FIX: was using q.expiryDate (often null) — now uses getExpiryDate() which checks raw too -->
+              <td>
+                <div class="expiry-wrap" *ngIf="getExpiryDate(q) as expDate; else noExpiry">
+                  <span class="expiry-tag" [class.expiry-tag--soon]="isExpiringSoon(q)"
+                    [class.expiry-tag--expired]="isExpired(q)">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                      *ngIf="isExpiringSoon(q) || isExpired(q)">
+                      <circle cx="12" cy="12" r="10" />
+                      <line x1="12" y1="8" x2="12" y2="12" />
+                      <line x1="12" y1="16" x2="12.01" y2="16" />
+                    </svg>
+                    {{ expDate | date:'dd MMM yyyy' }}
+                  </span>
+                  <span class="expiry-days" *ngIf="getDaysToExpiry(q) !== null && !isExpired(q)">
+                    {{ getDaysToExpiry(q) }}d left
+                  </span>
+                  <span class="expiry-days expiry-days--expired" *ngIf="isExpired(q)">Expired</span>
+                </div>
+                <ng-template #noExpiry><span class="dash">—</span></ng-template>
+              </td>
+
+              <!-- ── Approval Status ── -->
+              <!-- FIX: now shows client_approval_status (mapped via getApprovalStatus) -->
+              <td>
+                <span class="status-tag" [ngClass]="'stag--' + getApprovalStatus(q)">
+                  <span class="stag-dot"></span>
+                  {{ getApprovalStatus(q) | titlecase }}
+                </span>
+              </td>
+
+              <!-- Row chevron -->
+              <td class="act-td">
+                <span class="row-caret">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                    <polyline points="9 18 15 12 9 6" />
+                  </svg>
+                </span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- Empty state -->
+        <ng-template #emptyTpl>
+          <div class="tbl-empty">
+            <div class="tbl-empty__icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                <polyline points="14 2 14 8 20 8" />
+              </svg>
+            </div>
+            <strong>{{ hasActiveFilters() ? 'No matching quotes' : 'No quotes yet' }}</strong>
+            <p>{{ hasActiveFilters() ? 'Try adjusting or clearing the filters.' : 'Quotes from your CRM will appear
+              here.' }}</p>
+            <button class="btn-clear-filters" *ngIf="hasActiveFilters()" (click)="clearFilters()">Clear all
+              filters</button>
+          </div>
+        </ng-template>
+      </div>
+
+      <!-- ── TABLE FOOTER ─────────────────────────────────────────────── -->
+      <div class="tbl-footer" *ngIf="!loading() || quotes().length > 0">
+
+        <!-- Pagination -->
+        <div class="pagination" *ngIf="totalPages() > 1">
+          <div class="page-info">
+            Page {{ currentPage() }} of {{ totalPages() }}
+            <span class="page-record-info">· {{ pagedQuotes().length }} records</span>
+          </div>
+          <div class="page-controls">
+            <button class="page-btn" (click)="goToPage(1)" [disabled]="currentPage() === 1" title="First">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                <polyline points="11 17 6 12 11 7" />
+                <polyline points="18 17 13 12 18 7" />
+              </svg>
+            </button>
+            <button class="page-btn" (click)="prevPage()" [disabled]="currentPage() === 1">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                <polyline points="15 18 9 12 15 6" />
+              </svg>
+            </button>
+            <div class="page-numbers">
+              <button class="page-num" *ngFor="let p of visiblePages()" [class.active]="p === currentPage()"
+                [class.ellipsis]="p === -1" [disabled]="p === -1 || p === currentPage()"
+                (click)="p !== -1 && goToPage(p)">
+                {{ p === -1 ? '…' : p }}
+              </button>
+            </div>
+            <button class="page-btn" (click)="nextPage()" [disabled]="currentPage() === totalPages()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                <polyline points="9 18 15 12 9 6" />
+              </svg>
+            </button>
+            <button class="page-btn" (click)="goToPage(totalPages())" [disabled]="currentPage() === totalPages()"
+              title="Last">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                <polyline points="13 17 18 12 13 7" />
+                <polyline points="6 17 11 12 6 7" />
+              </svg>
+            </button>
+          </div>
+          <div class="page-size-wrap">
+            <label>Rows</label>
+            <select [(ngModel)]="pageSize" (change)="onPageSizeChange()">
+              <option value="10">10</option>
+              <option value="25">25</option>
+              <option value="50">50</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Load more -->
+        <div class="load-more-wrap" *ngIf="hasMore() && !loading()">
+          <button class="btn-more" (click)="loadMore()" [disabled]="loadingMore()">
+            <span class="more-spinner" *ngIf="loadingMore()"></span>
+            <svg *ngIf="!loadingMore()" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round">
+              <polyline points="6 9 12 15 18 9" />
+            </svg>
+            {{ loadingMore() ? 'Loading…' : 'Load more quotes' }}
+          </button>
+          <span class="load-hint" *ngIf="totalCount() !== null">Showing {{ quotes().length }} of {{ totalCount() |
+            number }}</span>
+        </div>
+
+      </div>
+    </div><!-- /tbl-panel -->
+
+  </ng-container>
+</div><!-- /quot-root -->
+
+<!-- ══ DETAIL DRAWER ═══════════════════════════════════════════════════════ -->
+<div class="drawer-backdrop" [class.open]="selectedQuote()" (click)="closeDetail()"></div>
+
+<aside class="detail-drawer" [class.open]="selectedQuote()" aria-label="Quote details" role="dialog">
+  <ng-container *ngIf="selectedQuote() as q">
+    <div class="dr-handle" (click)="closeDetail()"></div>
+
+    <!-- Header -->
+    <div class="dr-header">
+      <div class="dr-header__left">
+        <div class="dr-status-orb" [ngClass]="'orb--' + getApprovalStatus(q)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+            *ngIf="getApprovalStatus(q)==='accepted'||getApprovalStatus(q)==='paid'">
+            <polyline points="20 6 9 17 4 12" />
+          </svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+            *ngIf="getApprovalStatus(q)==='created'">
+            <circle cx="12" cy="12" r="10" />
+          </svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+            *ngIf="getApprovalStatus(q)==='rejected'">
+            <line x1="18" y1="6" x2="6" y2="18" />
+            <line x1="6" y1="6" x2="18" y2="18" />
+          </svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+            *ngIf="getApprovalStatus(q)==='expired'">
+            <circle cx="12" cy="12" r="10" />
+            <line x1="12" y1="8" x2="12" y2="12" />
+          </svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+            *ngIf="getApprovalStatus(q)==='sent'||getApprovalStatus(q)==='draft'">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+            <polyline points="14 2 14 8 20 8" />
+          </svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+            *ngIf="getApprovalStatus(q)==='awaiting_response'">
+            <circle cx="12" cy="12" r="10" />
+            <polyline points="12 6 12 12 16 14" />
+          </svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+            stroke-linejoin="round" *ngIf="getApprovalStatus(q)==='in_progress'">
+            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+          </svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+            stroke-linejoin="round" *ngIf="getApprovalStatus(q)==='payment_completed'">
+            <rect x="1" y="4" width="22" height="16" rx="2" />
+            <line x1="1" y1="10" x2="23" y2="10" />
+          </svg>
+        </div>
+        <div>
+          <p class="dr-header__label">{{ getDealName(q) }}</p>
+          <code class="dr-header__id">#{{ getQuoteId(q) }}</code>
+        </div>
+      </div>
+      <div class="dr-header__actions">
+        <button class="dr-copy-btn" (click)="copyText(getQuoteId(q), $event)" title="Copy Quote #">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <rect x="9" y="9" width="13" height="13" rx="2" />
+            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+          </svg>
+        </button>
+        <button class="dr-close" (click)="closeDetail()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <line x1="18" y1="6" x2="6" y2="18" />
+            <line x1="6" y1="6" x2="18" y2="18" />
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Amount band -->
+    <div class="dr-amount-band" [ngClass]="'band--' + getApprovalStatus(q)">
+      <div class="dr-amount-left">
+        <span class="dr-currency">{{ getCurrency(q) }}</span>
+        <span class="dr-amount">{{ formatAmount(getAmount(q)) }}</span>
+      </div>
+      <span class="status-tag" [ngClass]="'stag--' + getApprovalStatus(q)">
+        <span class="stag-dot"></span>
+        {{ getApprovalStatus(q) | titlecase }}
+      </span>
+    </div>
+
+    <!-- Body -->
+    <div class="dr-body">
+
+      <!-- ── Deal Overview ── -->
+      <section class="dr-section">
+        <h4 class="dr-section-label">Deal Overview</h4>
+        <dl class="dr-dl">
+          <div class="dr-row">
+            <dt>Quote Number</dt>
+            <dd class="mono">#{{ getQuoteId(q) }}</dd>
+          </div>
+          <div class="dr-row">
+            <dt>Deal Name</dt>
+            <dd>{{ getDealName(q) }}</dd>
+          </div>
+          <div class="dr-row" *ngIf="getOwner(q)">
+            <dt>Quote Owner</dt>
+            <dd>{{ getOwner(q) }}</dd>
+          </div>
+          <div class="dr-row">
+            <dt>Client Approval</dt>
+            <dd>
+              <span class="status-tag" [ngClass]="'stag--' + getApprovalStatus(q)">
+                <span class="stag-dot"></span>
+                {{ getApprovalStatus(q) | titlecase }}
+              </span>
+            </dd>
+          </div>
+          <div class="dr-row" *ngIf="getDate(q.createdAt)">
+            <dt>Created On</dt>
+            <dd>{{ getDate(q.createdAt) | date:'dd MMM yyyy, HH:mm' }}</dd>
+          </div>
+          <!-- FIX: use getExpiryDate() which reads raw.expiration_date -->
+          <div class="dr-row" *ngIf="getExpiryDate(q) as expDate">
+            <dt>Expiration Date</dt>
+            <dd [class.warn]="isExpiringSoon(q)" [class.expired-text]="isExpired(q)">
+              {{ expDate | date:'dd MMM yyyy' }}
+              <span class="expiry-badge" *ngIf="isExpiringSoon(q) && !isExpired(q)">⚠ {{ getDaysToExpiry(q) }}d
+                left</span>
+              <span class="expiry-badge expiry-badge--expired" *ngIf="isExpired(q)">Expired</span>
+            </dd>
+          </div>
+        </dl>
+      </section>
+
+      <!-- ── Client ── -->
+      <section class="dr-section">
+        <h4 class="dr-section-label">Client</h4>
+        <div class="dr-customer-card">
+          <div class="dr-avatar" [style.background]="getAvatarColor(getCustomer(q))">
+            {{ getCustomer(q)[0]?.toUpperCase() || '?' }}
+          </div>
+          <div class="dr-cust-info">
+            <span class="dr-cust-name">{{ getCustomer(q) }}</span>
+            <a class="dr-cust-email" *ngIf="q.email" [href]="'mailto:' + q.email">{{ q.email }}</a>
+            <span class="dr-cust-phone mono" *ngIf="q.phone">{{ q.phone }}</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── Notes ── -->
+      <section class="dr-section" *ngIf="q.notes">
+        <h4 class="dr-section-label">Notes</h4>
+        <p class="dr-notes">{{ q.notes }}</p>
+      </section>
+
+    </div>
+
+    <!-- Drawer nav -->
+    <div class="dr-nav">
+      <button class="dr-nav-btn" (click)="prevQuote()" [disabled]="!hasPrevQuote()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <polyline points="15 18 9 12 15 6" />
+        </svg>
+        Prev
+      </button>
+      <span class="dr-nav-pos">{{ currentQuoteIndex() + 1 }} / {{ filteredQuotes().length }}</span>
+      <button class="dr-nav-btn" (click)="nextQuote()" [disabled]="!hasNextQuote()">
+        Next
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <polyline points="9 18 15 12 9 6" />
+        </svg>
+      </button>
+    </div>
+
+  </ng-container>
+</aside>

@@ -1,0 +1,114 @@
+<!-- Click-outside backdrop -->
+<div class="header-backdrop" *ngIf="notifOpen() || profileOpen()" (click)="closeDropdowns()"></div>
+
+<header class="app-header" [class.sidebar-collapsed]="sidebarCollapsed">
+
+  <!-- Left -->
+  <div class="header-left">
+    <!-- Hamburger (mobile) -->
+    <button class="hamburger" (click)="onMenuToggle()" aria-label="Toggle menu">
+      <span></span><span></span><span></span>
+    </button>
+
+    <!-- Page info -->
+    <div class="page-info">
+      <span class="page-name">{{ currentRouteLabel }}</span>
+      <nav class="breadcrumb" aria-label="breadcrumb">
+        <span class="breadcrumb-item">POS Platform</span>
+        <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+        <span class="breadcrumb-item current">{{ currentRouteLabel }}</span>
+      </nav>
+    </div>
+  </div>
+
+  <!-- Right -->
+  <div class="header-right">
+
+    <!-- Notifications -->
+    <div class="header-action-wrapper dropdown-anchor">
+
+      <!-- Notification dropdown -->
+      <div class="dropdown notif-dropdown" *ngIf="notifOpen()" role="dialog" aria-label="Notifications">
+        <div class="dropdown-header">
+          <span>Notifications</span>
+          <span class="dropdown-badge">{{ unreadCount }} new</span>
+        </div>
+        <div class="notif-list">
+          <div
+            class="notif-item"
+            *ngFor="let n of notifications"
+            [class.unread]="n.unread"
+            role="listitem"
+          >
+            <div class="notif-icon-wrap">{{ n.icon }}</div>
+            <div class="notif-content">
+              <p class="notif-msg">{{ n.message }}</p>
+              <span class="notif-time">{{ n.time }}</span>
+            </div>
+            <div class="notif-dot" *ngIf="n.unread" aria-hidden="true"></div>
+          </div>
+        </div>
+        <div class="dropdown-footer">
+          <button class="mark-read-btn" (click)="markAllRead()">Mark all as read</button>
+          <a href="#">View all</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Profile -->
+    <div class="header-action-wrapper dropdown-anchor">
+      <button
+        class="profile-btn"
+        [class.active]="profileOpen()"
+        (click)="toggleProfile()"
+        aria-label="Profile menu"
+        [attr.aria-expanded]="profileOpen()"
+      >
+        <div class="profile-avatar">
+          {{ userInitials }}
+        </div>
+        <div class="profile-info desktop-only">
+          <span class="profile-name">{{ userName }}</span>
+          <span class="profile-role">{{ userRole }}</span>
+        </div>
+        <svg class="chevron desktop-only" viewBox="0 0 24 24" [class.flipped]="profileOpen()">
+          <polyline points="6 9 12 15 18 9"/>
+        </svg>
+      </button>
+
+      <!-- Profile dropdown -->
+      <div class="dropdown profile-dropdown" *ngIf="profileOpen()" role="dialog" aria-label="Profile options">
+        <div class="profile-dh">
+          <div class="profile-avatar lg">A</div>
+          <div class="profile-dh-info">
+            <strong>{{userName}}</strong>
+            <span class="profile-email">{{userEmail}}</span>
+          </div>
+        </div>
+
+        <div class="dropdown-menu-items">
+          <button class="dropdown-item" (click)="navigateTo('/settings')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="3"/>
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+            </svg>
+            Account Settings
+          </button>
+
+          <div class="dropdown-divider"></div>
+
+          <!-- Sign out via same auth.logout() -->
+          <button class="dropdown-item danger" (click)="onSignOut()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+              <polyline points="16 17 21 12 16 7"/>
+              <line x1="21" y1="12" x2="9" y2="12"/>
+            </svg>
+            Sign out
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</header>

@@ -1,0 +1,76 @@
+<!-- ═══════════════════════════════════════════════════════════
+     verify-email.component.html  —  POS Platform v2
+     ═══════════════════════════════════════════════════════════ -->
+<div class="verify-wrap">
+  <div class="verify-card">
+
+    <!-- Loading -->
+    <ng-container *ngIf="state === 'loading'">
+      <div class="verify-icon-ring loading-ring">
+        <div class="ring-spinner"></div>
+      </div>
+      <h2 class="verify-title">Verifying your email…</h2>
+      <p class="verify-body">Please wait a moment while we confirm your address.</p>
+    </ng-container>
+
+    <!-- Success -->
+    <ng-container *ngIf="state === 'success'">
+      <div class="verify-icon-ring success-ring">
+        <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+      <h2 class="verify-title">Email Verified!</h2>
+      <p class="verify-body">Your account is now active.</p>
+      <p class="verify-sub">Redirecting to sign in…</p>
+      <div class="verify-progress">
+        <div class="verify-progress-fill"></div>
+      </div>
+    </ng-container>
+
+    <!-- Error -->
+    <ng-container *ngIf="state === 'error'">
+      <div class="verify-icon-ring error-ring">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+      </div>
+      <h2 class="verify-title">Verification Failed</h2>
+      <p class="verify-body">{{ errorMessage }}</p>
+      <p class="verify-sub">Your link may have expired. Request a new one below.</p>
+
+      <button
+        class="btn btn-primary verify-btn"
+        (click)="resend()"
+        [disabled]="resendState === 'sending' || resendState === 'sent'"
+      >
+        <span *ngIf="resendState !== 'sending'">
+          {{ resendState === 'sent' ? 'Email sent!' : 'Resend Verification Email' }}
+        </span>
+        <span *ngIf="resendState === 'sending'" style="display:flex;align-items:center;gap:8px;">
+          <span class="btn-spinner"></span>
+          Sending…
+        </span>
+      </button>
+
+      <p *ngIf="resendState === 'sent'" class="verify-feedback success">
+        A new verification link has been sent to your email.
+      </p>
+      <p *ngIf="resendState === 'failed'" class="verify-feedback error">
+        Failed to resend. Please try again.
+      </p>
+
+      <a routerLink="/auth/login" class="verify-link">← Back to Login</a>
+    </ng-container>
+
+    <!-- No token -->
+    <ng-container *ngIf="state === 'notoken'">
+      <div class="verify-icon-ring warn-ring">
+        <svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      </div>
+      <h2 class="verify-title">Invalid Link</h2>
+      <p class="verify-body">
+        This verification link is missing a token.<br>
+        Please use the link sent to your email.
+      </p>
+      <a routerLink="/auth/login" class="btn btn-primary verify-btn">Go to Login</a>
+    </ng-container>
+
+  </div>
+</div>

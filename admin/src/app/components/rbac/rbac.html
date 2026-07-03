@@ -1,0 +1,748 @@
+<div class="rbac-root">
+
+  <!-- ── Page Header ──────────────────────────────────────────── -->
+  <div class="rbac-page-header">
+    <div class="rbac-page-header-left">
+      <div class="rbac-eyebrow">
+        <span class="rbac-eyebrow-dot"></span>
+        Access Control
+      </div>
+      <h1 class="rbac-page-title">Roles &amp; Permissions</h1>
+      <p class="rbac-page-sub">Define access boundaries across all platform modules. Changes apply immediately.</p>
+    </div>
+    <div class="rbac-page-header-right">
+      <div class="rbac-stat-pill">
+        <span class="rbac-stat-value">{{ roles().length }}</span>
+        <span class="rbac-stat-label">Roles</span>
+      </div>
+      <div class="rbac-stat-pill">
+        <span class="rbac-stat-value">{{ totalMembers() }}</span>
+        <span class="rbac-stat-label">Members</span>
+      </div>
+      <button class="rbac-btn-primary" (click)="openCreateDrawer()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+          stroke-linecap="round" stroke-linejoin="round">
+          <line x1="12" y1="5" x2="12" y2="19" />
+          <line x1="5" y1="12" x2="19" y2="12" />
+        </svg>
+        New Role
+      </button>
+    </div>
+  </div>
+
+  <!-- ── Loading skeleton ──────────────────────────────────────── -->
+  <div *ngIf="loading()" class="rbac-loading-wrap">
+    <div class="rbac-skeleton" *ngFor="let i of [1,2,3,4]"></div>
+  </div>
+
+  <!-- ── Main Grid ─────────────────────────────────────────────── -->
+  <div class="rbac-grid" *ngIf="!loading()">
+
+    <!-- ── Left: Role List ──────────────────────────────────────── -->
+    <div class="rbac-role-panel">
+      <div class="rbac-panel-header">
+        <div class="rbac-search-wrap">
+          <svg class="rbac-search-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8" />
+            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+          </svg>
+          <input class="rbac-search" type="text" placeholder="Search roles…" [value]="searchQuery()"
+            (input)="searchQuery.set($any($event.target).value)" />
+        </div>
+      </div>
+
+      <div class="rbac-role-list">
+        <div *ngFor="let role of filteredRoles(); trackBy: trackById" class="rbac-role-card"
+          [class.selected]="selectedRoleId() === role.id" (click)="selectRole(role.id)">
+          <div class="rbac-role-card-accent" [style.background]="role.color"></div>
+          <div class="rbac-role-card-body">
+            <div class="rbac-role-card-top">
+              <div class="rbac-role-avatar" [style.background]="role.color + '18'" [style.color]="role.color">
+                {{ role.name.charAt(0) }}
+              </div>
+              <div class="rbac-role-card-info">
+                <div class="rbac-role-card-name">
+                  {{ role.name }}
+                  <span class="rbac-system-badge" *ngIf="role.isSystem">System</span>
+                </div>
+                <div class="rbac-role-card-meta">{{ getRolePermissionSummary(role) }}</div>
+              </div>
+              <div class="rbac-role-card-members">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                  <circle cx="9" cy="7" r="4" />
+                </svg>
+                {{ role.memberCount }}
+              </div>
+            </div>
+            <p class="rbac-role-card-desc">{{ role.description }}</p>
+          </div>
+        </div>
+
+        <div class="rbac-empty-roles" *ngIf="filteredRoles().length === 0">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
+            stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8" />
+            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+          </svg>
+          <p>No roles match your search.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Right: Role Detail ────────────────────────────────────── -->
+    <div class="rbac-detail-panel" *ngIf="selectedRole() as role; else emptyState">
+
+      <!-- Detail Header -->
+      <div class="rbac-detail-header">
+        <div class="rbac-detail-header-left">
+          <div class="rbac-detail-avatar" [style.background]="role.color + '18'" [style.color]="role.color">
+            {{ role.name.charAt(0) }}
+          </div>
+          <div>
+            <div class="rbac-detail-title">
+              {{ role.name }}
+              <span class="rbac-system-badge lg" *ngIf="role.isSystem">System</span>
+            </div>
+            <div class="rbac-detail-subtitle">{{ role.description }}</div>
+          </div>
+        </div>
+        <div class="rbac-detail-actions">
+          <button class="rbac-icon-btn" title="Duplicate role" (click)="duplicateRole(role)">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <rect x="9" y="9" width="13" height="13" rx="2" />
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+            </svg>
+          </button>
+          <button class="rbac-icon-btn" title="Edit role" (click)="openEditDrawer(role)">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+            </svg>
+          </button>
+          <button class="rbac-icon-btn danger" title="Delete role" [disabled]="role.isSystem"
+            (click)="confirmDelete(role.id)">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="3 6 5 6 21 6" />
+              <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+              <path d="M10 11v6M14 11v6" />
+              <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Tabs -->
+      <div class="rbac-tabs">
+        <button class="rbac-tab" [class.active]="activeTab() === 'permissions'" (click)="onTabChange('permissions')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="11" width="18" height="11" rx="2" />
+            <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+          </svg>
+          Permissions
+        </button>
+        <button class="rbac-tab" [class.active]="activeTab() === 'members'" (click)="onTabChange('members')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+            <circle cx="9" cy="7" r="4" />
+          </svg>
+          Members
+          <span class="rbac-tab-badge">{{ role.memberCount }}</span>
+        </button>
+        <button class="rbac-tab" [class.active]="activeTab() === 'audit'" (click)="onTabChange('audit')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+            <polyline points="14 2 14 8 20 8" />
+            <line x1="16" y1="13" x2="8" y2="13" />
+            <line x1="16" y1="17" x2="8" y2="17" />
+          </svg>
+          Audit Log
+        </button>
+      </div>
+
+      <!-- ── Tab: Permissions ─────────────────────────────────────── -->
+      <div class="rbac-tab-content" *ngIf="activeTab() === 'permissions'">
+        <div *ngFor="let cat of categoryEntries()" class="rbac-perm-section">
+          <div class="rbac-perm-category-label">{{ categoryLabels[cat[0]] }}</div>
+          <div class="rbac-perm-table">
+            <!-- Header row -->
+            <div class="rbac-perm-row header-row">
+              <div class="rbac-perm-page-col">Page</div>
+              <div class="rbac-perm-actions-col">
+                <div class="rbac-action-head" *ngFor="let action of ACTIONS">{{ actionLabels[action] }}</div>
+              </div>
+            </div>
+            <!-- Data rows -->
+            <div class="rbac-perm-row" *ngFor="let page of cat[1]">
+              <div class="rbac-perm-page-col">
+                <span class="rbac-perm-page-icon" [innerHTML]="page.icon"></span>
+                <span class="rbac-perm-page-name">{{ page.label }}</span>
+              </div>
+              <div class="rbac-perm-actions-col">
+                <div class="rbac-perm-cell" *ngFor="let action of ACTIONS"
+                  [class.granted]="roleHasAction(role, page.key, action)"
+                  [class.unavailable]="!page.availableActions.includes(action)">
+                  <svg *ngIf="roleHasAction(role, page.key, action)" width="14" height="14" viewBox="0 0 24 24"
+                    fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+                    stroke-linejoin="round">
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                  <span *ngIf="!roleHasAction(role, page.key, action) && page.availableActions.includes(action)"
+                    class="rbac-perm-dash">—</span>
+                  <span *ngIf="!page.availableActions.includes(action)" class="rbac-perm-dash"
+                    style="opacity:.25">·</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Tab: Members ──────────────────────────────────────────── -->
+      <div class="rbac-tab-content" *ngIf="activeTab() === 'members'">
+
+        <!-- Toolbar -->
+        <div class="rbac-members-toolbar">
+          <div class="rbac-members-toolbar-left">
+            <button class="rbac-btn-primary" (click)="openInvitePanel('invite')">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                stroke-linecap="round" stroke-linejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19" />
+                <line x1="5" y1="12" x2="19" y2="12" />
+              </svg>
+              Invite New
+            </button>
+            <button class="rbac-btn-ghost" (click)="openInvitePanel('assign')">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                <circle cx="9" cy="7" r="4" />
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+              </svg>
+              Assign Existing
+            </button>
+          </div>
+          <span class="rbac-members-count" *ngIf="members().length > 0">
+            {{ members().length }} member{{ members().length !== 1 ? 's' : '' }}
+          </span>
+        </div>
+
+        <!-- Loading skeleton -->
+        <div class="rbac-audit-loading" *ngIf="membersLoading()">
+          <div class="rbac-skeleton" *ngFor="let i of [1,2,3]"></div>
+        </div>
+
+        <!-- Empty state -->
+        <div class="rbac-members-empty" *ngIf="!membersLoading() && members().length === 0">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+            <circle cx="9" cy="7" r="4" />
+          </svg>
+          <p>No members yet for this role.</p>
+          <span class="rbac-members-hint">Invite someone new or assign an existing user.</span>
+        </div>
+
+        <!-- Member rows -->
+        <div class="rbac-member-list" *ngIf="!membersLoading() && members().length > 0">
+          <div class="rbac-member-row" *ngFor="let m of members(); trackBy: trackById">
+
+            <div class="rbac-member-avatar" [style.background]="memberAvatarBg(m)" [style.color]="memberAvatarColor(m)">
+              {{ memberInitials(m) }}
+            </div>
+
+            <div class="rbac-member-info">
+              <div class="rbac-member-name">
+                {{ (m.firstName + ' ' + m.lastName).trim() || '—' }}
+              </div>
+              <div class="rbac-member-email">{{ m.email }}</div>
+            </div>
+
+            <!-- Status badge -->
+            <div class="rbac-member-status-badge" [attr.data-status]="m.subUserStatus">
+              {{ m.subUserStatus | titlecase }}
+            </div>
+
+            <!-- Role chip -->
+            <div class="rbac-member-role-chip">{{ m.rbacRoleName }}</div>
+
+            <!-- Action buttons -->
+            <div class="rbac-member-actions">
+              <button *ngIf="m.subUserStatus === 'invited'" class="rbac-icon-btn" title="Resend invite"
+                (click)="resendInvite(m)">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="23 4 23 10 17 10" />
+                  <path d="M20.49 15a9 9 0 1 1-.06-4.85" />
+                </svg>
+              </button>
+
+              <button *ngIf="m.subUserStatus === 'active'" class="rbac-icon-btn" title="Suspend member"
+                (click)="setMemberStatus(m, 'suspended')">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="10" />
+                  <line x1="4.93" y1="4.93" x2="19.07" y2="19.07" />
+                </svg>
+              </button>
+
+              <button *ngIf="m.subUserStatus === 'suspended'" class="rbac-icon-btn" title="Reactivate"
+                (click)="setMemberStatus(m, 'active')">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                  <polyline points="22 4 12 14.01 9 11.01" />
+                </svg>
+              </button>
+
+              <button class="rbac-icon-btn" title="Reassign role" (click)="openReassignDrawer(m)">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="17 1 21 5 17 9" />
+                  <path d="M3 11V9a4 4 0 0 1 4-4h14" />
+                  <polyline points="7 23 3 19 7 15" />
+                  <path d="M21 13v2a4 4 0 0 1-4 4H3" />
+                </svg>
+              </button>
+
+              <button class="rbac-icon-btn danger" title="Remove from team" (click)="confirmRemoveMember(m)">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="3 6 5 6 21 6" />
+                  <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Tab: Audit ───────────────────────────────────────────── -->
+      <div class="rbac-tab-content" *ngIf="activeTab() === 'audit'">
+
+        <div class="rbac-audit-loading" *ngIf="auditLoading()">
+          <div class="rbac-skeleton" *ngFor="let i of [1,2,3]"></div>
+        </div>
+
+        <div *ngIf="!auditLoading()">
+          <div class="rbac-audit-empty" *ngIf="auditLogs().length === 0">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
+              stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+              <polyline points="14 2 14 8 20 8" />
+            </svg>
+            <p>No audit events yet for this role.</p>
+          </div>
+
+          <div class="rbac-audit-list" *ngIf="auditLogs().length > 0">
+            <div class="rbac-audit-row" *ngFor="let entry of auditLogs()">
+              <div class="rbac-audit-avatar" [style.background]="entry.actorColor + '22'"
+                [style.color]="entry.actorColor">
+                {{ entry.actorInitials }}
+              </div>
+              <div class="rbac-audit-info">
+                <div class="rbac-audit-action">{{ entry.detail }}</div>
+                <div class="rbac-audit-meta">
+                  <span class="rbac-audit-actor">{{ entry.actorName }}</span>
+                  <span class="rbac-audit-sep">·</span>
+                  <span class="rbac-audit-time">{{ formatAuditTime(entry.createdAt) }}</span>
+                </div>
+              </div>
+              <div class="rbac-audit-tag" [attr.data-action]="entry.action">
+                {{ formatActionLabel(entry.action) }}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <ng-template #emptyState>
+      <div class="rbac-detail-empty">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3"
+          stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="11" width="18" height="11" rx="2" />
+          <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+        </svg>
+        <p>Select a role to view details</p>
+      </div>
+    </ng-template>
+
+  </div><!-- /rbac-grid -->
+
+  <!-- ── Invite / Assign Drawer ─────────────────────────────────────────── -->
+  <!-- NOTE: Drawers and modals are placed at rbac-root level, NOT inside rbac-detail-panel -->
+  <div class="rbac-backdrop" [class.open]="memberDrawerOpen()" (click)="closeMemberDrawer()"></div>
+  <div class="rbac-drawer" [class.open]="memberDrawerOpen()">
+    <div class="rbac-drawer-header">
+      <div class="rbac-drawer-title">
+        <div class="rbac-drawer-title-icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+            <circle cx="8.5" cy="7" r="4" />
+            <line x1="20" y1="8" x2="20" y2="14" />
+            <line x1="23" y1="11" x2="17" y2="11" />
+          </svg>
+        </div>
+        {{ memberDrawerMode() === 'invite' ? 'Invite New Member' : 'Assign Existing User' }}
+      </div>
+      <button class="rbac-drawer-close" (click)="closeMemberDrawer()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+          stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18" />
+          <line x1="6" y1="6" x2="18" y2="18" />
+        </svg>
+      </button>
+    </div>
+
+    <div class="rbac-drawer-body">
+      <!-- Mode toggle tabs -->
+      <div class="rbac-member-drawer-tabs">
+        <button class="rbac-member-drawer-tab" [class.active]="memberDrawerMode() === 'invite'"
+          (click)="memberDrawerMode.set('invite')">
+          Invite New
+        </button>
+        <button class="rbac-member-drawer-tab" [class.active]="memberDrawerMode() === 'assign'"
+          (click)="memberDrawerMode.set('assign')">
+          Assign Existing
+        </button>
+      </div>
+
+      <!-- Invite form -->
+      <form *ngIf="memberDrawerMode() === 'invite'" [formGroup]="inviteForm" (ngSubmit)="sendInvite()">
+        <div class="rbac-field-group">
+          <label class="rbac-label">Email Address <span class="rbac-req">*</span></label>
+          <input class="rbac-input" type="email" formControlName="email" placeholder="colleague@company.com"
+            [class.error]="inviteForm.get('email')?.invalid && inviteForm.get('email')?.touched" />
+          <div class="rbac-field-error"
+            *ngIf="inviteForm.get('email')?.invalid && inviteForm.get('email')?.touched">
+            <span *ngIf="inviteForm.get('email')?.errors?.['required']">Email is required.</span>
+            <span *ngIf="inviteForm.get('email')?.errors?.['email']">Enter a valid email address.</span>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div class="rbac-field-group">
+            <label class="rbac-label">First Name</label>
+            <input class="rbac-input" type="text" formControlName="firstName" placeholder="Jane"
+              [class.error]="inviteForm.get('firstName')?.invalid && inviteForm.get('firstName')?.touched" />
+            <div class="rbac-field-error"
+              *ngIf="inviteForm.get('firstName')?.invalid && inviteForm.get('firstName')?.touched">
+              Max 50 characters.
+            </div>
+          </div>
+          <div class="rbac-field-group">
+            <label class="rbac-label">Last Name</label>
+            <input class="rbac-input" type="text" formControlName="lastName" placeholder="Smith"
+              [class.error]="inviteForm.get('lastName')?.invalid && inviteForm.get('lastName')?.touched" />
+            <div class="rbac-field-error"
+              *ngIf="inviteForm.get('lastName')?.invalid && inviteForm.get('lastName')?.touched">
+              Max 50 characters.
+            </div>
+          </div>
+        </div>
+        <div class="rbac-field-group">
+          <label class="rbac-label">Phone
+            <span style="color:var(--text-light);font-weight:400">(optional)</span>
+          </label>
+          <input class="rbac-input" type="tel" formControlName="phone" placeholder="+91 98765 43210"
+            [class.error]="inviteForm.get('phone')?.invalid && inviteForm.get('phone')?.touched" />
+          <div class="rbac-field-error"
+            *ngIf="inviteForm.get('phone')?.invalid && inviteForm.get('phone')?.touched">
+            Enter a valid phone number (e.g. +91 98765 43210).
+          </div>
+        </div>
+        <div class="rbac-field-group">
+          <label class="rbac-label">Role</label>
+          <div class="rbac-invite-role-display">
+            <div class="rbac-role-avatar" [style.background]="selectedRole()?.color + '18'"
+              [style.color]="selectedRole()?.color">
+              {{ selectedRole()?.name?.charAt(0) }}
+            </div>
+            {{ selectedRole()?.name }}
+          </div>
+        </div>
+        <div class="rbac-member-drawer-hint">
+          An invitation email with login credentials will be sent to this address.
+        </div>
+        <div class="rbac-drawer-footer">
+          <button type="button" class="rbac-btn-ghost" (click)="closeMemberDrawer()">Cancel</button>
+          <button type="submit" class="rbac-btn-primary" [disabled]="memberSaving()">
+            <span *ngIf="memberSaving()" class="rbac-spinner"></span>
+            {{ memberSaving() ? 'Sending…' : 'Send Invitation' }}
+          </button>
+        </div>
+      </form>
+
+      <!-- Assign form -->
+      <form *ngIf="memberDrawerMode() === 'assign'" [formGroup]="assignForm" (ngSubmit)="sendAssign()">
+        <div class="rbac-field-group">
+          <label class="rbac-label">Email Address <span class="rbac-req">*</span></label>
+          <input class="rbac-input" type="email" formControlName="email" placeholder="existing@user.com"
+            [class.error]="assignForm.get('email')?.invalid && assignForm.get('email')?.touched" />
+          <div class="rbac-field-error"
+            *ngIf="assignForm.get('email')?.invalid && assignForm.get('email')?.touched">
+            <span *ngIf="assignForm.get('email')?.errors?.['required']">Email is required.</span>
+            <span *ngIf="assignForm.get('email')?.errors?.['email']">Enter a valid email address.</span>
+          </div>
+        </div>
+        <div class="rbac-field-group">
+          <label class="rbac-label">Role</label>
+          <div class="rbac-invite-role-display">
+            <div class="rbac-role-avatar" [style.background]="selectedRole()?.color + '18'"
+              [style.color]="selectedRole()?.color">
+              {{ selectedRole()?.name?.charAt(0) }}
+            </div>
+            {{ selectedRole()?.name }}
+          </div>
+        </div>
+        <div class="rbac-member-drawer-hint">
+          The user must already have a registered account. They'll be notified by email and can
+          log in immediately with their existing credentials.
+        </div>
+        <div class="rbac-drawer-footer">
+          <button type="button" class="rbac-btn-ghost" (click)="closeMemberDrawer()">Cancel</button>
+          <button type="submit" class="rbac-btn-primary" [disabled]="memberSaving()">
+            <span *ngIf="memberSaving()" class="rbac-spinner"></span>
+            {{ memberSaving() ? 'Assigning…' : 'Add to Team' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ── Reassign Role Drawer ────────────────────────────────── -->
+  <div class="rbac-backdrop" [class.open]="reassignDrawerOpen()" (click)="closeReassignDrawer()"></div>
+  <div class="rbac-drawer" [class.open]="reassignDrawerOpen()">
+    <div class="rbac-drawer-header">
+      <div class="rbac-drawer-title">
+        <div class="rbac-drawer-title-icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="17 1 21 5 17 9" />
+            <path d="M3 11V9a4 4 0 0 1 4-4h14" />
+          </svg>
+        </div>
+        Reassign Role
+      </div>
+      <button class="rbac-drawer-close" (click)="closeReassignDrawer()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+          stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18" />
+          <line x1="6" y1="6" x2="18" y2="18" />
+        </svg>
+      </button>
+    </div>
+    <div class="rbac-drawer-body">
+      <p class="rbac-reassign-hint">
+        Reassigning <strong>{{ reassignTarget()?.email }}</strong>. Pick a new role:
+      </p>
+      <div class="rbac-reassign-role-list">
+        <div *ngFor="let r of roles()" class="rbac-reassign-role-option"
+          [class.selected]="reassignRoleId() === r.id" [class.current]="r.id === reassignTarget()?.rbacRoleId"
+          (click)="reassignRoleId.set(r.id)">
+          <div class="rbac-role-avatar" [style.background]="r.color + '18'" [style.color]="r.color">
+            {{ r.name.charAt(0) }}
+          </div>
+          <div style="flex:1;min-width:0">
+            <div class="rbac-role-card-name">{{ r.name }}</div>
+            <div class="rbac-role-card-meta">{{ getRolePermissionSummary(r) }}</div>
+          </div>
+          <span *ngIf="r.id === reassignTarget()?.rbacRoleId" class="rbac-current-tag">Current</span>
+        </div>
+      </div>
+      <div class="rbac-drawer-footer">
+        <button type="button" class="rbac-btn-ghost" (click)="closeReassignDrawer()">Cancel</button>
+        <button class="rbac-btn-primary" [disabled]="!reassignRoleId() || reassigning()"
+          (click)="confirmReassign()">
+          <span *ngIf="reassigning()" class="rbac-spinner"></span>
+          {{ reassigning() ? 'Saving…' : 'Reassign Role' }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Remove Confirm Modal ──────────────────────────────────── -->
+  <div class="rbac-modal-backdrop" [class.open]="removeMemberTarget() !== null" (click)="cancelRemoveMember()">
+  </div>
+  <div class="rbac-modal" [class.open]="removeMemberTarget() !== null">
+    <div class="rbac-modal-icon">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+        stroke-linecap="round" stroke-linejoin="round">
+        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+        <circle cx="9" cy="7" r="4" />
+        <line x1="23" y1="18" x2="17" y2="18" />
+      </svg>
+    </div>
+    <h3 class="rbac-modal-title">Remove Member</h3>
+    <p class="rbac-modal-body">
+      <strong>{{ removeMemberTarget()?.email }}</strong> will lose all access to this team immediately.
+    </p>
+    <div class="rbac-modal-actions">
+      <button class="rbac-btn-ghost" (click)="cancelRemoveMember()">Cancel</button>
+      <button class="rbac-btn-danger" (click)="doRemoveMember()">Remove Member</button>
+    </div>
+  </div>
+
+  <!-- ── Role Drawer Backdrop ───────────────────────────────────────── -->
+  <div class="rbac-backdrop" [class.open]="drawerOpen()" (click)="closeDrawer()"></div>
+
+  <!-- ── Role Create/Edit Drawer ────────────────────────────────────── -->
+  <div class="rbac-drawer" [class.open]="drawerOpen()">
+    <div class="rbac-drawer-header">
+      <div class="rbac-drawer-title">
+        <div class="rbac-drawer-title-icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="11" width="18" height="11" rx="2" />
+            <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+          </svg>
+        </div>
+        {{ drawerMode() === 'create' ? 'Create New Role' : 'Edit Role' }}
+      </div>
+      <button class="rbac-drawer-close" (click)="closeDrawer()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+          stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18" />
+          <line x1="6" y1="6" x2="18" y2="18" />
+        </svg>
+      </button>
+    </div>
+
+    <div class="rbac-drawer-body">
+      <form [formGroup]="form" (ngSubmit)="saveRole()">
+
+        <div class="rbac-field-group">
+          <label class="rbac-label">Role Name <span class="rbac-req">*</span></label>
+          <input class="rbac-input" type="text" formControlName="name" placeholder="e.g. Finance Lead"
+            [class.error]="form.get('name')?.invalid && form.get('name')?.touched" />
+          <div class="rbac-field-error" *ngIf="form.get('name')?.invalid && form.get('name')?.touched">
+            <span *ngIf="form.get('name')?.errors?.['required']">Role name is required.</span>
+            <span *ngIf="form.get('name')?.errors?.['minlength']">Minimum 2 characters.</span>
+            <span *ngIf="form.get('name')?.errors?.['maxlength']">Maximum 40 characters.</span>
+          </div>
+        </div>
+
+        <div class="rbac-field-group">
+          <label class="rbac-label">Description</label>
+          <textarea class="rbac-input rbac-textarea" formControlName="description"
+            placeholder="What can users with this role do?" rows="2"
+            [class.error]="form.get('description')?.invalid && form.get('description')?.touched"></textarea>
+          <div class="rbac-field-error" *ngIf="form.get('description')?.invalid && form.get('description')?.touched">
+            Maximum 200 characters.
+          </div>
+        </div>
+
+        <div class="rbac-field-group">
+          <label class="rbac-label">Role Color</label>
+          <div class="rbac-color-picker">
+            <div *ngFor="let c of roleColors" class="rbac-color-swatch"
+              [class.selected]="form.get('color')?.value === c" [style.background]="c"
+              (click)="form.patchValue({ color: c })"></div>
+          </div>
+        </div>
+
+        <div class="rbac-drawer-section-label">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="11" width="18" height="11" rx="2" />
+            <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+          </svg>
+          Page Permissions
+          <span class="rbac-perm-count-badge">{{ getPermissionCount() }}</span>
+        </div>
+
+        <div class="rbac-drawer-perm-builder">
+          <div *ngFor="let cat of categoryEntries()" class="rbac-drawer-cat">
+            <div class="rbac-drawer-cat-label">{{ categoryLabels[cat[0]] }}</div>
+            <div class="rbac-drawer-page-row" *ngFor="let page of cat[1]; trackBy: trackByKey">
+              <div class="rbac-drawer-page-top">
+                <label class="rbac-checkbox-wrap">
+                  <div class="rbac-checkbox" [class.checked]="isPagePartialAccess(page.key)"
+                    [class.full]="isPageFullAccess(page.key, page)" (click)="toggleAllOnPage(page.key, page)">
+                    <svg *ngIf="isPageFullAccess(page.key, page)" width="10" height="10" viewBox="0 0 24 24" fill="none"
+                      stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                    <span *ngIf="isPagePartialAccess(page.key) && !isPageFullAccess(page.key, page)"
+                      class="rbac-partial-dash"></span>
+                  </div>
+                  <span class="rbac-drawer-page-icon" [innerHTML]="page.icon"></span>
+                  <span class="rbac-drawer-page-name">{{ page.label }}</span>
+                </label>
+              </div>
+              <div class="rbac-drawer-action-chips"
+                *ngIf="isPagePartialAccess(page.key) || isPageFullAccess(page.key, page)">
+                <button type="button" *ngFor="let action of page.availableActions" class="rbac-action-chip"
+                  [class.active]="hasPermission(page.key, action)"
+                  [class.locked]="action === 'view' && hasPermission(page.key, 'view') && draftPermissions().get(page.key)!.size > 1"
+                  (click)="togglePermission(page.key, action)">
+                  {{ actionLabels[action] }}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="rbac-drawer-footer">
+          <button type="button" class="rbac-btn-ghost" (click)="closeDrawer()">Cancel</button>
+          <button type="submit" class="rbac-btn-primary" [disabled]="saving()">
+            <svg *ngIf="!saving()" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="20 6 9 17 4 12" />
+            </svg>
+            <span *ngIf="saving()" class="rbac-spinner"></span>
+            {{ saving() ? 'Saving…' : (drawerMode() === 'create' ? 'Create Role' : 'Save Changes') }}
+          </button>
+        </div>
+
+      </form>
+    </div>
+  </div>
+
+  <!-- ── Delete Confirm Modal ──────────────────────────────────── -->
+  <div class="rbac-modal-backdrop" [class.open]="deleteConfirmId() !== null" (click)="cancelDelete()"></div>
+  <div class="rbac-modal" [class.open]="deleteConfirmId() !== null">
+    <div class="rbac-modal-icon">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+        stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="3 6 5 6 21 6" />
+        <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+      </svg>
+    </div>
+    <h3 class="rbac-modal-title">Delete Role</h3>
+    <p class="rbac-modal-body">This will permanently remove the role. Members assigned to it will lose access
+      immediately. This cannot be undone.</p>
+    <div class="rbac-modal-actions">
+      <button class="rbac-btn-ghost" (click)="cancelDelete()">Cancel</button>
+      <button class="rbac-btn-danger" (click)="deleteRole()">Delete Role</button>
+    </div>
+  </div>
+
+  <!-- ── Toast ─────────────────────────────────────────────────── -->
+  <div class="rbac-toast" [class.visible]="toast() !== null" [class.success]="toast()?.type === 'success'"
+    [class.error]="toast()?.type === 'error'">
+    <svg *ngIf="toast()?.type === 'success'" width="15" height="15" viewBox="0 0 24 24" fill="none"
+      stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="20 6 9 17 4 12" />
+    </svg>
+    <svg *ngIf="toast()?.type === 'error'" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="10" />
+      <line x1="12" y1="8" x2="12" y2="12" />
+      <line x1="12" y1="16" x2="12.01" y2="16" />
+    </svg>
+    {{ toast()?.message }}
+  </div>
+
+</div>

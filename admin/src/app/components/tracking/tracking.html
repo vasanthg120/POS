@@ -1,0 +1,1008 @@
+<!-- tracking.component.html — Enterprise v5 -->
+<div class="shell">
+
+  <!-- ══ HEADER ══ -->
+  <header class="page-header">
+    <div class="page-header-inner">
+      <div class="header-left">
+        <div class="brand-mark">
+          <svg viewBox="0 0 22 22" fill="none">
+            <path d="M3 16l5-6 3.5 3.5 5.5-9" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+              stroke-linejoin="round" />
+            <path d="M20 20H2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+          </svg>
+        </div>
+        <div class="header-title-block">
+          <h1 class="header-title">Quotation Tracking</h1>
+          <span class="header-breadcrumb">Dashboard · Pipeline · Payments</span>
+        </div>
+      </div>
+
+      <div class="header-right">
+        <div class="live-pill">
+          <span class="live-dot"></span>
+          <span>Live</span>
+          <span class="live-sep">·</span>
+          <span class="live-time">{{ lastUpdated }}</span>
+        </div>
+
+        <div class="hdr-action-group">
+          <button class="hdr-btn hdr-btn--ghost" (click)="onRefresh()" title="Refresh">
+            <svg viewBox="0 0 16 16" fill="none" width="14" height="14">
+              <path d="M1 8A7 7 0 0 0 13 12.5M15 8A7 7 0 0 0 3 3.5" stroke="currentColor" stroke-width="1.5"
+                stroke-linecap="round" />
+              <path d="M15 4v4h-4M1 12V8h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+                stroke-linejoin="round" />
+            </svg>
+            <span class="btn-text">Refresh</span>
+          </button>
+
+          <button class="hdr-btn hdr-btn--sync" (click)="onSyncRazorpay()" [disabled]="isSyncing">
+            <svg viewBox="0 0 16 16" fill="none" width="14" height="14" [class.btn-spin]="isSyncing">
+              <rect x="1" y="3" width="14" height="10" rx="2" stroke="currentColor" stroke-width="1.4" />
+              <path d="M1 6.5h14" stroke="currentColor" stroke-width="1.4" />
+              <circle cx="4.5" cy="10" r="1" fill="currentColor" />
+              <path d="M7 10h4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" />
+            </svg>
+            <span class="btn-text">{{ isSyncing ? 'Syncing…' : 'Sync Razorpay' }}</span>
+          </button>
+
+          <button class="hdr-btn hdr-btn--primary" (click)="exportCSV()">
+            <svg viewBox="0 0 16 16" fill="none" width="14" height="14">
+              <path d="M8 2v9M5 8l3 3 3-3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+                stroke-linejoin="round" />
+              <path d="M2 13v1.5A.5.5 0 0 0 2.5 15h11a.5.5 0 0 0 .5-.5V13" stroke="currentColor" stroke-width="1.5"
+                stroke-linecap="round" />
+            </svg>
+            <span class="btn-text">Export CSV</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="page-body">
+
+    <!-- ══ KPI STRIP ══ -->
+    <section class="kpi-strip">
+      <ng-container *ngIf="isLoading">
+        <div class="kpi-card kpi-skeleton" *ngFor="let _ of skeletonRows; trackBy: trackByIdx"></div>
+      </ng-container>
+
+      <ng-container *ngIf="!isLoading">
+
+        <div class="kpi-card kpi-card--hero">
+          <div class="kpi-icon-wrap kpi-icon--blue">
+            <svg viewBox="0 0 18 18" fill="none" width="16" height="16">
+              <path d="M3 4h12M3 8h12M3 12h7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+            </svg>
+          </div>
+          <div class="kpi-body">
+            <div class="kpi-label">Total Quotes</div>
+            <div class="kpi-value">{{ stats.total | number }}</div>
+            <div class="kpi-sub">Avg {{ fmtINR(stats.avgDealSize) }} per deal</div>
+          </div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-icon-wrap kpi-icon--emerald">
+            <svg viewBox="0 0 18 18" fill="none" width="16" height="16">
+              <path
+                d="M9 2v14M5.5 5.5C5.5 4.2 7 3 9 3s3.5 1.2 3.5 2.5S11.5 8 9 8 5.5 9.3 5.5 10.8 7 13 9 13s3.5-1.2 3.5-2.5"
+                stroke="currentColor" stroke-width="1.4" stroke-linecap="round" />
+            </svg>
+          </div>
+          <div class="kpi-body">
+            <div class="kpi-label">Revenue Collected</div>
+            <div class="kpi-value">{{ fmtINR(stats.totalRevenue) }}</div>
+            <div class="kpi-sub kpi-sub--ok">{{ stats.paidCount }} fully paid</div>
+          </div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-icon-wrap kpi-icon--teal">
+            <svg viewBox="0 0 18 18" fill="none" width="16" height="16">
+              <path d="M2 13l4.5-5.5 3 3 5-7" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"
+                stroke-linejoin="round" />
+            </svg>
+          </div>
+          <div class="kpi-body">
+            <div class="kpi-label">Conversion Rate</div>
+            <div class="kpi-value">{{ stats.conversionRate }}%</div>
+            <div class="kpi-sub">Quote → Paid</div>
+          </div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-icon-wrap kpi-icon--amber">
+            <svg viewBox="0 0 18 18" fill="none" width="16" height="16">
+              <circle cx="9" cy="9" r="7" stroke="currentColor" stroke-width="1.4" />
+              <path d="M9 5.5v3.5l2.5 1.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" />
+            </svg>
+          </div>
+          <div class="kpi-body">
+            <div class="kpi-label">Pending Revenue</div>
+            <div class="kpi-value">{{ fmtINR(stats.pendingRevenue) }}</div>
+            <div class="kpi-sub kpi-sub--warn">{{ stats.pendingCount }} pending</div>
+          </div>
+        </div>
+
+        <div class="kpi-card" [class.kpi-card--alert]="stats.overdueCount > 0">
+          <div class="kpi-icon-wrap kpi-icon--rose">
+            <svg viewBox="0 0 18 18" fill="none" width="16" height="16">
+              <path d="M9 2L2 16h14L9 2z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round" />
+              <path d="M9 8v3.5M9 13.5v.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" />
+            </svg>
+          </div>
+          <div class="kpi-body">
+            <div class="kpi-label">Overdue</div>
+            <div class="kpi-value">{{ fmtINR(stats.overdueRevenue) }}</div>
+            <div class="kpi-sub kpi-sub--err">{{ stats.overdueCount }} overdue</div>
+          </div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-icon-wrap kpi-icon--violet">
+            <svg viewBox="0 0 18 18" fill="none" width="16" height="16">
+              <rect x="2" y="4" width="14" height="10" rx="2" stroke="currentColor" stroke-width="1.4" />
+              <path d="M2 7.5h14" stroke="currentColor" stroke-width="1.3" />
+              <circle cx="5.5" cy="11" r="1" fill="currentColor" />
+            </svg>
+          </div>
+          <div class="kpi-body">
+            <div class="kpi-label">Failed / Partial</div>
+            <div class="kpi-value">{{ stats.failedCount + stats.partialCount }}</div>
+            <div class="kpi-sub">
+              <span class="kpi-sub--err">{{ stats.failedCount }} failed</span>
+              <span class="kpi-sep">·</span>
+              <span>{{ stats.partialCount }} partial</span>
+            </div>
+          </div>
+        </div>
+
+      </ng-container>
+    </section>
+
+    <!-- ══ ANALYTICS ROW ══ -->
+    <section class="analytics-row" *ngIf="!isLoading">
+
+      <div class="analytics-card">
+        <div class="analytics-card-head">
+          <span class="analytics-title">Payment Status</span>
+        </div>
+        <div class="sbar-list">
+          <div class="sbar-row" *ngFor="let s of paymentStatusList; trackBy: trackByKey">
+            <span class="sbar-label">{{ s.label }}</span>
+            <div class="sbar-track">
+              <div class="sbar-fill" [ngClass]="'sfill--' + s.key" [style.width.%]="getPayPercent(s.key)"></div>
+            </div>
+            <span class="sbar-count">{{ getPayCount(s.key) }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="analytics-card">
+        <div class="analytics-card-head">
+          <span class="analytics-title">Payment Methods</span>
+        </div>
+        <div class="sbar-list">
+          <div class="sbar-row" *ngFor="let m of methodList; trackBy: trackByIdx">
+            <span class="sbar-label">{{ m }}</span>
+            <div class="sbar-track">
+              <div class="sbar-fill sfill--method" [style.width.%]="getMethodPercent(m)"></div>
+            </div>
+            <span class="sbar-count">{{ getMethodCount(m) }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="analytics-card analytics-card--wide">
+        <div class="analytics-card-head">
+          <span class="analytics-title">Quotation Pipeline</span>
+        </div>
+        <div class="pipeline-wrap">
+          <div class="pipeline-col" *ngFor="let s of pipelineStages; trackBy: trackByVal">
+            <div class="pipe-count">{{ getQuotCount(s.value) }}</div>
+            <div class="pipe-bar-track">
+              <div class="pipe-bar" [ngClass]="s.cls" [style.height.%]="getPipelinePercent(s.value)"></div>
+            </div>
+            <div class="pipe-label">{{ s.label }}</div>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ══ FILTERS ══ -->
+    <div class="filter-panel">
+      <div class="filter-toggle" (click)="toggleFilters()">
+        <div class="filter-toggle-left">
+          <svg viewBox="0 0 16 16" fill="none" width="14" height="14">
+            <path d="M2 4h12M4 8h8M6 12h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+          </svg>
+          <span>Filters &amp; Search</span>
+          <span class="active-pill" *ngIf="activeFilterCount > 0">{{ activeFilterCount }} active</span>
+        </div>
+        <svg viewBox="0 0 10 10" fill="none" width="10" height="10" [class.rotated]="!filtersCollapsed">
+          <path d="M2 3.5l3 3 3-3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" />
+        </svg>
+      </div>
+
+      <div class="filter-body" [class.collapsed]="filtersCollapsed">
+
+        <div class="search-row">
+          <div class="search-wrap">
+            <svg viewBox="0 0 16 16" fill="none" class="search-icon">
+              <circle cx="7" cy="7" r="5" stroke="currentColor" stroke-width="1.4" />
+              <path d="M11 11l3.5 3.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" />
+            </svg>
+            <input type="text" [(ngModel)]="searchQuery" class="search-input"
+              placeholder="Search customer, email, ticket, quote name, bank ref…" (input)="applyFilters()"
+              (keyup.enter)="applyFilters()" />
+            <button class="search-clear-btn" *ngIf="searchQuery" (click)="searchQuery = ''; applyFilters()">
+              <svg viewBox="0 0 10 10" fill="none" width="10" height="10">
+                <path d="M1.5 1.5l7 7M8.5 1.5l-7 7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="filter-chips-grid">
+          <div class="fchip-group">
+            <span class="fchip-label">Payment Status</span>
+            <div class="fchip-row">
+              <button class="fchip" *ngFor="let s of paymentStatusOptions; trackBy: trackByVal"
+                [class.fchip--active]="activePaymentStatus === s.value" (click)="setPayFilter(s.value)">
+                <span class="fchip-dot" [ngClass]="'fdot--' + s.color" *ngIf="s.color"></span>
+                {{ s.label }}
+              </button>
+            </div>
+          </div>
+
+          <div class="fchip-group">
+            <span class="fchip-label">Quotation Stage</span>
+            <div class="fchip-row">
+              <button class="fchip" *ngFor="let s of quotationStatusOptions; trackBy: trackByVal"
+                [class.fchip--active]="activeQuotationStatus === s.value" (click)="setQuotFilter(s.value)">{{ s.label
+                }}</button>
+            </div>
+          </div>
+
+          <div class="fchip-group">
+            <span class="fchip-label">Method</span>
+            <div class="fchip-row">
+              <button class="fchip" *ngFor="let m of paymentMethodOptions; trackBy: trackByVal"
+                [class.fchip--active]="activePaymentMethod === m.value" (click)="setMethodFilter(m.value)">{{ m.label
+                }}</button>
+            </div>
+          </div>
+
+          <div class="fchip-group">
+            <span class="fchip-label">Quick Range</span>
+            <div class="fchip-row">
+              <button class="fchip" *ngFor="let r of rangeOptions; trackBy: trackByVal"
+                [class.fchip--active]="activeRange === r.value" (click)="applyRange(r.value)">{{ r.label }}</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="filter-bottom-row">
+          <div class="date-range-group">
+            <span class="fchip-label">Date Range</span>
+            <div class="range-inputs">
+              <div class="range-field">
+                <label>From</label>
+                <input type="date" [(ngModel)]="dateFrom" class="range-input" (change)="applyFilters()" />
+              </div>
+              <span class="range-arrow">→</span>
+              <div class="range-field">
+                <label>To</label>
+                <input type="date" [(ngModel)]="dateTo" class="range-input" (change)="applyFilters()" />
+              </div>
+            </div>
+          </div>
+
+          <div class="date-range-group">
+            <span class="fchip-label">Amount (₹)</span>
+            <div class="range-inputs">
+              <div class="range-field">
+                <label>Min</label>
+                <input type="number" [(ngModel)]="minAmount" class="range-input" placeholder="0"
+                  (change)="applyFilters()" style="max-width:100px" />
+              </div>
+              <span class="range-arrow">—</span>
+              <div class="range-field">
+                <label>Max</label>
+                <input type="number" [(ngModel)]="maxAmount" class="range-input" placeholder="Any"
+                  (change)="applyFilters()" style="max-width:100px" />
+              </div>
+            </div>
+          </div>
+
+          <button class="reset-btn" (click)="resetFilters()">
+            <svg viewBox="0 0 14 14" fill="none" width="12" height="12">
+              <path d="M1.5 7A5.5 5.5 0 0 0 11 10.5M12.5 7A5.5 5.5 0 0 0 3 3.5" stroke="currentColor" stroke-width="1.3"
+                stroke-linecap="round" />
+              <path d="M1.5 4v3.5h3.5M12.5 10V6.5H9" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"
+                stroke-linejoin="round" />
+            </svg>
+            Reset All
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ TABLE ══ -->
+    <div class="table-panel">
+      <div class="table-header">
+        <div class="table-header-left">
+          <span class="table-title">Quotations &amp; Payments</span>
+          <span class="record-count" *ngIf="!isLoading">
+            {{ filteredRecords.length | number }} records
+          </span>
+        </div>
+        <div class="table-header-right">
+          <div class="per-page-wrap">
+            <label>Show</label>
+            <select [(ngModel)]="pageSize" (change)="onPageSizeChange()" class="per-page-select">
+              <option [value]="10">10</option>
+              <option [value]="20">20</option>
+              <option [value]="50">50</option>
+              <option [value]="100">100</option>
+            </select>
+          </div>
+          <button class="icon-action-btn" (click)="exportCSV()" title="Export CSV">
+            <svg viewBox="0 0 14 14" fill="none" width="13" height="13">
+              <path d="M7 1v8M4.5 6.5l2.5 2.5 2.5-2.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"
+                stroke-linejoin="round" />
+              <path d="M2 11v1.5h10V11" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" />
+            </svg>
+            CSV
+          </button>
+        </div>
+      </div>
+
+      <!-- Loading bar -->
+      <div class="load-bar" *ngIf="isLoading">
+        <div class="load-bar-fill"></div>
+      </div>
+
+      <!-- Empty state -->
+      <div class="empty-state" *ngIf="!isLoading && filteredRecords.length === 0">
+        <div class="empty-icon-wrap">
+          <svg viewBox="0 0 48 48" fill="none" width="32" height="32">
+            <rect x="6" y="12" width="36" height="28" rx="4" stroke="currentColor" stroke-width="1.4" />
+            <path d="M6 20h36" stroke="currentColor" stroke-width="1.4" />
+            <circle cx="16" cy="30" r="2.5" stroke="currentColor" stroke-width="1.2" />
+            <path d="M22 28h10M22 32h7" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" />
+          </svg>
+        </div>
+        <div class="empty-title">No records found</div>
+        <div class="empty-sub">Try adjusting your filters or search query</div>
+        <button class="reset-btn" style="margin-top:12px; margin-left:auto; margin-right:auto;"
+          (click)="resetFilters()">Clear filters</button>
+      </div>
+
+      <!-- Table -->
+      <div class="table-scroll" *ngIf="!isLoading && pagedRecords.length > 0">
+        <table class="data-tbl">
+          <thead>
+            <tr>
+              <th class="th-sort" (click)="sortBy('customerName')">
+                Customer <span class="sort-ico">{{ sortIcon('customerName') }}</span>
+              </th>
+              <th>Quote No #</th>
+              <th>Quote Name</th>
+              <th class="th-sort text-right" (click)="sortBy('amount')">
+                Amount <span class="sort-ico">{{ sortIcon('amount') }}</span>
+              </th>
+              <th class="text-right">Balance</th>
+              <th>Status</th>
+              <th>Method</th>
+              <th>Stage</th>
+              <th class="th-sort" (click)="sortBy('createdAt')">
+                Created <span class="sort-ico">{{ sortIcon('createdAt') }}</span>
+              </th>
+              <th class="text-center">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let r of pagedRecords; trackBy: trackById" [class.row--overdue]="isOverdue(r)"
+              (click)="openDrawer(r)">
+
+              <td>
+                <div class="cust-cell">
+                  <div class="cust-av" [style.background]="avatarColor(r.customerName)">
+                    {{ initials(r.customerName) }}
+                  </div>
+                  <div class="cust-info">
+                    <div class="cust-name">{{ r.customerName }}</div>
+                    <div class="cust-email">{{ r.customerEmail }}</div>
+                  </div>
+                </div>
+              </td>
+
+              <td><code class="ticket-code">{{ r.ticketNumber }}</code></td>
+
+              <td class="quote-cell" [title]="r.quoteName">{{ r.quoteName || '—' }}</td>
+
+              <td class="text-right">
+                <div class="amount-wrap">
+                  <span class="amount-main">{{ fmtINR(r.amount) }}</span>
+                  <span class="amount-sub" *ngIf="r.paymentStatus === 'partially_paid'">
+                    {{ fmtINR(r.paidAmount) }} paid
+                  </span>
+                </div>
+              </td>
+
+              <td class="text-right">
+                <span class="balance-cell" [class.balance--zero]="r.paymentStatus === 'paid'"
+                  [class.balance--overdue]="isOverdue(r)">
+                  {{ r.paymentStatus === 'paid' ? '—' : fmtINR(r.amount - (r.paidAmount || 0)) }}
+                </span>
+              </td>
+
+              <td>
+                <div class="status-group">
+                  <span class="pay-badge" [ngClass]="'pbadge--' + r.paymentStatus">
+                    <span class="pay-pulse" *ngIf="r.paymentStatus === 'pending'"></span>
+                    {{ payLabel(r.paymentStatus) }}
+                  </span>
+                  <span class="auto-tag" *ngIf="r._paymentId && !r._adminOverride" title="Auto-synced">
+                    <svg viewBox="0 0 8 8" fill="none" width="8" height="8">
+                      <path d="M0.5 4a3.5 3.5 0 0 0 5.7 2.7M7.5 4a3.5 3.5 0 0 0-5.7-2.7" stroke="currentColor"
+                        stroke-width="1.2" stroke-linecap="round" />
+                      <path d="M7.5 1.5V4H5M0.5 6.5V4H3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"
+                        stroke-linejoin="round" />
+                    </svg>
+                    Auto
+                  </span>
+                </div>
+              </td>
+
+              <td>
+                <span class="method-tag" *ngIf="r.paymentMethod">{{ r.paymentMethod }}</span>
+                <span class="method-tag method-tag--na" *ngIf="!r.paymentMethod">—</span>
+              </td>
+
+              <td>
+                <span class="stage-badge" [ngClass]="'sbadge--' + formatStatusClass(r.quotationStatus)">
+                  {{ r.quotationStatus }}
+                </span>
+              </td>
+
+              <td class="date-cell" (click)="$event.stopPropagation()">
+                <div class="date-main">{{ fmtDateShort(r.createdAt) }}</div>
+                <div class="date-time">{{ fmtTime(r.createdAt) }}</div>
+                <span class="overdue-tag" *ngIf="isOverdue(r)">{{ daysOverdue(r) }}d overdue</span>
+              </td>
+
+              <td class="text-center" (click)="$event.stopPropagation()">
+                <div class="action-btns">
+                  <button class="act-btn act-btn--eye" title="View" (click)="openDrawer(r)">
+                    <svg viewBox="0 0 12 12" fill="none" width="12" height="12">
+                      <path d="M1 6s2-4 5-4 5 4 5 4-2 4-5 4-5-4-5-4z" stroke="currentColor" stroke-width="1.2" />
+                      <circle cx="6" cy="6" r="1.5" stroke="currentColor" stroke-width="1.2" />
+                    </svg>
+                  </button>
+                  <button class="act-btn act-btn--copy" title="Copy ticket #" (click)="copy(r.ticketNumber)">
+                    <svg viewBox="0 0 12 12" fill="none" width="12" height="12">
+                      <rect x="3.5" y="3.5" width="7" height="7" rx="1.2" stroke="currentColor" stroke-width="1.2" />
+                      <path d="M1.5 8.5V1.5h7" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"
+                        stroke-linejoin="round" />
+                    </svg>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination -->
+      <div class="pagination" *ngIf="totalPages > 1">
+        <div class="page-info">
+          Showing <strong>{{ (currentPage - 1) * pageSize + 1 }}–{{ Math.min(currentPage * pageSize,
+            filteredRecords.length) }}</strong>
+          of <strong>{{ filteredRecords.length | number }}</strong>
+        </div>
+        <div class="page-btns">
+          <button class="page-btn" [disabled]="currentPage === 1" (click)="goToPage(1)">«</button>
+          <button class="page-btn" [disabled]="currentPage === 1" (click)="goToPage(currentPage - 1)">‹</button>
+          <button class="page-btn" *ngFor="let n of visiblePages; trackBy: trackByIdx"
+            [class.page-btn--active]="n === currentPage" (click)="goToPage(n)">{{ n }}</button>
+          <button class="page-btn" [disabled]="currentPage === totalPages"
+            (click)="goToPage(currentPage + 1)">›</button>
+          <button class="page-btn" [disabled]="currentPage === totalPages" (click)="goToPage(totalPages)">»</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ TOAST ══ -->
+    <div class="toast" [class.toast--show]="showToast" [class.toast--error]="toastType === 'error'">
+      <svg viewBox="0 0 12 12" fill="none" width="12" height="12" *ngIf="toastType === 'success'">
+        <path d="M1.5 6l3 3 6-6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+          stroke-linejoin="round" />
+      </svg>
+      <svg viewBox="0 0 12 12" fill="none" width="12" height="12" *ngIf="toastType === 'error'">
+        <path d="M1.5 1.5l9 9M10.5 1.5l-9 9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+      </svg>
+      {{ toastMsg }}
+    </div>
+
+  </main>
+
+  <!-- ══ OVERLAY ══ -->
+  <div class="drawer-overlay" [class.is-open]="drawerOpen" (click)="closeDrawer()"></div>
+
+  <!-- ══ DETAIL DRAWER ══ -->
+  <aside class="detail-drawer" [class.is-open]="drawerOpen">
+
+    <div class="drawer-top">
+      <span class="drawer-top-title">Quotation Detail</span>
+      <div class="drawer-top-actions">
+        <button class="drawer-tab-btn" [class.active]="drawerTab === 'details'"
+          (click)="drawerTab = 'details'">Details</button>
+        <button class="drawer-tab-btn" [class.active]="drawerTab === 'payments'"
+          (click)="drawerTab = 'payments'">Payments</button>
+        <button class="drawer-tab-btn" [class.active]="drawerTab === 'timeline'"
+          (click)="drawerTab = 'timeline'">Timeline</button>
+        <button class="drawer-close" (click)="closeDrawer()">
+          <svg viewBox="0 0 12 12" fill="none" width="12" height="12">
+            <path d="M2 2l8 8M10 2L2 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <ng-container *ngIf="selectedRecord">
+
+      <!-- Hero -->
+      <div class="drawer-hero">
+        <div class="hero-row">
+          <div class="hero-av" [style.background]="avatarColor(selectedRecord.customerName)">
+            {{ initials(selectedRecord.customerName) }}
+          </div>
+          <div class="hero-info">
+            <div class="hero-name">{{ selectedRecord.customerName }}</div>
+            <code class="hero-ticket">{{ selectedRecord.ticketNumber }}</code>
+          </div>
+          <div class="rzp-auto-pill" *ngIf="selectedRecord._paymentId && !selectedRecord._adminOverride">
+            <svg viewBox="0 0 10 10" fill="none" width="9" height="9">
+              <path d="M0.5 5a4.5 4.5 0 0 0 7.3 3.5M9.5 5a4.5 4.5 0 0 0-7.3-3.5" stroke="currentColor"
+                stroke-width="1.2" stroke-linecap="round" />
+            </svg>
+            Auto-synced
+          </div>
+        </div>
+
+        <div class="hero-quote-name">{{ selectedRecord.quoteName }}</div>
+        <div class="hero-amount">{{ fmtINR(selectedRecord.amount) }}</div>
+
+        <div class="hero-badges">
+          <span class="pay-badge" [ngClass]="'pbadge--' + editForm.paymentStatus">
+            {{ payLabel(editForm.paymentStatus) }}
+          </span>
+          <span class="stage-badge" [ngClass]="'sbadge--' + formatStatusClass(editForm.quotationStatus)">
+            {{ editForm.quotationStatus }}
+          </span>
+          <span class="overdue-tag" *ngIf="isOverdue(selectedRecord)">
+            {{ daysOverdue(selectedRecord) }}d overdue
+          </span>
+        </div>
+
+        <div class="pay-progress" *ngIf="selectedRecord.amount > 0">
+          <div class="pay-progress-head">
+            <span>Paid: {{ fmtINR(selectedRecord.paidAmount || 0) }}</span>
+            <span *ngIf="balanceDue > 0" class="balance-label">Balance: {{ fmtINR(balanceDue) }}</span>
+            <span *ngIf="balanceDue === 0" class="cleared-label">Fully cleared ✓</span>
+          </div>
+          <div class="pay-track">
+            <div class="pay-fill" [style.width.%]="paidPercent"></div>
+          </div>
+          <div class="pay-pct">{{ paidPercent }}%</div>
+        </div>
+      </div>
+
+      <!-- Razorpay row -->
+      <div class="rzp-row" *ngIf="rzpDetails">
+        <div class="rzp-row-head">
+          <svg viewBox="0 0 12 12" fill="none" width="12" height="12">
+            <rect x="0.5" y="2.5" width="11" height="7" rx="1.5" stroke="currentColor" stroke-width="1.2" />
+            <path d="M0.5 5h11" stroke="currentColor" stroke-width="1.2" />
+            <circle cx="3.5" cy="8" r="0.8" fill="currentColor" />
+          </svg>
+          Razorpay
+        </div>
+        <div class="rzp-tags">
+          <span class="rzp-tag" *ngIf="rzpDetails.bank">🏦 {{ rzpDetails.bank }}</span>
+          <span class="rzp-tag" *ngIf="rzpDetails.vpa">📱 {{ rzpDetails.vpa }}</span>
+          <span class="rzp-tag" *ngIf="rzpDetails.wallet">👜 {{ rzpDetails.wallet }}</span>
+          <span class="rzp-tag rzp-tag--method" *ngIf="rzpDetails.method">{{ rzpMethodLabel(rzpDetails.method) }}</span>
+          <span class="rzp-tag rzp-tag--fee" *ngIf="rzpDetails.fee">Fee: {{ fmtINR(rzpDetails.fee / 100) }}</span>
+          <span class="rzp-tag" [class.rzp-tag--ok]="rzpDetails.captured" [class.rzp-tag--warn]="!rzpDetails.captured">
+            {{ rzpDetails.captured ? '✓ Captured' : '⚠ Not captured' }}
+          </span>
+        </div>
+      </div>
+
+      <!-- ─ DETAILS TAB ─ -->
+      <div class="drawer-body" *ngIf="drawerTab === 'details'">
+
+        <div class="dsect">
+          <div class="dsect-title">Customer</div>
+          <div class="drow"><span class="dk">Name</span><span class="dv">{{ selectedRecord.customerName }}</span></div>
+          <div class="drow">
+            <span class="dk">Email</span>
+            <a class="dv-link" [href]="'mailto:' + selectedRecord.customerEmail">{{ selectedRecord.customerEmail }}</a>
+          </div>
+          <div class="drow" *ngIf="selectedRecord.customerPhone">
+            <span class="dk">Phone</span>
+            <a class="dv-link" [href]="'tel:' + selectedRecord.customerPhone">{{ selectedRecord.customerPhone }}</a>
+          </div>
+        </div>
+
+        <div class="dsect">
+          <div class="dsect-title">Quotation Stage</div>
+          <div class="stage-picker">
+            <button class="stage-pick-btn" *ngFor="let s of stageWorkflow; trackBy: trackByVal"
+              [class.active]="editForm.quotationStatus === s.value"
+              [ngClass]="editForm.quotationStatus === s.value ? s.cls : ''"
+              (click)="editForm.quotationStatus = s.value">
+              {{ s.label }}
+            </button>
+          </div>
+        </div>
+
+        <div class="dsect">
+          <div class="dsect-title">Payment Details</div>
+
+          <div class="ef">
+            <label>Payment Status</label>
+            <select [(ngModel)]="editForm.paymentStatus">
+              <option value="pending">Pending</option>
+              <option value="paid">Paid (Full)</option>
+              <option value="partially_paid">Partially Paid</option>
+              <option value="failed">Failed</option>
+              <option value="refunded">Refunded</option>
+            </select>
+          </div>
+
+          <div class="ef" *ngIf="editForm.paymentStatus === 'partially_paid'">
+            <label>Amount Paid So Far (₹)</label>
+            <input type="number" [(ngModel)]="editForm.paidAmount" [placeholder]="selectedRecord.amount" min="0"
+              [max]="selectedRecord.amount" />
+          </div>
+
+          <div class="ef">
+            <label>Payment Method</label>
+            <div class="method-row">
+              <select [(ngModel)]="editForm.paymentMethod" (ngModelChange)="onMethodChange()">
+                <option value="">— Not set —</option>
+                <option>UPI</option>
+                <option>Card</option>
+                <option>Net Banking</option>
+                <option>Cash</option>
+                <option>Bank Transfer</option>
+                <option>NEFT</option>
+                <option>RTGS</option>
+                <option>IMPS</option>
+                <option>Cheque</option>
+                <option>Wallet</option>
+                <option>EMI</option>
+              </select>
+              <button class="rzp-sync-btn" *ngIf="selectedRecord._paymentId" [disabled]="isFetchingRzp"
+                (click)="syncRazorpayDetail(selectedRecord._paymentId!)">
+                <svg viewBox="0 0 12 12" fill="none" width="12" height="12" [class.is-spinning]="isFetchingRzp">
+                  <path d="M1 6A5 5 0 0 0 9.5 9M11 6A5 5 0 0 0 2.5 3" stroke="currentColor" stroke-width="1.3"
+                    stroke-linecap="round" />
+                  <path d="M11 2.5V6H7.5M1 9.5V6H4.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"
+                    stroke-linejoin="round" />
+                </svg>
+                {{ isFetchingRzp ? 'Syncing…' : 'Sync' }}
+              </button>
+            </div>
+          </div>
+
+          <div class="bank-section" *ngIf="isManualMethod">
+            <div class="bank-section-title">Manual Payment — verification details</div>
+            <div class="ef">
+              <label>Reference / UTR / Cheque No.</label>
+              <input type="text" [(ngModel)]="editForm.bankTransferRef" placeholder="e.g. HDFC20260415X001" />
+            </div>
+            <div class="ef">
+              <label>Notes</label>
+              <textarea [(ngModel)]="editForm.bankTransferNotes" rows="2"
+                placeholder="e.g. NEFT confirmed — credited 15 Apr"></textarea>
+            </div>
+          </div>
+        </div>
+
+        <div class="dsect">
+          <div class="dsect-title">Financials</div>
+          <div class="drow"><span class="dk">Total Amount</span><span class="dv dv--strong">{{
+              fmtINR(selectedRecord.amount) }}</span></div>
+          <div class="drow">
+            <span class="dk">Paid Amount</span>
+            <span class="dv" [class.dv--ok]="(selectedRecord.paidAmount || 0) >= selectedRecord.amount">
+              {{ fmtINR(selectedRecord.paidAmount || 0) }}
+            </span>
+          </div>
+          <div class="drow" *ngIf="balanceDue > 0">
+            <span class="dk">Balance Due</span><span class="dv dv--danger">{{ fmtINR(balanceDue) }}</span>
+          </div>
+          <div class="drow"><span class="dk">Currency</span><span class="dv">{{ selectedRecord.currency || 'INR'
+              }}</span></div>
+          <div class="drow" *ngIf="selectedRecord.bankTransferRef">
+            <span class="dk">Ref / UTR</span><span class="dv dv--mono">{{ selectedRecord.bankTransferRef }}</span>
+          </div>
+          <div class="drow"><span class="dk">Created</span><span class="dv">{{ fmtDate(selectedRecord.createdAt)
+              }}</span></div>
+          <div class="drow" *ngIf="selectedRecord.paidAt">
+            <span class="dk">Paid On</span><span class="dv dv--ok">{{ fmtDate(selectedRecord.paidAt) }}</span>
+          </div>
+          <div class="drow" *ngIf="selectedRecord.expiresAt">
+            <span class="dk">Expires</span>
+            <span class="dv" [class.dv--danger]="isOverdue(selectedRecord)">
+              {{ fmtDate(selectedRecord.expiresAt) }}
+              <span *ngIf="isOverdue(selectedRecord)"> ({{ daysOverdue(selectedRecord) }}d overdue)</span>
+            </span>
+          </div>
+          <div class="drow" *ngIf="selectedRecord._paymentId">
+            <span class="dk">Payment ID</span><span class="dv dv--mono">{{ selectedRecord._paymentId }}</span>
+          </div>
+        </div>
+
+        <div class="dsect">
+          <div class="dsect-title">Internal Notes</div>
+          <div class="ef">
+            <textarea [(ngModel)]="editForm.notes" rows="3"
+              placeholder="Internal notes, instructions or reminders…"></textarea>
+          </div>
+        </div>
+
+        <div class="drawer-save-row">
+          <div class="save-msg save-msg--ok" *ngIf="saveOk">{{ saveOk }}</div>
+          <div class="save-msg save-msg--err" *ngIf="saveErr">{{ saveErr }}</div>
+          <button class="save-btn" [disabled]="isSaving" (click)="saveRecord()">
+            <ng-container *ngIf="!isSaving">
+              <svg viewBox="0 0 12 12" fill="none" width="12" height="12">
+                <path d="M1.5 6l3 3 6-6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+                  stroke-linejoin="round" />
+              </svg>
+              Save Changes
+            </ng-container>
+            <span class="save-spinner" *ngIf="isSaving">
+              <svg viewBox="0 0 16 16" fill="none" width="16" height="16">
+                <circle cx="8" cy="8" r="6" stroke="rgba(255,255,255,.3)" stroke-width="2" />
+                <path d="M8 2a6 6 0 0 1 6 6" stroke="#fff" stroke-width="2" stroke-linecap="round" />
+              </svg>
+            </span>
+          </button>
+        </div>
+      </div>
+
+      <!-- ─ PAYMENTS TAB ─ -->
+      <div class="drawer-body" *ngIf="drawerTab === 'payments'">
+        <div class="pay-tab-wrap">
+
+          <button class="manual-pay-btn" (click)="openManualPayModal()"
+            [disabled]="selectedRecord.paymentStatus === 'paid'">
+            <svg viewBox="0 0 14 14" fill="none" width="14" height="14">
+              <path d="M7 2v10M2 7h10" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+            </svg>
+            Record Manual Payment
+          </button>
+
+          <div class="sync-banner" *ngIf="selectedRecord._paymentId && !selectedRecord._adminOverride">
+            <svg viewBox="0 0 14 14" fill="none" width="14" height="14" style="flex-shrink:0;margin-top:1px">
+              <path d="M1 7A6 6 0 0 0 10.5 11M13 7A6 6 0 0 0 3.5 3" stroke="currentColor" stroke-width="1.3"
+                stroke-linecap="round" />
+              <path d="M13 3.5V7H9.5M1 10.5V7H4.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"
+                stroke-linejoin="round" />
+            </svg>
+            <span>Auto-detected from Razorpay. No manual update needed.</span>
+          </div>
+
+          <div class="pay-summary-grid">
+            <div class="pay-summary-item">
+              <div class="psi-label">Total</div>
+              <div class="psi-value">{{ fmtINR(selectedRecord.amount) }}</div>
+            </div>
+            <div class="pay-summary-item psi--ok">
+              <div class="psi-label">Paid</div>
+              <div class="psi-value">{{ fmtINR(selectedRecord.paidAmount || 0) }}</div>
+            </div>
+            <div class="pay-summary-item" [class.psi--danger]="balanceDue > 0">
+              <div class="psi-label">Balance</div>
+              <div class="psi-value">{{ fmtINR(balanceDue) }}</div>
+            </div>
+          </div>
+
+          <div *ngIf="selectedRecord.manualPayments.length">
+            <div class="pay-hist-title">Payment History</div>
+            <div class="pay-hist-list">
+              <div class="pay-hist-item" *ngFor="let p of selectedRecord.manualPayments; trackBy: trackByIdx">
+                <div class="phi-left">
+                  <div class="phi-method">{{ p.method }}</div>
+                  <div class="phi-ref" *ngIf="p.referenceNumber">Ref: {{ p.referenceNumber }}</div>
+                  <div class="phi-note" *ngIf="p.notes">{{ p.notes }}</div>
+                </div>
+                <div class="phi-right">
+                  <div class="phi-amount">{{ fmtINR(p.amount) }}</div>
+                  <div class="phi-date">{{ fmtDateShort(p.paymentDate) }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div *ngIf="rzpDetails" class="rzp-detail-card">
+            <div class="rzp-detail-title">Razorpay Transaction</div>
+            <div class="drow" *ngIf="rzpDetails.id"><span class="dk">Payment ID</span><span class="dv dv--mono">{{
+                rzpDetails.id }}</span></div>
+            <div class="drow" *ngIf="rzpDetails.method"><span class="dk">Method</span><span class="dv">{{
+                rzpMethodLabel(rzpDetails.method) }}</span></div>
+            <div class="drow" *ngIf="rzpDetails.bank"><span class="dk">Bank</span><span class="dv">{{ rzpDetails.bank
+                }}</span></div>
+            <div class="drow" *ngIf="rzpDetails.vpa"><span class="dk">UPI VPA</span><span class="dv dv--mono">{{
+                rzpDetails.vpa }}</span></div>
+            <div class="drow" *ngIf="rzpDetails.card"><span class="dk">Card</span><span class="dv">{{
+                rzpDetails.card.network }} •••• {{ rzpDetails.card.last4 }}</span></div>
+            <div class="drow" *ngIf="rzpDetails.fee"><span class="dk">Gateway Fee</span><span class="dv">{{
+                fmtINR(rzpDetails.fee / 100) }}</span></div>
+            <div class="drow">
+              <span class="dk">Captured</span>
+              <span class="dv" [class.dv--ok]="rzpDetails.captured" [class.dv--danger]="!rzpDetails.captured">
+                {{ rzpDetails.captured ? 'Yes' : 'No' }}
+              </span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ─ TIMELINE TAB ─ -->
+      <div class="drawer-body" *ngIf="drawerTab === 'timeline'">
+        <div class="tl-section">
+          <div class="tl-add">
+            <textarea [(ngModel)]="newTimelineNote" rows="2"
+              placeholder="Add a note to this record's timeline…"></textarea>
+            <button class="tl-add-btn" [disabled]="!newTimelineNote.trim() || isAddingNote" (click)="addNote()">
+              Add Note
+            </button>
+          </div>
+
+          <div class="tl-list" *ngIf="selectedRecord.timeline && selectedRecord.timeline.length">
+            <div class="tl-item" *ngFor="let t of selectedRecord.timeline; let last = last; trackBy: trackByIdx">
+              <div class="tl-col">
+                <div class="tl-dot" [ngClass]="'tldot--' + t.type">
+                  <svg viewBox="0 0 6 6" fill="none" width="6" height="6" *ngIf="t.type === 'payment'">
+                    <path d="M0.5 3l1.5 1.5 3.5-4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" />
+                  </svg>
+                  <svg viewBox="0 0 6 6" fill="none" width="6" height="6" *ngIf="t.type === 'note'">
+                    <path d="M1 2h4M1 4h2.5" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" />
+                  </svg>
+                  <svg viewBox="0 0 6 6" fill="none" width="6" height="6" *ngIf="t.type === 'status'">
+                    <path d="M1 3h4M3 1l2 2-2 2" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" />
+                  </svg>
+                </div>
+                <div class="tl-line" *ngIf="!last"></div>
+              </div>
+              <div class="tl-content">
+                <div class="tl-event">{{ t.event }}</div>
+                <div class="tl-meta">{{ t.date }} · {{ t.by }}</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="tl-empty" *ngIf="!selectedRecord.timeline || !selectedRecord.timeline.length">
+            No activity recorded yet.
+          </div>
+        </div>
+      </div>
+
+    </ng-container>
+  </aside>
+
+  <!-- ══ MANUAL PAYMENT MODAL ══ -->
+  <div class="modal-overlay" [class.is-open]="manualPayModal" (click)="closeManualPayModal()"></div>
+  <div class="modal" [class.is-open]="manualPayModal">
+    <div class="modal-head">
+      <div class="modal-title">Record Manual Payment</div>
+      <button class="drawer-close" (click)="closeManualPayModal()">
+        <svg viewBox="0 0 12 12" fill="none" width="12" height="12">
+          <path d="M2 2l8 8M10 2L2 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+        </svg>
+      </button>
+    </div>
+
+    <div class="modal-body" *ngIf="selectedRecord" (click)="$event.stopPropagation()">
+      <div class="modal-balance">
+        <div class="mbal-row">
+          <span>Quote Total</span>
+          <strong>{{ fmtINR(selectedRecord.amount) }}</strong>
+        </div>
+        <div class="mbal-row mbal-row--ok">
+          <span>Already Paid</span>
+          <strong>{{ fmtINR(selectedRecord.paidAmount || 0) }}</strong>
+        </div>
+        <div class="mbal-row mbal-row--due">
+          <span>Balance Due</span>
+          <strong>{{ fmtINR(manualPayMaxAmount) }}</strong>
+        </div>
+      </div>
+
+      <div class="ef">
+        <label>Payment Method *</label>
+        <select [(ngModel)]="manualPayForm.method">
+          <option value="">— Select method —</option>
+          <option *ngFor="let m of manualMethodOptions">{{ m }}</option>
+        </select>
+      </div>
+
+      <div class="ef">
+        <label>Amount Received (₹) *</label>
+        <div class="amount-pct-row">
+          <input type="number" [(ngModel)]="manualPayForm.amount" [max]="manualPayMaxAmount" min="1"
+            [placeholder]="manualPayMaxAmount" (ngModelChange)="onManualAmountChange()" />
+          <span class="amount-pct-sep">or</span>
+          <div class="pct-input-wrap">
+            <input type="number" [(ngModel)]="manualPayPct" min="1" max="100" placeholder="%" step="1"
+              (ngModelChange)="onManualPctChange()" />
+            <span class="pct-symbol">%</span>
+          </div>
+        </div>
+        <div class="ef-hint" *ngIf="manualPayForm.amount && manualPayForm.amount > 0">
+          After this:
+          <strong *ngIf="(selectedRecord.paidAmount || 0) + manualPayForm.amount >= selectedRecord.amount"
+            class="hint-ok">Fully Paid ✓</strong>
+          <strong *ngIf="(selectedRecord.paidAmount || 0) + manualPayForm.amount < selectedRecord.amount"
+            class="hint-warn">
+            {{ fmtINR(selectedRecord.amount - (selectedRecord.paidAmount || 0) - manualPayForm.amount) }} remaining
+          </strong>
+        </div>
+      </div>
+
+      <div class="ef">
+        <label>Reference / UTR / Cheque No.</label>
+        <input type="text" [(ngModel)]="manualPayForm.referenceNumber" placeholder="e.g. UTR123456" />
+      </div>
+
+      <div class="ef">
+        <label>Payment Date</label>
+        <input type="date" [(ngModel)]="manualPayForm.paymentDate" />
+      </div>
+
+      <div class="ef">
+        <label>Notes (optional)</label>
+        <textarea [(ngModel)]="manualPayForm.notes" rows="2"
+          placeholder="Cash received at office / NEFT confirmed by bank"></textarea>
+      </div>
+
+      <div class="save-msg save-msg--ok" *ngIf="manualPayOk">{{ manualPayOk }}</div>
+      <div class="save-msg save-msg--err" *ngIf="manualPayErr">{{ manualPayErr }}</div>
+    </div>
+
+    <div class="modal-actions">
+      <button class="modal-cancel-btn" (click)="closeManualPayModal()">Cancel</button>
+      <button class="save-btn modal-save-btn"
+        [disabled]="isSubmittingManual || !manualPayForm.method || !manualPayForm.amount"
+        (click)="submitManualPayment()">
+        <ng-container *ngIf="!isSubmittingManual">
+          <svg viewBox="0 0 12 12" fill="none" width="12" height="12">
+            <path d="M1.5 6l3 3 6-6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+              stroke-linejoin="round" />
+          </svg>
+          Record Payment
+        </ng-container>
+        <span class="save-spinner" *ngIf="isSubmittingManual">
+          <svg viewBox="0 0 16 16" fill="none" width="16" height="16">
+            <circle cx="8" cy="8" r="6" stroke="rgba(255,255,255,.3)" stroke-width="2" />
+            <path d="M8 2a6 6 0 0 1 6 6" stroke="#fff" stroke-width="2" stroke-linecap="round" />
+          </svg>
+        </span>
+      </button>
+    </div>
+  </div>
+
+</div><!-- /shell -->

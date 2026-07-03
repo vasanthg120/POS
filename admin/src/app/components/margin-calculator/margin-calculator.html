@@ -1,0 +1,511 @@
+<div class="app" [class.drawer-open]="drawerOpen">
+
+  <!-- ── TOP BAR ── -->
+  <header class="topbar">
+    <div class="topbar-brand">
+      <span class="brand-mark">◈</span>
+      <span class="brand-text">MarginIQ</span>
+    </div>
+
+    <div class="topbar-center" id="job-display">
+      <span class="job-label" [class.has-name]="hasJobName">{{ jobDisplay }}</span>
+      <span *ngIf="currentJobId" class="autosave-badge" [class.saved]="isSaved">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <polyline *ngIf="isSaved" points="20 6 9 17 4 12"/>
+          <circle *ngIf="!isSaved" cx="12" cy="12" r="3"/>
+        </svg>
+        {{ isSaved ? 'Autosaved' : 'Unsaved changes' }}
+      </span>
+    </div>
+
+    <div class="topbar-actions">
+      <!-- Stats pill -->
+      <div class="stats-pill" *ngIf="jobStats">
+        <span class="stats-item">
+          <span class="stats-num">{{ jobStats.totalJobs }}</span>
+          <span class="stats-lbl">Jobs</span>
+        </span>
+        <span class="stats-divider"></span>
+        <span class="stats-item">
+          <span class="stats-num">{{ fmtCurrency(jobStats.totalRevenue) }}</span>
+          <span class="stats-lbl">Revenue</span>
+        </span>
+        <span class="stats-divider"></span>
+        <span class="stats-item">
+          <span class="stats-num">{{ fmtPct(jobStats.avgMarginPct) }}</span>
+          <span class="stats-lbl">Avg Margin</span>
+        </span>
+      </div>
+
+      <div class="live-pill">
+        <span class="live-dot"></span>
+        Live
+      </div>
+
+      <!-- Jobs Drawer toggle -->
+      <button class="icon-btn icon-btn--accent" (click)="openDrawer()" title="All Jobs">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <rect x="2" y="7" width="20" height="14" rx="2"/>
+          <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/>
+          <line x1="12" y1="12" x2="12" y2="16"/>
+          <line x1="10" y1="14" x2="14" y2="14"/>
+        </svg>
+      </button>
+
+      <!-- Save -->
+      <button
+        class="btn btn--save"
+        (click)="saveJob()"
+        [disabled]="isSaving"
+        title="Save job to database"
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+          <polyline points="17 21 17 13 7 13 7 21"/>
+          <polyline points="7 3 7 8 15 8"/>
+        </svg>
+        {{ saveLabel }}
+      </button>
+
+      <!-- Finalise -->
+      <button
+        class="btn btn--finalise"
+        *ngIf="currentJobId"
+        (click)="finaliseJob()"
+        title="Mark as finalised"
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="20 6 9 17 4 12"/>
+        </svg>
+        Finalise
+      </button>
+
+      <button class="icon-btn" (click)="exportCsv()" title="Export CSV">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="7 10 12 15 17 10"/>
+          <line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>
+      </button>
+      <button class="icon-btn icon-btn--danger" (click)="resetAll()" title="Reset all">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+          <path d="M3 3v5h5"/>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <div class="workspace">
+
+    <!-- ── LEFT PANEL ── -->
+    <aside class="left-panel">
+
+      <!-- Job Config -->
+      <div class="panel-block">
+        <p class="panel-heading">Project / Job</p>
+        <div class="field">
+          <label class="label">Client / Job Name</label>
+          <input type="text" class="input" placeholder="e.g. V‑Mart Clothing"
+            [(ngModel)]="jobName" (ngModelChange)="recalc()"/>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label class="label">Setup Fees</label>
+            <input type="number" class="input" placeholder="1" min="0"
+              [(ngModel)]="setupCount" (ngModelChange)="recalc()"/>
+          </div>
+          <div class="field">
+            <label class="label">Cost Per Screen (₹)</label>
+            <input type="number" class="input" placeholder="0.00" min="0" step="0.01"
+              [(ngModel)]="setupUnit" (ngModelChange)="recalc()"/>
+          </div>
+        </div>
+        <div class="field">
+          <label class="label">Shipping Total (₹)</label>
+          <input type="number" class="input" placeholder="0.00" min="0" step="0.01"
+            [(ngModel)]="shipping" (ngModelChange)="recalc()"/>
+        </div>
+        <div class="field">
+          <label class="label">GST Rate (%)</label>
+          <input type="number" class="input" placeholder="18" min="0" step="0.1"
+            [(ngModel)]="gstRate" (ngModelChange)="recalc()"/>
+        </div>
+
+        <!-- DB status strip -->
+        <div class="db-strip" *ngIf="currentJobId">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <ellipse cx="12" cy="5" rx="9" ry="3"/>
+            <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/>
+            <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/>
+          </svg>
+          <span>ID: {{ currentJobId | slice:0:8 }}…</span>
+        </div>
+      </div>
+
+      <!-- Summary Stats -->
+      <div class="panel-block panel-block--dark">
+        <p class="panel-heading">Summary</p>
+        <div class="stat-list">
+          <div class="stat-row">
+            <span class="stat-name">Total Revenue</span>
+            <span class="stat-val">{{ fmt(summary.totalQuote) }}</span>
+          </div>
+          <div class="stat-row">
+            <span class="stat-name">Total Expenses</span>
+            <span class="stat-val">{{ fmt(summary.totalCost) }}</span>
+          </div>
+          <div class="stat-row stat-row--sep">
+            <span class="stat-name">GST Amount ({{ fmtPct(gstRate / 100) }})</span>
+            <span class="stat-val">{{ gstAmount }}</span>
+          </div>
+          <div class="stat-row stat-row--profit">
+            <span class="stat-name">Net Profit</span>
+            <span class="stat-val stat-val--profit">{{ fmt(summary.profitSubtotal) }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Margin Health -->
+      <div class="panel-block">
+        <p class="panel-heading">Profit Health</p>
+        <div class="health-gauge">
+          <div class="gauge-bar">
+            <div class="gauge-fill" [style.width]="gaugeWidth(summary.overallMarginPct)"></div>
+          </div>
+          <div class="gauge-pct">{{ fmtPct(summary.overallMarginPct) }}</div>
+        </div>
+        <div class="health-bands">
+          <div class="band band--poor">Poor &lt;20%</div>
+          <div class="band band--fair">Fair 20–35%</div>
+          <div class="band band--ok">Good 35–50%</div>
+          <div class="band band--great">Excellent &gt;50%</div>
+        </div>
+        <div class="health-status" [attr.data-health]="health(summary.overallMarginPct)">
+          {{ healthLabel(summary.overallMarginPct) }}
+        </div>
+      </div>
+
+      <!-- Price Breakdown -->
+      <div class="panel-block panel-block--accent">
+        <p class="panel-heading">Price Breakdown</p>
+        <div class="breakdown-list">
+          <div class="breakdown-row">
+            <span>Subtotal (ex. GST)</span>
+            <strong>{{ fmt(summary.subtotal) }}</strong>
+          </div>
+          <div class="breakdown-row">
+            <span>+ Shipping</span>
+            <strong>{{ fmt(summary.inclDelivery - summary.subtotal) }}</strong>
+          </div>
+          <div class="breakdown-row">
+            <span>+ Setup Fees</span>
+            <strong>{{ fmt(summary.setupTotal) }}</strong>
+          </div>
+          <div class="breakdown-row breakdown-row--total">
+            <span>Grand Total (incl. GST)</span>
+            <strong>{{ fmt(summary.incGst) }}</strong>
+          </div>
+        </div>
+      </div>
+
+    </aside>
+
+    <!-- ── MAIN TABLE AREA ── -->
+    <main class="main">
+
+      <!-- Table Toolbar -->
+      <div class="table-toolbar">
+        <h2 class="table-title">Line Items</h2>
+        <div class="toolbar-right">
+          <button class="btn btn--ghost" (click)="newJob()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <path d="M12 5v14M5 12h14"/>
+            </svg>
+            New Job
+          </button>
+          <button class="btn btn--ghost" (click)="clearRows()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <polyline points="3 6 5 6 21 6"/>
+              <path d="M19 6l-1 14H6L5 6"/>
+              <path d="M9 6V4h6v2"/>
+            </svg>
+            Clear All
+          </button>
+          <button class="btn btn--primary" (click)="addRow()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="12" y1="5" x2="12" y2="19"/>
+              <line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+            Add Item
+          </button>
+        </div>
+      </div>
+
+      <!-- Table -->
+      <div class="table-wrap" *ngIf="rows.length > 0">
+        <table class="data-table">
+          <thead>
+          <tr>
+            <th class="col-item">Product / Service</th>
+            <th class="col-num">Qty</th>
+            <th class="col-num">Cost/Unit</th>
+            <th class="col-num col-calc">Item Cost</th>
+            <th class="col-num">Print/Unit</th>
+            <th class="col-num col-calc">Print Total</th>
+            <th class="col-num">Setup</th>
+            <th class="col-num">Ship</th>
+            <th class="col-num col-calc col-key">Expense</th>
+            <th class="col-num">Sell Price/Unit</th>
+            <th class="col-num col-calc col-key">Revenue</th>
+            <th class="col-num col-calc">Profit/Unit</th>
+            <th class="col-num col-calc">Total Profit</th>
+            <th class="col-num col-calc">Profit %</th>
+            <th class="col-del"></th>
+          </tr>
+          </thead>
+          <tbody>
+          <tr *ngFor="let row of rows; let i = index; trackBy: trackById">
+            <td class="col-item">
+              <input type="text" class="cell-input cell-input--text"
+                placeholder="T‑Shirt, Hoodie, Banner…"
+                [(ngModel)]="rows[i].item" (ngModelChange)="recalc()"/>
+            </td>
+            <td class="col-num">
+              <input type="number" class="cell-input" min="0" placeholder="0"
+                [(ngModel)]="rows[i].qty" (ngModelChange)="recalc()"/>
+            </td>
+            <td class="col-num">
+              <input type="number" class="cell-input" min="0" step="0.01" placeholder="0.00"
+                [(ngModel)]="rows[i].unitCost" (ngModelChange)="recalc()"/>
+            </td>
+            <td class="col-num col-calc">
+              <span>{{ fmt(calced[i]?.cog ?? 0) }}</span>
+            </td>
+            <td class="col-num">
+              <input type="number" class="cell-input" min="0" step="0.01" placeholder="0.00"
+                [(ngModel)]="rows[i].decoUnit" (ngModelChange)="recalc()"/>
+            </td>
+            <td class="col-num col-calc">
+              <span>{{ fmt(calced[i]?.decoCost ?? 0) }}</span>
+            </td>
+            <td class="col-num">
+              <input type="number" class="cell-input" min="0" step="0.01" placeholder="0.00"
+                [(ngModel)]="rows[i].setup" (ngModelChange)="recalc()"/>
+            </td>
+            <td class="col-num">
+              <input type="number" class="cell-input" min="0" step="0.01" placeholder="0.00"
+                [(ngModel)]="rows[i].ship" (ngModelChange)="recalc()"/>
+            </td>
+            <td class="col-num col-calc col-key">
+              <span>{{ fmt(calced[i]?.totalCost ?? 0) }}</span>
+            </td>
+            <td class="col-num">
+              <input type="number" class="cell-input" min="0" step="0.01" placeholder="0.00"
+                [(ngModel)]="rows[i].quoteUnit" (ngModelChange)="recalc()"/>
+            </td>
+            <td class="col-num col-calc col-key">
+              <span>{{ fmt(calced[i]?.quoteCost ?? 0) }}</span>
+            </td>
+            <td class="col-num col-calc">
+              <span>{{ fmt(calced[i]?.marginUnit ?? 0) }}</span>
+            </td>
+            <td class="col-num col-calc">
+              <span>{{ fmt(calced[i]?.totalMargin ?? 0) }}</span>
+            </td>
+            <td class="col-num col-calc">
+              <span class="margin-pill" [attr.data-health]="health(calced[i]?.marginPct ?? 0)">
+                {{ fmtPct(calced[i]?.marginPct ?? 0) }}
+              </span>
+            </td>
+            <td class="col-del">
+              <button class="del-btn" (click)="deleteRow(row.id)" title="Remove">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="18" y1="6" x2="6" y2="18"/>
+                  <line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+              </button>
+            </td>
+          </tr>
+          </tbody>
+          <tfoot>
+          <tr>
+            <td class="col-item">GRAND TOTAL</td>
+            <td class="col-num">{{ summary.totalQty || "—" }}</td>
+            <td class="col-num"></td>
+            <td class="col-num col-calc">{{ fmt(summary.totalCog) }}</td>
+            <td class="col-num"></td>
+            <td class="col-num col-calc">{{ fmt(summary.totalDecoCost) }}</td>
+            <td class="col-num col-calc">{{ fmt(summary.totalSetup) }}</td>
+            <td class="col-num col-calc">{{ fmt(summary.totalShip) }}</td>
+            <td class="col-num col-calc col-key">{{ fmt(summary.totalCost) }}</td>
+            <td class="col-num"></td>
+            <td class="col-num col-calc col-key">{{ fmt(summary.totalQuote) }}</td>
+            <td class="col-num col-calc">{{ fmt(summary.totalMargin) }}</td>
+            <td class="col-num col-calc">{{ fmt(summary.totalMargin) }}</td>
+            <td class="col-num col-calc">{{ fmtPct(summary.totalMarginPct) }}</td>
+            <td class="col-del"></td>
+          </tr>
+          </tfoot>
+        </table>
+      </div>
+
+      <!-- Empty State -->
+      <div class="empty-state" *ngIf="rows.length === 0">
+        <div class="empty-icon">◈</div>
+        <p class="empty-text">No line items yet</p>
+        <p class="empty-sub">Click <strong>Add Item</strong> to begin or <strong>load</strong> a saved job</p>
+        <button class="btn btn--primary mt-16" (click)="openDrawer()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="2" y="7" width="20" height="14" rx="2"/>
+            <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/>
+          </svg>
+          Open Saved Jobs
+        </button>
+      </div>
+    </main>
+  </div>
+
+  <!-- ════════════════════════════════════════
+       JOBS DRAWER (slides in from right)
+       ═════════════════════════════════════════ -->
+  <div class="drawer-backdrop" *ngIf="drawerOpen" (click)="closeDrawer()"></div>
+
+  <aside class="jobs-drawer" [class.open]="drawerOpen">
+
+    <!-- Drawer Header -->
+    <div class="drawer-header">
+      <div class="drawer-title-row">
+        <h3 class="drawer-title">Saved Jobs</h3>
+        <button class="icon-btn" (click)="closeDrawer()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Stats mini bar -->
+      <div class="drawer-stats" *ngIf="jobStats">
+        <div class="ds-card">
+          <span class="ds-val">{{ jobStats.totalJobs }}</span>
+          <span class="ds-lbl">Total</span>
+        </div>
+        <div class="ds-card">
+          <span class="ds-val">{{ jobStats.draftCount }}</span>
+          <span class="ds-lbl">Drafts</span>
+        </div>
+        <div class="ds-card">
+          <span class="ds-val">{{ jobStats.finalisedCount }}</span>
+          <span class="ds-lbl">Finalised</span>
+        </div>
+        <div class="ds-card ds-card--highlight">
+          <span class="ds-val">{{ fmtPct(jobStats.avgMarginPct) }}</span>
+          <span class="ds-lbl">Avg Margin</span>
+        </div>
+      </div>
+
+      <!-- Search -->
+      <div class="drawer-search">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <circle cx="11" cy="11" r="8"/>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+        <input
+          type="text"
+          class="drawer-search-input"
+          placeholder="Search jobs…"
+          [(ngModel)]="jobSearchQuery"
+          (ngModelChange)="onJobSearch()"
+        />
+      </div>
+
+      <!-- New Job CTA -->
+      <button class="btn btn--primary btn--full" (click)="newJob()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="12" y1="5" x2="12" y2="19"/>
+          <line x1="5" y1="12" x2="19" y2="12"/>
+        </svg>
+        Start New Job
+      </button>
+    </div>
+
+    <!-- Loading Skeleton -->
+    <div class="drawer-loading" *ngIf="jobsListLoading">
+      <div class="skeleton-job" *ngFor="let i of [1,2,3,4]"></div>
+    </div>
+
+    <!-- Jobs List -->
+    <div class="drawer-list" *ngIf="!jobsListLoading">
+      <div
+        class="job-card"
+        *ngFor="let job of jobsList"
+        (click)="loadJobFromDrawer(job)"
+        [class.job-card--active]="job._id === currentJobId"
+      >
+        <div class="job-card-top">
+          <div class="job-card-name">
+            {{ job.jobName || 'Untitled Job' }}
+          </div>
+          <span class="status-badge" [class]="statusBadgeClass(job.status)">
+            {{ job.status }}
+          </span>
+        </div>
+
+        <div class="job-card-meta">
+          <span class="jc-meta-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <rect x="3" y="4" width="18" height="18" rx="2"/>
+              <line x1="16" y1="2" x2="16" y2="6"/>
+              <line x1="8" y1="2" x2="8" y2="6"/>
+              <line x1="3" y1="10" x2="21" y2="10"/>
+            </svg>
+            {{ formatDate(job.createdAt) }}
+          </span>
+          <span class="jc-meta-item" *ngIf="job.summary['grandTotal']">
+            {{ fmt(job.summary['grandTotal']) }}
+          </span>
+          <span class="jc-margin-pill" *ngIf="job.summary['overallMarginPct'] !== undefined"
+            [attr.data-health]="health(job.summary['overallMarginPct'])">
+            {{ fmtPct(job.summary['overallMarginPct']) }}
+          </span>
+        </div>
+
+        <!-- Quick actions -->
+        <div class="job-card-actions">
+          <button class="jca-btn" (click)="duplicateJob(job, $event)" title="Duplicate">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <rect x="9" y="9" width="13" height="13" rx="2"/>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+            </svg>
+            Duplicate
+          </button>
+          <button class="jca-btn jca-btn--danger" (click)="archiveJob(job, $event)" title="Archive">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <polyline points="21 8 21 21 3 21 3 8"/>
+              <rect x="1" y="3" width="22" height="5"/>
+              <line x1="10" y1="12" x2="14" y2="12"/>
+            </svg>
+            Archive
+          </button>
+        </div>
+      </div>
+
+      <!-- Empty drawer state -->
+      <div class="drawer-empty" *ngIf="jobsList.length === 0">
+        <div class="drawer-empty-icon">📋</div>
+        <p>No jobs found</p>
+        <span>Click "Start New Job" above</span>
+      </div>
+    </div>
+  </aside>
+
+</div>
+
+<!-- Toast -->
+<div class="toast" [class.show]="toastVisible">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+    <polyline points="20 6 9 17 4 12"/>
+  </svg>
+  <span>{{ toastMessage }}</span>
+</div>

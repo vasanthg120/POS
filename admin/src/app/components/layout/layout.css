@@ -1,0 +1,71 @@
+/* ════════════════════════════════════════════════════════════════
+   LAYOUT  —  Enterprise POS Platform v2  (Redesign)
+   KEY FIX: app-main no longer sets overflow-y: auto.
+   Body/html scroll naturally so position:fixed elements (drawer,
+   header) anchor to the viewport — not to a scroll container.
+   ════════════════════════════════════════════════════════════════ */
+
+html, body {
+  height: 100%;
+  overflow-y: auto;
+  scroll-behavior: smooth;
+}
+
+.app-shell {
+  display: flex;
+  min-height: 100vh;
+  background: var(--bg);
+}
+
+/* Body column */
+.app-body {
+  flex: 1;
+  min-width: 0;
+  margin-left: var(--sidebar-width, 240px);
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  transition: margin-left 0.36s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.app-shell.sidebar-collapsed .app-body {
+  margin-left: var(--sidebar-width-collapsed, 68px);
+}
+
+/* Main content area — NO overflow-y: auto here.
+   The body scrolls; fixed elements anchor to the viewport. */
+.app-main {
+  margin-top: var(--header-height, 64px);
+  flex: 1;
+  background: var(--bg);
+}
+
+.page-content {
+  padding: 24px 24px 100px;
+  max-width: 1440px;
+  width: 100%;
+  margin: 0;
+  animation: page-enter 0.32s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes page-enter {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Responsive ───────────────────────────────── */
+@media (max-width: 768px) {
+  .app-body {
+    margin-left: 0 !important;
+  }
+
+  .page-content {
+    padding: 18px 14px 80px;
+  }
+}
+
+@media (max-width: 480px) {
+  .page-content {
+    padding: 14px 10px 70px;
+  }
+}

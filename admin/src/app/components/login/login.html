@@ -1,0 +1,192 @@
+<div class="auth-layout">
+
+  <aside class="auth-brand-panel">
+    <div class="brand-glow"></div>
+
+    <a href="/" class="brand-logo">
+      <img src="assets/images/fp.png" alt="Logo" />
+    </a>
+
+    <div class="brand-content">
+      <h2 class="brand-headline">
+        One platform.<br>
+        <span>Every business.</span>
+      </h2>
+      <p class="brand-sub">
+        Manage payments, quotations, and client relationships from a single,
+        secure dashboard built for modern enterprise operations.
+      </p>
+
+      <ul class="brand-features">
+        <li>
+          <div class="brand-feat-icon">
+            <svg viewBox="0 0 24 24">
+              <rect x="3" y="3" width="18" height="18" rx="3" />
+              <path d="M3 9h18" />
+              <path d="M9 21V9" />
+            </svg>
+          </div>
+          Multi-tenant architecture with isolated data
+        </li>
+        <li>
+          <div class="brand-feat-icon">
+            <svg viewBox="0 0 24 24">
+              <rect x="2" y="5" width="20" height="14" rx="2" />
+              <path d="M2 10h20" />
+            </svg>
+          </div>
+          Centralised Razorpay &amp; CRM key management
+        </li>
+        <li>
+          <div class="brand-feat-icon">
+            <svg viewBox="0 0 24 24">
+              <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+            </svg>
+          </div>
+          Real-time payment tracking &amp; analytics
+        </li>
+        <li>
+          <div class="brand-feat-icon">
+            <svg viewBox="0 0 24 24">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+              <circle cx="9" cy="7" r="4" />
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+              <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+            </svg>
+          </div>
+          Role-based access control (Admin / Staff)
+        </li>
+        <li>
+          <div class="brand-feat-icon">
+            <svg viewBox="0 0 24 24">
+              <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+              <polyline points="22,6 12,13 2,6" />
+            </svg>
+          </div>
+          Automated email workflows &amp; notifications
+        </li>
+      </ul>
+    </div>
+  </aside>
+
+  <!-- ── Form Panel ───────────────────────────────────────── -->
+  <main class="auth-form-panel">
+    <div class="auth-form-container fade-in">
+
+      <!-- Header -->
+      <div class="auth-header">
+        <div class="auth-eyebrow">
+          <span class="auth-eyebrow-dot"></span>
+          Secure Access
+        </div>
+        <h1 class="auth-title">Welcome back</h1>
+        <p class="auth-subtitle">Sign in to your POS Platform account</p>
+      </div>
+
+      <!-- Session expired notice -->
+      <div class="session-banner" *ngIf="sessionExpired">
+        <svg viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="10" />
+          <polyline points="12 6 12 12 16 14" />
+        </svg>
+        Your session expired. Please sign in again.
+      </div>
+
+      <!-- Server error -->
+      <div class="auth-alert error mb-4" *ngIf="serverError">
+        <svg viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="10" />
+          <line x1="12" y1="8" x2="12" y2="12" />
+          <line x1="12" y1="16" x2="12.01" y2="16" />
+        </svg>
+        {{ serverError }}
+      </div>
+
+      <!-- Form -->
+      <form class="auth-form" [formGroup]="loginForm" (ngSubmit)="onSubmit()" novalidate>
+
+        <!-- Email -->
+        <div class="form-group" [class.has-error]="isInvalid('email')">
+          <label class="form-label" for="email">
+            Email address <span class="required">*</span>
+          </label>
+          <div class="input-wrapper">
+            <span class="input-icon input-icon-left">
+              <svg viewBox="0 0 24 24">
+                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+                <polyline points="22,6 12,13 2,6" />
+              </svg>
+            </span>
+            <input class="form-input" id="email" type="email" placeholder="you@company.com" formControlName="email"
+              autocomplete="email" [attr.aria-invalid]="isInvalid('email')" />
+          </div>
+          <span class="field-error" *ngIf="isInvalid('email')">
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <path
+                d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" />
+            </svg>
+            {{ getError('email') }}
+          </span>
+        </div>
+
+        <!-- Password -->
+        <div class="form-group" [class.has-error]="isInvalid('password')">
+          <label class="form-label" for="password">
+            Password <span class="required">*</span>
+          </label>
+          <div class="input-wrapper">
+            <span class="input-icon input-icon-left">
+              <svg viewBox="0 0 24 24">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+              </svg>
+            </span>
+            <input class="form-input" id="password" [type]="showPassword ? 'text' : 'password'"
+              placeholder="Enter your password" formControlName="password" autocomplete="current-password" />
+            <span class="input-icon input-icon-right" (click)="togglePassword()" role="button"
+              [attr.aria-label]="showPassword ? 'Hide password' : 'Show password'">
+              <svg *ngIf="!showPassword" viewBox="0 0 24 24">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                <circle cx="12" cy="12" r="3" />
+              </svg>
+              <svg *ngIf="showPassword" viewBox="0 0 24 24">
+                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94" />
+                <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19" />
+                <line x1="1" y1="1" x2="23" y2="23" />
+              </svg>
+            </span>
+          </div>
+          <span class="field-error" *ngIf="isInvalid('password')">
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <path
+                d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" />
+            </svg>
+            {{ getError('password') }}
+          </span>
+        </div>
+
+        <!-- Remember + Forgot -->
+        <div class="form-extras">
+          <label class="checkbox-group">
+            <input class="checkbox-input" type="checkbox" formControlName="rememberMe" />
+            <span class="checkbox-label">Remember me</span>
+          </label>
+          <a routerLink="/auth/forgot-password" class="forgot-link">Forgot password?</a>
+        </div>
+
+        <!-- Submit -->
+        <button class="btn btn-primary" type="submit" [class.loading]="isLoading" [disabled]="isLoading">
+          <span class="btn-spinner" *ngIf="isLoading"></span>
+          {{ isLoading ? 'Signing in…' : 'Sign in to Dashboard' }}
+          <svg *ngIf="!isLoading" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="5" y1="12" x2="19" y2="12" />
+            <polyline points="12 5 19 12 12 19" />
+          </svg>
+        </button>
+
+      </form>
+
+    </div>
+  </main>
+</div>
