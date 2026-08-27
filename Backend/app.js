@@ -24,6 +24,7 @@ app.use(helmet({ contentSecurityPolicy: false, crossOriginEmbedderPolicy: false 
 const allowedOrigins = [
   ...(process.env.FRONTEND_URL || 'http://localhost:4200').split(',').map(s => s.trim()),
   'http://localhost:4200',
+  'http://localhost:5173',
 ];
 
 app.use(cors({
@@ -77,6 +78,9 @@ app.use('/payments', paymentsPublic);
 const marginJobRouter = require('./routes/margin');
 app.use('/tenant/margin-jobs', marginJobRouter);
 
+const royaltyRouter = require('./routes/royalty');
+app.use('/tenant/royalty', royaltyRouter);
+
 const rbacRoutes = require('./routes/rbac.routes');
 app.use('/api/tenant/rbac/roles', rbacRoutes);
 
@@ -108,6 +112,7 @@ mongoose.connect(process.env.MONGODB_URI || process.env.MONGO_URI, {
 }).then(async () => {
   logger.info('✅ MongoDB connected');
   await seedSuperAdmin();
+  require('./jobs/billingCron').start();
 
   const server = app.listen(PORT, () => {
     logger.info(`🚀 POS Platform API running on port ${PORT} [${process.env.NODE_ENV || 'development'}]`);

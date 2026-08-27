@@ -40,6 +40,19 @@
   gap: 16px;
 }
 
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.brand-logo {
+  height: 64px;
+  width: auto;
+  object-fit: contain;
+  display: block;
+}
+
 .brand-name {
   font-size: 16px;
   font-weight: 700;
@@ -633,95 +646,6 @@
   to {
     transform: rotate(360deg);
   }
-}
-
-/* Quote preview */
-.quote-preview {
-  border: 1.5px solid #d0e4f5;
-  border-radius: 12px;
-  overflow: hidden;
-  background: #fff;
-}
-
-.quote-preview-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 10px 16px;
-  background: #f0f7ff;
-  border-bottom: 1px solid #d0e4f5;
-}
-
-.quote-preview-badge {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 11px;
-  font-weight: 700;
-  color: #fff;
-  background: #0e64a3;
-  padding: 4px 10px;
-  border-radius: 20px;
-}
-
-.quote-preview-badge svg {
-  width: 11px;
-  height: 11px;
-}
-
-.quote-preview-ref {
-  font-size: 12px;
-  font-weight: 700;
-  color: #475569;
-  font-family: monospace;
-}
-
-.quote-preview-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1px;
-  background: #e8edf5;
-}
-
-.qp-item {
-  background: #fff;
-  padding: 10px 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-}
-
-.qp-label {
-  font-size: 10px;
-  font-weight: 700;
-  color: #94a3b8;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.qp-value {
-  font-size: 13px;
-  font-weight: 600;
-  color: #1a2332;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.qp-amount {
-  color: #0e64a3;
-}
-
-.qp-status-chip {
-  display: inline-block;
-  font-size: 11px;
-  font-weight: 700;
-  color: #0e64a3;
-  background: #f0f7ff;
-  border: 1px solid #d0e4f5;
-  padding: 2px 8px;
-  border-radius: 20px;
-  text-transform: capitalize;
 }
 
 /* Error / hint */

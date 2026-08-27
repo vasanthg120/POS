@@ -9,7 +9,7 @@ import {
 } from '@angular/forms';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { HttpClient }                   from '@angular/common/http';
-import { Subject, takeUntil, debounceTime, distinctUntilChanged, filter } from 'rxjs';
+import { Subject, takeUntil, debounceTime, distinctUntilChanged } from 'rxjs';
 import { Environment }                  from '../environment/environment';
 
 export type CheckoutStep =
@@ -76,7 +76,6 @@ export class PaymentPage implements OnInit, OnDestroy {
   // ── Tenant & Quote ─────────────────────────────────────────────────────────
   slug           = '';
   tenant         : TenantPublicInfo | null = null;
-  resolvedQuote  : QuotePreview | null = null;
 
   // ── Order / payment ────────────────────────────────────────────────────────
   order          : CreatedOrder | null = null;
@@ -91,6 +90,11 @@ export class PaymentPage implements OnInit, OnDestroy {
 
   private destroy$ = new Subject<void>();
   private readonly api = Environment.API_URL;   // e.g. https://payment.pantheras.io/api
+
+  // Incremented on every lookup request; a response is only applied if it
+  // still matches the latest sequence number, so a slow/older request can
+  // never overwrite the result of a newer one (out-of-order network replies).
+  private searchSeq = 0;
 
   constructor(
     private fb   : FormBuilder,
@@ -120,14 +124,14 @@ export class PaymentPage implements OnInit, OnDestroy {
       }
     });
 
-    // Live search (debounced)
+    // Clear a stale "not found" error as soon as the customer edits the number.
     this.lookupForm.get('quotationNo')!.valueChanges.pipe(
       takeUntil(this.destroy$),
-      debounceTime(600),
-      distinctUntilChanged(),
-      filter((v: string) => !!v && v.trim().length >= 1),
-    ).subscribe(val => {
-      if (!this.resolvedQuote) this.fetchQuotePreview(val.trim());
+    ).subscribe(() => {
+      if (this.lookupError) {
+        this.lookupError = '';
+        this.cdr.markForCheck();
+      }
     });
   }
 
@@ -154,11 +158,15 @@ export class PaymentPage implements OnInit, OnDestroy {
       ]],
     });
 
+    // name/email/phone are read-only here — pre-filled from the quotation and
+    // no longer editable by the customer, so they carry no client-side
+    // validators (an unfixable "invalid" state would just dead-end them). Any
+    // bad data still surfaces from the backend when the order is created.
     this.detailsForm = this.fb.group({
       amount     : ['', [Validators.required, Validators.min(0.01)]],
-      name       : ['', [Validators.required, Validators.minLength(2)]],
-      email      : ['', [Validators.required, Validators.email]],
-      phone      : ['', [Validators.required, Validators.pattern(/^\+?[\d\s\-().]{7,20}$/)]],
+      name       : [''],
+      email      : [''],
+      phone      : [''],
       quotationNo: ['', [Validators.required, Validators.minLength(1), Validators.maxLength(50)]],
       notes      : [''],
     });
@@ -174,42 +182,38 @@ export class PaymentPage implements OnInit, OnDestroy {
   }
 
   // ── Quote lookup ───────────────────────────────────────────────────────────
+  // Enter a quotation number, submit, and — if it resolves — go straight to
+  // the quotation details step to review and pay. No live/in-place preview.
   onLookupSubmit(): void {
     if (this.lookupForm.invalid) { this.lookupForm.markAllAsTouched(); this.cdr.markForCheck(); return; }
     const qid = (this.lookupForm.value.quotationNo as string).trim();
-    if (this.resolvedQuote) {
-      // Already resolved — just advance
-      this.prefillDetails(this.resolvedQuote, qid);
-      this.currentStep = 'details';
-      this.cdr.markForCheck();
-    } else {
-      this.fetchAndTransition(qid);
-    }
+    this.fetchAndTransition(qid);
   }
 
   private fetchAndTransition(quoteId: string): void {
-    this.isSearching   = true;
-    this.lookupError   = '';
-    this.resolvedQuote = null;
+    const seq = ++this.searchSeq;
+    this.isSearching = true;
+    this.lookupError = '';
     this.cdr.markForCheck();
 
     this.http.get<any>(`${this.api}/public/quotes`, { params: { search: quoteId, slug: this.slug } })
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next : r => {
+          if (seq !== this.searchSeq) return; // superseded by a newer search
           this.isSearching = false;
-          const quote = this.extractFirstQuote(r);
+          const quote = this.extractFirstQuote(r, quoteId);
           if (!quote) {
             this.lookupError = `No quote found for "${quoteId}". Please check the number and try again.`;
             this.cdr.markForCheck();
             return;
           }
-          this.resolvedQuote = quote;
           this.prefillDetails(quote, quoteId);
           this.currentStep = 'details';
           this.cdr.markForCheck();
         },
         error: err => {
+          if (seq !== this.searchSeq) return;
           this.isSearching = false;
           this.lookupError = err?.error?.message || 'Could not reach the quoting system. Please try again.';
           this.cdr.markForCheck();
@@ -217,28 +221,27 @@ export class PaymentPage implements OnInit, OnDestroy {
       });
   }
 
-  private fetchQuotePreview(quoteId: string): void {
-    this.isSearching   = true;
-    this.resolvedQuote = null;
-    this.lookupError   = '';
-    this.cdr.markForCheck();
+  /**
+   * Normalise whatever shape the CRM / backend returns.
+   *
+   * A short or single-digit search term can match several quotes upstream —
+   * previously this always took the first array entry, which could silently
+   * resolve to a different customer's quote. Now it prefers the entry whose
+   * quotation number is an exact match for what was typed.
+   */
+  private extractFirstQuote(r: any, searchTerm?: string): QuotePreview | null {
+    const list: any[] = r?.data ?? r?.quotes ?? (Array.isArray(r) ? r : []);
+    if (!list.length) return null;
 
-    this.http.get<any>(`${this.api}/public/quotes`, { params: { search: quoteId, slug: this.slug } })
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next : r => {
-          this.isSearching   = false;
-          this.resolvedQuote = this.extractFirstQuote(r);
-          this.cdr.markForCheck();
-        },
-        error: () => { this.isSearching = false; this.cdr.markForCheck(); },
-      });
-  }
+    let raw = list[0];
+    if (searchTerm) {
+      const needle = searchTerm.trim().toLowerCase();
+      const exact = list.find(q =>
+        String(q.quotationNo ?? q.ticket_number ?? q.id ?? '').toLowerCase() === needle
+      );
+      if (exact) raw = exact;
+    }
 
-  /** Normalise whatever shape the CRM / backend returns */
-  private extractFirstQuote(r: any): QuotePreview | null {
-    const raw = r?.data?.[0] ?? r?.quotes?.[0] ?? r?.[0] ?? null;
-    if (!raw) return null;
     return {
       quotationNo  : raw.quotationNo ?? raw.ticket_number ?? raw.id ?? '',
       customerName : raw.customerName  ?? raw.customer_name  ?? '',
@@ -401,13 +404,12 @@ export class PaymentPage implements OnInit, OnDestroy {
 
   // ── Navigation ─────────────────────────────────────────────────────────────
   goBackToLookup(): void {
-    this.currentStep   = 'lookup';
-    this.lookupError   = '';
-    this.errorMessage  = '';
-    this.resolvedQuote = null;
-    this.order         = null;
-    this.orderId       = '';
-    this.paymentId     = '';
+    this.currentStep  = 'lookup';
+    this.lookupError  = '';
+    this.errorMessage = '';
+    this.order        = null;
+    this.orderId      = '';
+    this.paymentId    = '';
     this.detailsForm.reset();
     this.cdr.markForCheck();
   }
@@ -424,13 +426,12 @@ export class PaymentPage implements OnInit, OnDestroy {
   retryPayment(): void { this.currentStep = 'payment'; this.errorMessage = ''; this.cdr.markForCheck(); }
 
   startOver(): void {
-    this.currentStep    = 'lookup';
-    this.order          = null;
-    this.orderId        = '';
-    this.successData    = null;
-    this.errorMessage   = '';
-    this.lookupError    = '';
-    this.resolvedQuote  = null;
+    this.currentStep     = 'lookup';
+    this.order           = null;
+    this.orderId         = '';
+    this.successData     = null;
+    this.errorMessage    = '';
+    this.lookupError     = '';
     this.convertedAmount = 0;
     this.lookupForm.reset();
     this.detailsForm.reset();

@@ -121,7 +121,6 @@ const OrderSchema = new Schema(
       type: String,
       trim: true,
       default: '',
-      index: true,
     },
 
     // Razorpay payment ID (set after successful verification)
@@ -129,7 +128,6 @@ const OrderSchema = new Schema(
       type: String,
       trim: true,
       default: '',
-      index: true,
     },
 
     // Razorpay signature stored for audit trail

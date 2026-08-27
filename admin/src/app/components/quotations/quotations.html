@@ -294,7 +294,7 @@
           </span>
         </div>
 
-        <button class="btn-export" (click)="exportCSV()" [disabled]="!filteredQuotes().length" title="Export CSV">
+        <button class="btn-export" *ngIf="auth.canAccess('quotations', 'export')" (click)="exportCSV()" [disabled]="!filteredQuotes().length" title="Export CSV">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
             <polyline points="7 10 12 15 17 10" />
@@ -538,9 +538,9 @@
           <div class="page-size-wrap">
             <label>Rows</label>
             <select [(ngModel)]="pageSize" (change)="onPageSizeChange()">
-              <option value="10">10</option>
-              <option value="25">25</option>
-              <option value="50">50</option>
+              <option [ngValue]="10">10</option>
+              <option [ngValue]="25">25</option>
+              <option [ngValue]="50">50</option>
             </select>
           </div>
         </div>

@@ -11,6 +11,7 @@ import {
   TrackingService, TrackingRecord, TrackingStats,
   EditForm, ManualPaymentForm, TimelineEntry, PayStatus, QuotStage,
 } from '../services/tracking';
+import { Auth } from '../services/auth';
 
 const AVATAR_PALETTE = [
   '#1d4ed8', '#0891b2', '#059669', '#7c3aed',
@@ -191,6 +192,7 @@ export class Tracking implements OnInit, OnDestroy {
   constructor(
     private svc: TrackingService,
     private cdr: ChangeDetectorRef,
+    public  auth: Auth,
   ) { }
 
   // ─── Lifecycle ─────────────────────────────────────────────────────────────

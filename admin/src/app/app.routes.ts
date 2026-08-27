@@ -77,8 +77,8 @@ export const routes: Routes = [
       {
         path         : 'dashboard',
         loadComponent: () =>
-          import('./components/dashboard/dashboard').then(m => m.Dashboard),
-        title        : 'Admin Dashboard',
+          import('./components/super-admin-dashboard/super-admin-dashboard').then(m => m.SuperAdminDashboard),
+        title        : 'Super Admin Dashboard',
       },
       {
         path         : 'tenants',
@@ -87,15 +87,21 @@ export const routes: Routes = [
         title        : 'Manage Tenants',
       },
       {
+        path         : 'tenants/:tenantId',
+        loadComponent: () =>
+          import('./components/tenant-detail/tenant-detail').then(m => m.TenantDetail),
+        title        : 'Tenant Overview',
+      },
+      {
         path         : 'payments',
         loadComponent: () =>
-          import('./components/payments/payments').then(m => m.Payments),
+          import('./components/super-admin-payments/super-admin-payments').then(m => m.SuperAdminPayments),
         title        : 'All Payments',
       },
       {
         path         : 'quotations',
         loadComponent: () =>
-          import('./components/quotations/quotations').then(m => m.Quotations),
+          import('./components/super-admin-quotations/super-admin-quotations').then(m => m.SuperAdminQuotations),
         title        : 'All Quotations',
       },
       {
@@ -122,6 +128,18 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./components/rbac/rbac').then(m => m.Rbac),
         title        : 'Roles & Permissions',
+      },
+      {
+        path         : 'royalty',
+        loadComponent: () =>
+          import('./components/royalty/royalty').then(m => m.Royalty),
+        title        : 'Royalty Management',
+      },
+      {
+        path         : 'billing',
+        loadComponent: () =>
+          import('./components/super-admin-billing/super-admin-billing').then(m => m.SuperAdminBilling),
+        title        : 'Tenant Billing',
       },
     ],
   },
@@ -202,10 +220,30 @@ export const routes: Routes = [
       {
         path        : 'rbac',
         canActivate : [rbacGuard],
-        data        : { pageKey: 'settings' },
+        data        : { pageKey: 'rbac' },
         loadComponent: () =>
           import('./components/rbac/rbac').then(m => m.Rbac),
         title       : 'Roles & Permissions',
+      },
+
+      // ── Royalty ───────────────────────────────────────────────────────────
+      {
+        path        : 'royalty',
+        canActivate : [setupGuard, rbacGuard],
+        data        : { pageKey: 'royalty' },
+        loadComponent: () =>
+          import('./components/royalty/royalty').then(m => m.Royalty),
+        title       : 'Royalty Management',
+      },
+
+      // ── Billing (read-only — own subscription/invoices) ────────────────────
+      {
+        path        : 'billing',
+        canActivate : [setupGuard, rbacGuard],
+        data        : { pageKey: 'billing' },
+        loadComponent: () =>
+          import('./components/tenant-billing/tenant-billing').then(m => m.TenantBilling),
+        title       : 'Billing & Subscription',
       },
     ],
   },

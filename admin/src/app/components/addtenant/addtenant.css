@@ -742,6 +742,12 @@
   color: var(--warning);
 }
 
+.tm-action-btn--danger:hover {
+  background: var(--error-bg);
+  border-color: var(--error-border);
+  color: var(--error);
+}
+
 /* ── Pagination ───────────────────────────────────── */
 .tm-pagination {
   display: flex;
@@ -1699,6 +1705,22 @@
   cursor: not-allowed;
 }
 
+.at-btn--danger {
+  background: var(--error);
+  color: white;
+  box-shadow: 0 1px 8px rgba(220, 38, 38, .22);
+}
+
+.at-btn--danger:hover:not(:disabled) {
+  box-shadow: 0 4px 18px rgba(220, 38, 38, .32);
+  transform: translateY(-1px);
+}
+
+.at-btn--danger:disabled {
+  opacity: .5;
+  cursor: not-allowed;
+}
+
 .at-spinner {
   width: 14px;
   height: 14px;
@@ -1831,6 +1853,27 @@
 .tm-int-badge--on {
   background: var(--success-bg);
   color: var(--success);
+}
+
+.tm-th--right,
+td.tm-td--right {
+  text-align: right;
+}
+
+.tm-integ-cell {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.tm-int-loading {
+  color: var(--text-muted);
+}
+
+.tm-sync-err {
+  color: var(--error);
+  font-size: .85rem;
+  cursor: help;
 }
 
 @media (max-width: 540px) {

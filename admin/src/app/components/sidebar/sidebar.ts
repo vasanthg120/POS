@@ -8,6 +8,7 @@ import {
 } from '@angular/core';
 import { CommonModule }                                        from '@angular/common';
 import { RouterModule, RouterLink, RouterLinkActive }         from '@angular/router';
+import { DomSanitizer, SafeHtml }                             from '@angular/platform-browser';
 import { Auth, UserRole }                                     from '../services/auth';
 
 interface NavItem {
@@ -17,6 +18,11 @@ interface NavItem {
   badge?  : string;
   roles   : UserRole[];
   pageKey?: string;   // maps to RBAC pageKey for sub-user filtering
+}
+
+// Same as NavItem but with the icon already sanitized for [innerHTML] binding.
+interface RenderNavItem extends Omit<NavItem, 'icon'> {
+  icon: SafeHtml;
 }
 
 const ALL_NAV_ITEMS: NavItem[] = [
@@ -74,6 +80,30 @@ const ALL_NAV_ITEMS: NavItem[] = [
                 <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
               </svg>`,
   },
+  {
+    label  : 'Royalty',
+    route  : '',
+    roles  : ['superadmin', 'tenant'],
+    pageKey: 'royalty',
+    icon   : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"/>
+                <path d="M12 6v12M8 9.5c0-1.9 1.8-3.5 4-3.5s4 1.6 4 3.5-1.8 2.8-4 3.5c-2.2.7-4 1.6-4 3.5s1.8 3.5 4 3.5 4-1.6 4-3.5"/>
+              </svg>`,
+  },
+  {
+    // Labeled "Subscription" (not "Billing") on purpose — the superadmin's
+    // "Billing" admin-section item below shares the ADMIN_LABELS lookup by
+    // exact label text, and this one must stay in the tenant's main nav.
+    label  : 'Subscription',
+    route  : '',
+    roles  : ['tenant'],
+    pageKey: 'billing',
+    icon   : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="2" y="5" width="20" height="14" rx="2"/>
+                <path d="M2 10h20"/>
+                <path d="M6 15h4"/>
+              </svg>`,
+  },
   // ── Admin section ──────────────────────────────────────────────────────────
   {
     label  : 'Add Tenant',
@@ -88,10 +118,21 @@ const ALL_NAV_ITEMS: NavItem[] = [
               </svg>`,
   },
   {
+    label  : 'Billing',
+    route  : '/admin/billing',
+    roles  : ['superadmin'],
+    pageKey: 'tenants',
+    icon   : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="2" y="5" width="20" height="14" rx="2"/>
+                <path d="M2 10h20"/>
+                <path d="M6 15h4"/>
+              </svg>`,
+  },
+  {
     label  : 'Roles & Permissions',
     route  : '',
     roles  : ['superadmin', 'tenant'],
-    pageKey: 'settings',
+    pageKey: 'rbac',
     icon   : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
                 <rect x="3" y="11" width="18" height="11" rx="2"/>
                 <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
@@ -115,6 +156,8 @@ const ROUTE_SEGMENT: Record<string, string> = {
   'Quotation Status'    : 'quotations',
   'Tracking'            : 'tracking',
   'Margin Calculator'   : 'margin-calculator',
+  'Royalty'             : 'royalty',
+  'Subscription'        : 'billing',
   'Roles & Permissions' : 'rbac',
   'Settings'            : 'settings',
 };
@@ -139,29 +182,30 @@ export class Sidebar implements OnInit {
   collapsed  = signal(false);
   mobileOpen = signal(false);
 
-  navItems     : NavItem[] = [];
+  navItems     : RenderNavItem[] = [];
   userInitials  = '';
   userName      = '';
   userRole      = '';
   isSuperAdmin  = false;
 
-  private readonly ADMIN_LABELS = new Set(['Add Tenant', 'Roles & Permissions', 'Settings']);
+  private readonly ADMIN_LABELS = new Set(['Add Tenant', 'Billing', 'Roles & Permissions', 'Settings']);
 
-  get mainNavItems(): NavItem[] {
+  get mainNavItems(): RenderNavItem[] {
     return this.navItems.filter(i => !this.ADMIN_LABELS.has(i.label));
   }
 
-  get adminNavItems(): NavItem[] {
+  get adminNavItems(): RenderNavItem[] {
     return this.navItems.filter(i => this.ADMIN_LABELS.has(i.label));
   }
 
-  constructor(private auth: Auth) {}
+  constructor(private auth: Auth, private sanitizer: DomSanitizer) {}
 
   ngOnInit(): void {
     const user = this.auth.currentUser();
     const role = user?.role as UserRole | undefined;
     if (!role) return;
 
+    // isSuperAdmin drives the '/admin' route prefix.
     this.isSuperAdmin = role === 'superadmin';
     const prefix      = this.isSuperAdmin ? '/admin' : '';
 
@@ -199,6 +243,8 @@ export class Sidebar implements OnInit {
         // Items with a hardcoded route (Add Tenant) keep it;
         // rest resolve dynamically from ROUTE_SEGMENT
         route: item.route || `${prefix}/${ROUTE_SEGMENT[item.label] ?? item.label.toLowerCase()}`,
+        // Sanitize the raw SVG so Angular's [innerHTML] doesn't strip it
+        icon: this.sanitizer.bypassSecurityTrustHtml(item.icon),
       }));
 
     // ── User display info ──────────────────────────────────────────────────
@@ -206,7 +252,7 @@ export class Sidebar implements OnInit {
     this.userName     = `${user?.firstName ?? ''} ${user?.lastName ?? ''}`.trim() || 'User';
     this.userRole     = isSubUser
       ? (user?.rbacRoleName ?? 'Team Member')
-      : this.isSuperAdmin
+      : role === 'superadmin'
         ? 'Super Admin'
         : 'Tenant';
   }

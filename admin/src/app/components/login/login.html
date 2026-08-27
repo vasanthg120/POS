@@ -92,8 +92,20 @@
         Your session expired. Please sign in again.
       </div>
 
+      <!-- Subscription payment required -->
+      <div class="auth-alert error mb-4 billing-suspended-alert" *ngIf="serverError && billingSuspended">
+        <svg viewBox="0 0 24 24">
+          <rect x="4" y="10" width="16" height="11" rx="2" />
+          <path d="M8 10V7a4 4 0 0 1 8 0v3" />
+        </svg>
+        <div>
+          <strong>Subscription Payment Required</strong>
+          <p>{{ serverError }}</p>
+        </div>
+      </div>
+
       <!-- Server error -->
-      <div class="auth-alert error mb-4" *ngIf="serverError">
+      <div class="auth-alert error mb-4" *ngIf="serverError && !billingSuspended">
         <svg viewBox="0 0 24 24">
           <circle cx="12" cy="12" r="10" />
           <line x1="12" y1="8" x2="12" y2="12" />

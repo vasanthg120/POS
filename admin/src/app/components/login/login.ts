@@ -23,6 +23,7 @@ export class Login implements OnInit, OnDestroy {
   isLoading      = false;
   showPassword   = false;
   serverError    = '';
+  billingSuspended = false;
   sessionExpired = false;
 
   private returnUrl = '/dashboard';
@@ -86,6 +87,7 @@ export class Login implements OnInit, OnDestroy {
 
     this.isLoading   = true;
     this.serverError = '';
+    this.billingSuspended = false;
     const { email, password } = this.loginForm.value;
 
     this.auth.login(email, password)
@@ -99,10 +101,12 @@ export class Login implements OnInit, OnDestroy {
           this.router.navigateByUrl(this.auth.resolveHome(this.returnUrl));
         },
         error: (err) => {
+          this.billingSuspended = err?.code === 'BILLING_SUSPENDED';
           switch (err?.code) {
             case 'ACCOUNT_LOCKED'     : this.serverError = err.message; break;
             case 'EMAIL_NOT_VERIFIED' : this.serverError = 'Please verify your email before signing in.'; break;
             case 'ACCOUNT_DISABLED'   : this.serverError = 'Your account has been disabled. Contact your administrator.'; break;
+            case 'BILLING_SUSPENDED'  : this.serverError = err.message; break;
             default                   : this.serverError = err?.message || 'Login failed. Please try again.';
           }
         },

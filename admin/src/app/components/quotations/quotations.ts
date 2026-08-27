@@ -259,7 +259,6 @@ export class Quotations implements OnInit, OnDestroy {
             [];
           this.quotes.update(prev => reset ? incoming : [...prev, ...incoming]);
           this.totalCount.set(res.data?.total ?? null);
-          console.log(res)
         } else {
           this.error.set((res as any).message || 'Could not load quotes.');
         }

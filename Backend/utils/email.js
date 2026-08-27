@@ -69,6 +69,12 @@ const FRONTEND_BASE = () =>
 
 const COMPANY_NAME = process.env.COMPANY_NAME || 'Fully Promoted India';
 
+const MONTH_NAMES = [
+  'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December',
+];
+const round2Ish = (n) => Math.round((Number(n) || 0) * 100) / 100;
+
 // ─────────────────────────────────────────────────────────────
 // ENTERPRISE LIGHT THEME MAIL TEMPLATE
 // ─────────────────────────────────────────────────────────────
@@ -141,10 +147,10 @@ const wrap = ({ title, subtitle = '', body }) => `
 // ─────────────────────────────────────────────────────────────
 // GENERIC SEND HELPER
 // ─────────────────────────────────────────────────────────────
-const send = async ({ to, subject, html }) => {
+const send = async ({ to, subject, html, attachments }) => {
   try {
     const transporter = getTransporter();
-    const info = await transporter.sendMail({ from: FROM(), to, subject, html });
+    const info = await transporter.sendMail({ from: FROM(), to, subject, html, attachments });
     logger.info(`[Email] "${subject}" sent successfully to ${to} | ${info.messageId}`);
     return info;
   } catch (err) {
@@ -377,6 +383,254 @@ exports.sendMemberAssignedEmail = async (existingTenant, roleName, assignedBy) =
           Questions? Contact
           <a href="mailto:${ADMIN_EMAIL()}" style="color:#1e40af;">${ADMIN_EMAIL()}</a>.
         </p>
+      `,
+    }),
+  });
+};
+
+// ─────────────────────────────────────────────────────────────
+// 7. BILLING — REMINDER (7/3/1 days before due, or due-today)
+// ─────────────────────────────────────────────────────────────
+exports.sendBillingReminderEmail = async (tenant, invoice, daysUntilDue = null) => {
+  const name = tenant.firstName || tenant.email;
+  const formatted = `₹${invoice.totalAmount.toLocaleString('en-IN')}`;
+  const dueDate = new Date(invoice.dueDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' });
+  const when = daysUntilDue === 0 ? 'today' : daysUntilDue === 1 ? 'tomorrow' : `in ${daysUntilDue} days`;
+
+  return send({
+    to: tenant.email,
+    subject: daysUntilDue === 0
+      ? `Payment Due Today — ${formatted} (${invoice.invoiceNumber})`
+      : `Upcoming Subscription Payment — ${formatted} due ${dueDate}`,
+    html: wrap({
+      title: daysUntilDue === 0 ? 'Payment Due Today' : 'Upcoming Payment Reminder',
+      subtitle: 'Your monthly platform subscription invoice is due soon.',
+      body: `
+        <p>Hi <strong>${name}</strong>,</p>
+        <p>This is a reminder that your monthly subscription payment is due ${when}.</p>
+        <table class="detail-table">
+          <tr><td class="detail-label">Invoice</td><td class="detail-value">${invoice.invoiceNumber}</td></tr>
+          <tr><td class="detail-label">Amount Due</td><td class="detail-value">${formatted}</td></tr>
+          <tr><td class="detail-label">Due Date</td><td class="detail-value">${dueDate}</td></tr>
+        </table>
+        <p>Please arrange payment before the due date to avoid any interruption to your account access.</p>
+        <p style="font-size:13px;color:#94a3b8;">
+          Questions about billing? Contact
+          <a href="mailto:${ADMIN_EMAIL()}" style="color:#1e40af;">${ADMIN_EMAIL()}</a>.
+        </p>
+      `,
+    }),
+  });
+};
+
+// ─────────────────────────────────────────────────────────────
+// 8. BILLING — OVERDUE (the day the invoice passes its due date, and
+//    again at each overdue-day reminder point)
+// ─────────────────────────────────────────────────────────────
+exports.sendBillingOverdueEmail = async (tenant, invoice, graceDaysRemaining) => {
+  const name = tenant.firstName || tenant.email;
+  const outstanding = round2Ish(invoice.totalAmount - (invoice.paidAmount || 0));
+  const formatted = `₹${outstanding.toLocaleString('en-IN')}`;
+  const dueDate = new Date(invoice.dueDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' });
+
+  return send({
+    to: tenant.email,
+    subject: `Payment Overdue — ${formatted} (${invoice.invoiceNumber})`,
+    html: wrap({
+      title: 'Payment Overdue',
+      subtitle: 'Your subscription payment is now past its due date.',
+      body: `
+        <p>Hi <strong>${name}</strong>,</p>
+        <p>Your monthly subscription payment was due on <strong>${dueDate}</strong> and has not yet been received in full.</p>
+        <table class="detail-table">
+          <tr><td class="detail-label">Invoice</td><td class="detail-value">${invoice.invoiceNumber}</td></tr>
+          <tr><td class="detail-label">Outstanding Balance</td><td class="detail-value">${formatted}</td></tr>
+          <tr><td class="detail-label">Due Date</td><td class="detail-value">${dueDate}</td></tr>
+        </table>
+        <p>
+          To avoid your account being suspended, please arrange payment within the next
+          <strong>${graceDaysRemaining} day${graceDaysRemaining === 1 ? '' : 's'}</strong>.
+        </p>
+        <p style="font-size:13px;color:#94a3b8;">
+          Already paid? Contact
+          <a href="mailto:${ADMIN_EMAIL()}" style="color:#1e40af;">${ADMIN_EMAIL()}</a> so we can confirm it.
+        </p>
+      `,
+    }),
+  });
+};
+
+// ─────────────────────────────────────────────────────────────
+// 8b. BILLING — FINAL WARNING (last day before auto-suspension)
+// ─────────────────────────────────────────────────────────────
+exports.sendFinalWarningEmail = async (tenant, invoice, daysUntilSuspension) => {
+  const name = tenant.firstName || tenant.email;
+  const outstanding = round2Ish(invoice.totalAmount - (invoice.paidAmount || 0));
+  const formatted = `₹${outstanding.toLocaleString('en-IN')}`;
+
+  return send({
+    to: tenant.email,
+    subject: `Final Warning — Account Suspends in ${daysUntilSuspension} Day${daysUntilSuspension === 1 ? '' : 's'}`,
+    html: wrap({
+      title: 'Final Warning',
+      subtitle: 'Your account will be suspended very soon unless payment is received.',
+      body: `
+        <p>Hi <strong>${name}</strong>,</p>
+        <p>
+          This is a final notice — invoice <strong>${invoice.invoiceNumber}</strong> for
+          <strong>${formatted}</strong> remains unpaid, and your account will be automatically
+          suspended in <strong>${daysUntilSuspension} day${daysUntilSuspension === 1 ? '' : 's'}</strong>
+          if payment is not received.
+        </p>
+        <p style="font-size:13px;color:#94a3b8;">
+          To avoid interruption, please contact
+          <a href="mailto:${ADMIN_EMAIL()}" style="color:#1e40af;">${ADMIN_EMAIL()}</a> immediately.
+        </p>
+      `,
+    }),
+  });
+};
+
+// ─────────────────────────────────────────────────────────────
+// 9. BILLING — ACCOUNT SUSPENDED (grace period elapsed, unpaid)
+// ─────────────────────────────────────────────────────────────
+exports.sendAccountSuspendedEmail = async (tenant, invoice) => {
+  const name = tenant.firstName || tenant.email;
+  const outstanding = round2Ish(invoice.totalAmount - (invoice.paidAmount || 0));
+  const formatted = `₹${outstanding.toLocaleString('en-IN')}`;
+
+  return send({
+    to: tenant.email,
+    subject: `Account Suspended — Payment Overdue`,
+    html: wrap({
+      title: 'Account Suspended',
+      subtitle: 'Access has been paused due to an unpaid subscription invoice.',
+      body: `
+        <p>Hi <strong>${name}</strong>,</p>
+        <p>
+          Your ${COMPANY_NAME} account access has been suspended because the outstanding
+          subscription payment of <strong>${formatted}</strong> (invoice ${invoice.invoiceNumber})
+          was not received within the grace period.
+        </p>
+        <p>
+          Your operational data remains securely stored and untouched — it is not affected by
+          this suspension. Your account will be automatically reactivated as soon as the
+          payment is recorded.
+        </p>
+        <p style="font-size:13px;color:#94a3b8;">
+          To resolve this, please contact
+          <a href="mailto:${ADMIN_EMAIL()}" style="color:#1e40af;">${ADMIN_EMAIL()}</a>.
+        </p>
+      `,
+    }),
+  });
+};
+
+// ─────────────────────────────────────────────────────────────
+// 9b. BILLING — INVOICE GENERATED (new billing cycle started)
+// ─────────────────────────────────────────────────────────────
+exports.sendInvoiceGeneratedEmail = async (tenant, invoice) => {
+  const name = tenant.firstName || tenant.email;
+  const formatted = `₹${invoice.totalAmount.toLocaleString('en-IN')}`;
+  const dueDate = new Date(invoice.dueDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' });
+
+  return send({
+    to: tenant.email,
+    subject: `New Invoice Generated — ${invoice.invoiceNumber}`,
+    html: wrap({
+      title: 'New Invoice Generated',
+      subtitle: `Your invoice for ${MONTH_NAMES[invoice.periodMonth - 1]} ${invoice.periodYear} is ready.`,
+      body: `
+        <p>Hi <strong>${name}</strong>,</p>
+        <p>A new subscription invoice has been generated for your account.</p>
+        <table class="detail-table">
+          <tr><td class="detail-label">Invoice</td><td class="detail-value">${invoice.invoiceNumber}</td></tr>
+          <tr><td class="detail-label">Plan</td><td class="detail-value">${invoice.planName || 'Custom'}</td></tr>
+          <tr><td class="detail-label">Amount</td><td class="detail-value">${formatted}</td></tr>
+          <tr><td class="detail-label">Due Date</td><td class="detail-value">${dueDate}</td></tr>
+        </table>
+      `,
+    }),
+  });
+};
+
+// ─────────────────────────────────────────────────────────────
+// 9c. BILLING — PAYMENT FAILED
+// ─────────────────────────────────────────────────────────────
+exports.sendPaymentFailedEmail = async (tenant, invoice, reason) => {
+  const name = tenant.firstName || tenant.email;
+  const formatted = `₹${invoice.totalAmount.toLocaleString('en-IN')}`;
+
+  return send({
+    to: tenant.email,
+    subject: `Payment Failed — ${invoice.invoiceNumber}`,
+    html: wrap({
+      title: 'Payment Failed',
+      subtitle: 'We were unable to process your subscription payment.',
+      body: `
+        <p>Hi <strong>${name}</strong>,</p>
+        <p>
+          A payment attempt of <strong>${formatted}</strong> for invoice
+          <strong>${invoice.invoiceNumber}</strong> could not be completed.
+          ${reason ? `<br/><em>Reason: ${reason}</em>` : ''}
+        </p>
+        <p style="font-size:13px;color:#94a3b8;">
+          Please contact <a href="mailto:${ADMIN_EMAIL()}" style="color:#1e40af;">${ADMIN_EMAIL()}</a>
+          to arrange payment.
+        </p>
+      `,
+    }),
+  });
+};
+
+// ─────────────────────────────────────────────────────────────
+// 9d. BILLING — SUBSCRIPTION PAYMENT RECEIVED (platform fee, not a
+//     customer-facing payment — see sendPaymentConfirmation for that)
+// ─────────────────────────────────────────────────────────────
+exports.sendSubscriptionPaymentReceivedEmail = async (tenant, invoice, receiptPdfBuffer = null) => {
+  const name = tenant.firstName || tenant.email;
+  const formatted = `₹${invoice.paidAmount.toLocaleString('en-IN')}`;
+
+  return send({
+    to: tenant.email,
+    subject: `Payment Received — ${invoice.invoiceNumber}`,
+    html: wrap({
+      title: 'Payment Received',
+      subtitle: 'Thank you — your subscription payment has been recorded.',
+      body: `
+        <p>Hi <strong>${name}</strong>,</p>
+        <p>We've recorded your payment of <strong>${formatted}</strong> against invoice <strong>${invoice.invoiceNumber}</strong>.</p>
+        <table class="detail-table">
+          <tr><td class="detail-label">Invoice</td><td class="detail-value">${invoice.invoiceNumber}</td></tr>
+          <tr><td class="detail-label">Amount Paid</td><td class="detail-value">${formatted}</td></tr>
+          <tr><td class="detail-label">Method</td><td class="detail-value">${invoice.paymentMethod || '—'}</td></tr>
+        </table>
+        ${receiptPdfBuffer ? '<p>Your receipt is attached to this email as a PDF.</p>' : ''}
+      `,
+    }),
+    attachments: receiptPdfBuffer
+      ? [{ filename: `receipt-${invoice.invoiceNumber}.pdf`, content: receiptPdfBuffer, contentType: 'application/pdf' }]
+      : undefined,
+  });
+};
+
+// ─────────────────────────────────────────────────────────────
+// 10. BILLING — ACCOUNT REACTIVATED (payment recorded)
+// ─────────────────────────────────────────────────────────────
+exports.sendAccountReactivatedEmail = async (tenant) => {
+  const name = tenant.firstName || tenant.email;
+  const loginUrl = `${FRONTEND_BASE()}/auth/login`;
+
+  return send({
+    to: tenant.email,
+    subject: `Account Reactivated — Welcome Back`,
+    html: wrap({
+      title: 'Account Reactivated',
+      subtitle: 'Your payment was received and access has been restored.',
+      body: `
+        <p>Hi <strong>${name}</strong>,</p>
+        <p>Your subscription payment has been received and your account access has been fully restored.</p>
+        <a href="${loginUrl}" class="btn">Log In to Your Account</a>
       `,
     }),
   });

@@ -7,6 +7,7 @@ import {
   MarginJobRecord,
   JobStats,
 } from "../services/margin";
+import { Auth } from "../services/auth";
 
 /* ── interfaces ── */
 interface LineItem {
@@ -98,7 +99,7 @@ export class MarginCalculator implements OnInit, OnDestroy {
   toastMessage = "";
   private toastTimer: ReturnType<typeof setTimeout> | null = null;
 
-  constructor(private jobSvc: Margin) {}
+  constructor(private jobSvc: Margin, public auth: Auth) {}
 
   /* ════════════════════════════════════════
      LIFECYCLE

@@ -197,6 +197,8 @@ export class Auth {
         'quotations',
         'tracking',
         'margin-calculator',
+        'royalty',
+        'billing',
         'settings',
         'tenants',
       ]);

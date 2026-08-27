@@ -2,6 +2,7 @@ import {
   Component, OnInit, signal, computed, DestroyRef, inject,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Subject } from 'rxjs';
@@ -12,7 +13,7 @@ import { Auth } from '../services/auth';
 
 export type PageKey =
   | 'dashboard' | 'payments' | 'quotations' | 'tracking'
-  | 'margin-calculator' | 'rbac' | 'settings' | 'tenants';
+  | 'margin-calculator' | 'royalty' | 'billing' | 'rbac' | 'settings' | 'tenants';
 
 export type PermissionAction = 'view' | 'create' | 'edit' | 'delete' | 'export';
 
@@ -79,6 +80,16 @@ const PAGES: Page[] = [
     icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>`,
   },
   {
+    key: 'royalty', label: 'Royalty', category: 'finance',
+    availableActions: ['view', 'export'],
+    icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v12M8 9.5c0-1.9 1.8-3.5 4-3.5s4 1.6 4 3.5-1.8 2.8-4 3.5c-2.2.7-4 1.6-4 3.5s1.8 3.5 4 3.5 4-1.6 4-3.5"/></svg>`,
+  },
+  {
+    key: 'billing', label: 'Billing', category: 'finance',
+    availableActions: ['view'],
+    icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/><path d="M6 15h4"/></svg>`,
+  },
+  {
     key: 'rbac', label: 'RBAC', category: 'admin',
     availableActions: ['view', 'edit'],
     icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>`,
@@ -132,6 +143,20 @@ export class Rbac implements OnInit {
   assignForm!: FormGroup;
 
   readonly pages = PAGES;
+
+  // Sanitize raw SVG icon strings so Angular's [innerHTML] doesn't strip them.
+  // Memoized so change detection reuses the same SafeHtml instance.
+  private readonly sanitizer = inject(DomSanitizer);
+  private readonly iconCache = new Map<string, SafeHtml>();
+  safeIcon(raw: string): SafeHtml {
+    let safe = this.iconCache.get(raw);
+    if (!safe) {
+      safe = this.sanitizer.bypassSecurityTrustHtml(raw);
+      this.iconCache.set(raw, safe);
+    }
+    return safe;
+  }
+
   readonly actionLabels: Record<PermissionAction, string> = {
     view: 'View', create: 'Create', edit: 'Edit', delete: 'Delete', export: 'Export',
   };
@@ -656,5 +681,10 @@ export class Rbac implements OnInit {
     // Tenant managing roles: strip 'tenants' page from the matrix
     return PAGES.filter(p => p.key !== 'tenants');
   });
+
+  // Sub-users with only 'rbac:view' can open this page (e.g. to see their own
+  // permissions) but must not see mutating controls — the backend already
+  // rejects these calls with 403, this just keeps the UI honest about it.
+  canManageRoles = computed(() => this.auth.canAccess('rbac', 'edit'));
 }
 

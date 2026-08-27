@@ -100,9 +100,15 @@ const tenantSchema = new mongoose.Schema({
   crm: { type: crmSchema, default: () => ({ isConfigured: false }) },
 
   // ── Account state ──────────────────────────────────────────────────────────
-  // ✅ 'superadmin' added — required for the superadmin seed + auth middleware
+  // 'superadmin' = the one platform-operator account (seeded from .env).
   role: { type: String, enum: ['superadmin', 'tenant'], default: 'tenant' },
   isActive: { type: Boolean, default: true },
+  // Distinct from isActive (a manual superadmin toggle) — set/cleared only by
+  // the billing sweep (services/billing.service.js) when a subscription
+  // invoice goes unpaid past its grace period, and cleared the moment a
+  // payment is recorded. Kept separate so the two suspension reasons never
+  // fight each other and the login error can name the actual cause.
+  billingSuspended: { type: Boolean, default: false },
   isEmailVerified: { type: Boolean, default: false, select: false },
 
   // ── Auth tokens ────────────────────────────────────────────────────────────

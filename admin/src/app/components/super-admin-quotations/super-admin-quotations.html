@@ -1,0 +1,218 @@
+<div class="shell">
+
+  <header class="page-header">
+    <div class="page-header-inner">
+      <div class="header-left">
+        <div class="brand-mark">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+            <polyline points="14 2 14 8 20 8" />
+          </svg>
+        </div>
+        <div class="header-title-block">
+          <span class="header-title">Quotation Monitoring</span>
+          <span class="header-breadcrumb">All Tenants → Quotations</span>
+        </div>
+      </div>
+      <div class="header-right">
+        <button class="hdr-btn" [disabled]="isLoading" (click)="refresh()" title="Bypass the 60s cache and re-fetch live from CRM/Razorpay">
+          <svg viewBox="0 0 16 16" fill="none" width="14" height="14" [class.btn-spin]="isLoading">
+            <path d="M13.5 8a5.5 5.5 0 1 1-1.6-3.9M13.5 2.5v3h-3" stroke="currentColor" stroke-width="1.4"
+              stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+          Refresh
+        </button>
+        <button class="hdr-btn hdr-btn--primary" [disabled]="!summary.total || isExporting" (click)="exportCSV()">
+          <svg viewBox="0 0 16 16" fill="none" width="14" height="14" [class.btn-spin]="isExporting">
+            <path d="M8 2v8M4.5 6.5 8 10l3.5-3.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" />
+            <path d="M2.5 12h11" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" />
+          </svg>
+          {{ isExporting ? 'Exporting…' : 'Export CSV' }}
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="page-body">
+
+    <div class="kpi-strip sq-kpi-strip">
+      <ng-container *ngIf="isLoading">
+        <div class="kpi-card kpi-skeleton" *ngFor="let _ of skeletonRows; trackBy: trackByIdx"></div>
+      </ng-container>
+      <ng-container *ngIf="!isLoading">
+        <div class="kpi-card">
+          <div class="kpi-body">
+            <div class="kpi-label">Total Quotations</div>
+            <div class="kpi-value">{{ summary.total }}</div>
+          </div>
+        </div>
+        <div class="kpi-card kpi-card--hero">
+          <div class="kpi-body">
+            <div class="kpi-label">Total Amount</div>
+            <div class="kpi-value">{{ fmtINR(summary.totalAmount) }}</div>
+          </div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-body">
+            <div class="kpi-label">Pending</div>
+            <div class="kpi-value">{{ summary.pending }}</div>
+          </div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-body">
+            <div class="kpi-label">Approved</div>
+            <div class="kpi-value">{{ summary.approved }}</div>
+          </div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-body">
+            <div class="kpi-label">Rejected / Expired</div>
+            <div class="kpi-value">{{ summary.rejectedExpired }}</div>
+          </div>
+        </div>
+      </ng-container>
+    </div>
+
+    <div class="tenant-error-banner" *ngIf="tenantErrors.length">
+      <svg viewBox="0 0 16 16" fill="none" width="14" height="14"><circle cx="8" cy="8" r="6.5" stroke="currentColor" stroke-width="1.3" /><path d="M8 5v3.5M8 10.5v.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" /></svg>
+      {{ tenantErrors.length }} tenant{{ tenantErrors.length !== 1 ? 's' : '' }} could not be synced:
+      <span *ngFor="let e of tenantErrors; let last = last">{{ e.tenantName }}{{ !last ? ', ' : '' }}</span>
+    </div>
+
+    <div class="filter-panel">
+      <div class="filter-toggle" (click)="toggleFilters()">
+        <div class="filter-toggle-left">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M2 4h12M4.5 8h7M7 12h2" stroke-linecap="round" /></svg>
+          Filters
+          <span class="active-pill" *ngIf="activeFilterCount > 0">{{ activeFilterCount }}</span>
+        </div>
+        <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" [class.rotated]="!filtersCollapsed">
+          <path d="M4 6l4 4 4-4" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+      </div>
+
+      <div class="filter-body" [class.collapsed]="filtersCollapsed">
+        <div class="search-row">
+          <div class="search-wrap">
+            <svg class="search-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="7" cy="7" r="5" /><path d="M13 13l-2.5-2.5" stroke-linecap="round" /></svg>
+            <input class="search-input" type="text" placeholder="Search quotation #, customer, tenant…"
+              [(ngModel)]="searchQuery" (ngModelChange)="applyFiltersDebounced()" />
+            <button class="search-clear-btn" *ngIf="searchQuery" (click)="searchQuery=''; applyFiltersDebounced()">
+              <svg width="12" height="12" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M2 2l10 10M12 2L2 12" stroke-linecap="round" /></svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="filter-chips-grid">
+          <div class="fchip-group">
+            <span class="fchip-label">Tenant</span>
+            <select class="range-input" [(ngModel)]="activeTenant" (ngModelChange)="applyFiltersDebounced()">
+              <option value="">All Tenants</option>
+              <option *ngFor="let t of tenants" [value]="t.tenantId">{{ t.businessName || t.ownerName }}</option>
+            </select>
+          </div>
+          <div class="fchip-group">
+            <span class="fchip-label">Payment Status</span>
+            <div class="fchip-row">
+              <button class="fchip" *ngFor="let s of paymentStatusOptions; trackBy: trackByIdx"
+                [class.fchip--active]="activePaymentStatus === s.value"
+                (click)="activePaymentStatus = s.value; applyFiltersDebounced()">{{ s.label }}</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="filter-bottom-row">
+          <div class="date-range-group">
+            <span class="fchip-label">Period</span>
+            <div class="range-inputs">
+              <div class="range-field">
+                <label>Month</label>
+                <select class="range-input" [(ngModel)]="selectedMonth" (ngModelChange)="onPeriodChange()">
+                  <option *ngFor="let m of monthOptions" [ngValue]="m.value">{{ m.label }}</option>
+                </select>
+              </div>
+              <div class="range-field">
+                <label>Year</label>
+                <select class="range-input" [(ngModel)]="selectedYear" (ngModelChange)="onPeriodChange()">
+                  <option *ngFor="let y of yearOptions" [ngValue]="y">{{ y }}</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          <button class="reset-btn" (click)="resetFilters()">
+            <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M13.5 8a5.5 5.5 0 1 1-1.6-3.9M13.5 2.5v3h-3" stroke-linecap="round" stroke-linejoin="round" /></svg>
+            Reset filters
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="table-panel">
+      <div class="table-header">
+        <div class="table-header-left">
+          <span class="table-title">Quotations</span>
+          <span class="record-count" *ngIf="summary.total">{{ summary.total }} record{{ summary.total !== 1 ? 's' : '' }}</span>
+        </div>
+      </div>
+
+      <div class="load-bar" *ngIf="isLoading"><div class="load-bar-fill"></div></div>
+
+      <div class="empty-state" *ngIf="!isLoading && rows.length === 0">
+        <div class="empty-title">No quotations match this period/filters</div>
+        <button class="reset-btn" (click)="resetFilters()">Clear filters</button>
+      </div>
+
+      <div class="table-scroll" *ngIf="!isLoading && rows.length > 0">
+        <table class="sq-tbl">
+          <thead>
+            <tr>
+              <th>Tenant</th>
+              <th>Quotation</th>
+              <th class="th-sort" (click)="sortBy('customerName')">Customer <span class="sort-ico">{{ sortIcon('customerName') }}</span></th>
+              <th class="th-sort" (click)="sortBy('quotationDate')">Quote Date <span class="sort-ico">{{ sortIcon('quotationDate') }}</span></th>
+              <th class="th-sort text-right" (click)="sortBy('amount')">Amount <span class="sort-ico">{{ sortIcon('amount') }}</span></th>
+              <th>Stage</th>
+              <th>Payment Status</th>
+              <th>Created By</th>
+              <th>Last Updated</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let r of rows; trackBy: trackByRow">
+              <td><span class="tenant-chip">{{ r.tenantName }}</span></td>
+              <td><span class="ticket-code">{{ r.quotationNo }}</span></td>
+              <td>
+                <div class="cust-info">
+                  <div class="cust-name">{{ r.customerName || '—' }}</div>
+                  <div class="cust-email">{{ r.customerEmail }}</div>
+                </div>
+              </td>
+              <td class="date-cell">{{ fmtDate(r.quotationDate) }}</td>
+              <td class="text-right"><span class="amount-main">{{ fmtINR(r.amount) }}</span></td>
+              <td><span class="stage-badge">{{ r.quotationStatus }}</span></td>
+              <td><span class="pay-badge" [ngClass]="'pbadge--' + r.paymentStatus">{{ payLabel(r.paymentStatus) }}</span></td>
+              <td class="muted-cell">{{ r.createdBy || '—' }}</td>
+              <td class="date-cell">{{ fmtDate(r.lastUpdated) }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="table-footer" *ngIf="!isLoading && pagination.total > 0">
+        <div class="page-size-wrap">
+          <span>Rows per page</span>
+          <select class="range-input" [(ngModel)]="pageSize" (ngModelChange)="onPageSizeChange()">
+            <option [ngValue]="25">25</option>
+            <option [ngValue]="50">50</option>
+            <option [ngValue]="100">100</option>
+          </select>
+        </div>
+        <div class="pager" *ngIf="pagination.pages > 1">
+          <button class="pager-btn" [disabled]="pagination.page === 1" (click)="goToPage(pagination.page - 1)">‹ Prev</button>
+          <span class="pager-info">Page {{ pagination.page }} of {{ pagination.pages }}</span>
+          <button class="pager-btn" [disabled]="pagination.page === pagination.pages" (click)="goToPage(pagination.page + 1)">Next ›</button>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>

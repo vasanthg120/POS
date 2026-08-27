@@ -56,23 +56,23 @@ exports.createOrder = async (req, res) => {
 
     const total = Math.round(items.reduce((s, i) => s + i.unitPrice * i.quantity, 0) * 100) / 100;
     const orderNotes = [quotationNo, notes].filter(Boolean).join(' — ') || '';
+    const orderNumber = `ORD-${Date.now()}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
 
     const order = new Order({
+      tenant      : tenant._id,
+      orderNumber,
       items: items.map(i => ({
         name      : i.name,
         quantity  : i.quantity,
         unitPrice : i.unitPrice,
-        totalPrice: i.unitPrice * i.quantity,
       })),
-      subtotal    : total,
-      tax: 0, taxRate: 0, discount: 0, shipping: 0,
       total,
       currency    : tenant.currency || 'INR',
       customerInfo: { name: customerInfo.name, email: customerInfo.email, phone: customerInfo.phone || '' },
       notes       : orderNotes,
-      status      : 'payment_pending',
-      tenantId    : tenant.tenantId,
-      quotationNo : quotationNo || null,
+      status      : 'pending',
+      gateway     : 'razorpay',
+      quotationNo : quotationNo || '',
     });
 
     await order.save();
@@ -128,12 +128,12 @@ exports.createRazorpayOrder = async (req, res) => {
       amount  : amountInPaise,
       currency: 'INR',
       receipt : (order.quotationNo || order.orderNumber || order._id.toString()).substring(0, 40),
-      notes: { orderId: order._id.toString(), quotationNo: order.quotationNo || '', tenantId: order.tenantId },
+      notes: { orderId: order._id.toString(), quotationNo: order.quotationNo || '', tenantId: tenant.tenantId },
     });
 
     const payment = new Payment({
       orderId          : order._id,
-      tenantId         : order.tenantId,
+      tenantId         : tenant.tenantId,
       gateway          : 'razorpay',
       gatewayPaymentId : 'pending',
       gatewayOrderId   : rzpOrder.id,
@@ -232,7 +232,7 @@ exports.verifyRazorpay = async (req, res) => {
 // ── GET /payments (tenant's own payments) ─────────────────────────────────────
 exports.getTenantPayments = async (req, res) => {
   try {
-    const tenant = await Tenant.findById(req.tenant.sub);
+    const tenant = await Tenant.findById(req.user.id);
     if (!tenant) return res.status(404).json({ success: false, message: 'Tenant not found.' });
 
     const page  = Math.max(1, parseInt(req.query.page)  || 1);
@@ -352,7 +352,7 @@ exports.refund = async (req, res) => {
     if (payment.status !== 'succeeded') return res.status(400).json({ success: false, message: 'Payment is not refundable.' });
 
     // Ensure tenant owns this payment
-    const tenant = await Tenant.findById(req.tenant.sub);
+    const tenant = await Tenant.findById(req.user.id);
     if (payment.tenantId !== tenant.tenantId) {
       return res.status(403).json({ success: false, message: 'Access denied.' });
     }
@@ -383,11 +383,9 @@ exports.refund = async (req, res) => {
 exports.search = async (req, res) => {
   try {
     const q        = String(req.query.q || '').trim();
-    const tenantId = req.tenant.tenantId;
+    const tenantId = req.user.tenantId;
     if (!q) return res.status(400).json({ success: false, message: 'Search query required.' });
 
-    const Payment = require('../models/payment.model');
-    const Order   = require('../models/order.model');
 
     const payments = await Payment.find({
       tenantId,

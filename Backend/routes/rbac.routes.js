@@ -5,6 +5,7 @@ const { body, param, validationResult } = require('express-validator');
 const rbacCtrl      = require('../controllers/rbacController');
 const { protect }   = require('../middleware/auth');
 const requireTenant = require('../middleware/requireTenant');
+const requirePermission = require('../middleware/requirePermission');
 
 const router = express.Router();
 
@@ -24,20 +25,20 @@ const mongoId = () => param('id').isMongoId().withMessage('Invalid role ID.');
 // All RBAC routes require auth + tenant role
 router.use(protect, requireTenant);
 
-router.get('/',           rbacCtrl.listRoles);
-router.get('/audit',      rbacCtrl.getAuditLog);
+router.get('/',           requirePermission('rbac', 'view'), rbacCtrl.listRoles);
+router.get('/audit',      requirePermission('rbac', 'view'), rbacCtrl.getAuditLog);
 
-router.post('/', [
+router.post('/', requirePermission('rbac', 'edit'), [
   body('name').trim().notEmpty().withMessage('Role name is required.').isLength({ min: 2, max: 40 }),
   body('description').optional().isLength({ max: 200 }),
   body('color').optional().matches(/^#[0-9a-fA-F]{6}$/).withMessage('Invalid hex color.'),
   body('permissions').optional().isArray(),
 ], validate, rbacCtrl.createRole);
 
-router.get   ('/:id',           [mongoId()], validate, rbacCtrl.getRole);
-router.patch ('/:id',           [mongoId()], validate, rbacCtrl.updateRole);
-router.delete('/:id',           [mongoId()], validate, rbacCtrl.deleteRole);
-router.post  ('/:id/duplicate', [mongoId()], validate, rbacCtrl.duplicateRole);
-router.get   ('/:id/audit',     [mongoId()], validate, rbacCtrl.getRoleAuditLog);
+router.get   ('/:id',           requirePermission('rbac', 'view'), [mongoId()], validate, rbacCtrl.getRole);
+router.patch ('/:id',           requirePermission('rbac', 'edit'), [mongoId()], validate, rbacCtrl.updateRole);
+router.delete('/:id',           requirePermission('rbac', 'edit'), [mongoId()], validate, rbacCtrl.deleteRole);
+router.post  ('/:id/duplicate', requirePermission('rbac', 'edit'), [mongoId()], validate, rbacCtrl.duplicateRole);
+router.get   ('/:id/audit',     requirePermission('rbac', 'view'), [mongoId()], validate, rbacCtrl.getRoleAuditLog);
 
 module.exports = router;

@@ -8,6 +8,13 @@ export const serverRoutes: ServerRoute[] = [
     renderMode: RenderMode.Server
   },
 
+  // Dynamic tenant detail page (superadmin) — one page per tenantId, can't
+  // be enumerated at build time
+  {
+    path: 'admin/tenants/:tenantId',
+    renderMode: RenderMode.Server
+  },
+
   // Everything else prerendered
   {
     path: '**',

@@ -455,7 +455,7 @@
           <h3 class="tbl-title">Transactions</h3>
           <span class="record-count" *ngIf="payments().length">{{ payments().length }} of {{ totalCount }}</span>
         </div>
-        <button class="btn-export" (click)="exportCSV()">
+        <button class="btn-export" *ngIf="auth.canAccess('payments', 'export')" (click)="exportCSV()">
           <svg viewBox="0 0 24 24">
             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
             <polyline points="7 10 12 15 17 10" />
@@ -509,7 +509,7 @@
               </th>
               <th>Customer</th>
               <th>Method</th>
-              <th class="num" (click)="sortBy('amount')" class="sortable num">
+              <th class="num sortable" (click)="sortBy('amount')">
                 Amount
                 <span class="sort-icon" [class.asc]="sortCol==='amount'&&sortDir==='asc'"
                   [class.desc]="sortCol==='amount'&&sortDir==='desc'">
@@ -638,7 +638,7 @@
         <!-- Bulk action bar -->
         <div class="bulk-bar" *ngIf="selectedIds.size > 0">
           <span class="bulk-count">{{ selectedIds.size }} selected</span>
-          <button class="bulk-btn" (click)="exportSelected()">
+          <button class="bulk-btn" *ngIf="auth.canAccess('payments', 'export')" (click)="exportSelected()">
             <svg viewBox="0 0 24 24">
               <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
               <polyline points="7 10 12 15 17 10" />
@@ -693,10 +693,10 @@
           <div class="page-size-wrap">
             <label>Rows</label>
             <select [(ngModel)]="pageSize" (change)="onPageSizeChange()">
-              <option value="10">10</option>
-              <option value="25">25</option>
-              <option value="50">50</option>
-              <option value="100">100</option>
+              <option [ngValue]="10">10</option>
+              <option [ngValue]="25">25</option>
+              <option [ngValue]="50">50</option>
+              <option [ngValue]="100">100</option>
             </select>
           </div>
         </div>

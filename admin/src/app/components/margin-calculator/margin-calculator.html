@@ -55,6 +55,7 @@
       <!-- Save -->
       <button
         class="btn btn--save"
+        *ngIf="auth.canAccess('margin-calculator', 'create')"
         (click)="saveJob()"
         [disabled]="isSaving"
         title="Save job to database"
@@ -70,7 +71,7 @@
       <!-- Finalise -->
       <button
         class="btn btn--finalise"
-        *ngIf="currentJobId"
+        *ngIf="currentJobId && auth.canAccess('margin-calculator', 'create')"
         (click)="finaliseJob()"
         title="Mark as finalised"
       >
@@ -218,7 +219,7 @@
       <div class="table-toolbar">
         <h2 class="table-title">Line Items</h2>
         <div class="toolbar-right">
-          <button class="btn btn--ghost" (click)="newJob()">
+          <button class="btn btn--ghost" *ngIf="auth.canAccess('margin-calculator', 'create')" (click)="newJob()">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
               <path d="M12 5v14M5 12h14"/>
             </svg>
@@ -421,7 +422,7 @@
       </div>
 
       <!-- New Job CTA -->
-      <button class="btn btn--primary btn--full" (click)="newJob()">
+      <button class="btn btn--primary btn--full" *ngIf="auth.canAccess('margin-calculator', 'create')" (click)="newJob()">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <line x1="12" y1="5" x2="12" y2="19"/>
           <line x1="5" y1="12" x2="19" y2="12"/>
@@ -472,7 +473,7 @@
         </div>
 
         <!-- Quick actions -->
-        <div class="job-card-actions">
+        <div class="job-card-actions" *ngIf="auth.canAccess('margin-calculator', 'create')">
           <button class="jca-btn" (click)="duplicateJob(job, $event)" title="Duplicate">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
               <rect x="9" y="9" width="13" height="13" rx="2"/>

@@ -13,7 +13,10 @@ const SYSTEM_ROLES = [
       { pageKey: 'quotations',        actions: ['view','create','edit','delete','export'] },
       { pageKey: 'tracking',          actions: ['view','edit'] },
       { pageKey: 'margin-calculator', actions: ['view','create'] },
+      { pageKey: 'royalty',           actions: ['view','export'] },
+      { pageKey: 'billing',           actions: ['view'] },
       { pageKey: 'settings',          actions: ['view','edit'] },
+      { pageKey: 'rbac',              actions: ['view','edit'] },
     ],
   },
   {
@@ -26,6 +29,7 @@ const SYSTEM_ROLES = [
       { pageKey: 'quotations',        actions: ['view','create','edit','export'] },
       { pageKey: 'tracking',          actions: ['view','edit'] },
       { pageKey: 'margin-calculator', actions: ['view','create'] },
+      { pageKey: 'royalty',           actions: ['view','export'] },
     ],
   },
   {
@@ -38,6 +42,7 @@ const SYSTEM_ROLES = [
       { pageKey: 'quotations',        actions: ['view'] },
       { pageKey: 'tracking',          actions: ['view'] },
       { pageKey: 'margin-calculator', actions: ['view'] },
+      { pageKey: 'royalty',           actions: ['view'] },
     ],
   },
 ];

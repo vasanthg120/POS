@@ -6,24 +6,33 @@ const router  = express.Router();
 const { protect } = require('../middleware/auth');
 
 const ctrl = require('../controllers/marginController');
+const requirePermission = require('../middleware/requirePermission');
 
 // All routes require authentication
 router.use(protect);
 
+// The margin-calculator RBAC page only exposes 'view' and 'create' actions
+// (see admin rbac.ts PAGES + Backend/utils/seedTenantRoles.js) — there is no
+// separate 'edit'/'delete' grant for this page, so every mutating operation
+// here (including update/status/duplicate/delete) is gated behind 'create',
+// the one action that already means "full use of the calculator".
+const canView   = requirePermission('margin-calculator', 'view');
+const canModify = requirePermission('margin-calculator', 'create');
+
 /* ── Stats ── */
-router.get('/stats/summary', ctrl.getStats);
+router.get('/stats/summary', canView, ctrl.getStats);
 
 /* ── CRUD ── */
 router.route('/')
-  .get(ctrl.listJobs)
-  .post(ctrl.createJob);
+  .get(canView, ctrl.listJobs)
+  .post(canModify, ctrl.createJob);
 
 router.route('/:id')
-  .get(ctrl.getJob)
-  .put(ctrl.updateJob)
-  .delete(ctrl.deleteJob);
+  .get(canView, ctrl.getJob)
+  .put(canModify, ctrl.updateJob)
+  .delete(canModify, ctrl.deleteJob);
 
-router.patch('/:id/status',    ctrl.updateStatus);
-router.post( '/:id/duplicate', ctrl.duplicateJob);
+router.patch('/:id/status',    canModify, ctrl.updateStatus);
+router.post( '/:id/duplicate', canModify, ctrl.duplicateJob);
 
 module.exports = router;

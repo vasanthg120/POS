@@ -2,6 +2,8 @@
 
 const crypto    = require('crypto');
 const Tenant    = require('../models/tenant');
+const TenantSubscription = require('../models/tenantSubscription');
+const RoyaltyConfig = require('../models/royaltyConfig');
 const emailUtil = require('../utils/email');   // ← whole module, not destructured
 const logger    = require('../utils/logger');
 const { seedTenantRoles } = require('../utils/seedTenantRoles');
@@ -91,10 +93,10 @@ exports.listTenants = async (req, res, next) => {
     const limit = Math.min(100, parseInt(req.query.limit) || 20);
     const skip  = (page - 1) * limit;
 
-    // Always exclude superadmin and sub-users
+    // Store tenants only — excludes the superadmin account and sub-users.
     const filter = {
-      role      : { $ne: 'superadmin' },
-      isSubUser : { $ne: true },          // ← add this
+      role      : 'tenant',
+      isSubUser : { $ne: true },
     };
 
     if (req.query.search) {
@@ -157,6 +159,77 @@ exports.setTenantStatus = async (req, res, next) => {
       success: true,
       message: `Tenant ${isActive ? 'enabled' : 'disabled'} successfully.`,
       data   : safeTenant(tenant),
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// ── PATCH /api/admin/tenants/:tenantId ────────────────────────────────────────
+exports.updateTenant = async (req, res, next) => {
+  try {
+    const tenant = await Tenant.findOne({ tenantId: req.params.tenantId });
+    if (!tenant) {
+      return res.status(404).json({ success: false, message: 'Tenant not found.' });
+    }
+    if (tenant.role === 'superadmin') {
+      return res.status(403).json({ success: false, message: 'The platform superadmin account cannot be edited here.' });
+    }
+
+    const {
+      firstName, lastName, email, phone, businessName, city, currency,
+    } = req.body;
+
+    if (email && email.toLowerCase() !== tenant.email) {
+      const existing = await Tenant.findOne({ email: email.toLowerCase(), _id: { $ne: tenant._id } });
+      if (existing) {
+        return res.status(409).json({ success: false, code: 'EMAIL_EXISTS', message: 'Another account already uses this email.' });
+      }
+      tenant.email = email.toLowerCase();
+    }
+
+    if (firstName !== undefined) tenant.firstName = firstName;
+    if (lastName !== undefined) tenant.lastName = lastName;
+    if (phone !== undefined) tenant.phone = phone;
+    if (tenant.role === 'tenant') {
+      if (businessName !== undefined) tenant.businessName = businessName;
+      if (city !== undefined) tenant.city = city;
+      if (currency !== undefined) tenant.currency = currency;
+    }
+
+    await tenant.save();
+
+    logger.info(`[Admin] Tenant ${tenant.tenantId} profile updated by ${req.user.email}`);
+    return res.json({
+      success: true,
+      message: 'Account updated successfully.',
+      data   : safeTenant(tenant),
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// ── DELETE /api/admin/tenants/:tenantId ───────────────────────────────────────
+exports.deleteTenant = async (req, res, next) => {
+  try {
+    const tenant = await Tenant.findOne({ tenantId: req.params.tenantId });
+    if (!tenant) {
+      return res.status(404).json({ success: false, message: 'Tenant not found.' });
+    }
+    if (tenant.role === 'superadmin') {
+      return res.status(403).json({ success: false, message: 'The platform superadmin account cannot be deleted.' });
+    }
+
+    await Tenant.deleteMany({ parentTenantId: tenant.tenantId, isSubUser: true });
+    await TenantSubscription.deleteOne({ tenantId: tenant.tenantId });
+    await RoyaltyConfig.deleteOne({ tenantId: tenant.tenantId });
+    await Tenant.deleteOne({ _id: tenant._id });
+
+    logger.info(`[Admin] Tenant ${tenant.email} (${tenant.tenantId}) deleted by ${req.user.email}`);
+    return res.json({
+      success: true,
+      message: 'Tenant deleted successfully.',
     });
   } catch (err) {
     next(err);

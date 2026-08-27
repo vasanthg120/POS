@@ -1,3 +1,7 @@
+/* Subscription payment required */
+.billing-suspended-alert strong { display: block; font-weight: 700; margin-bottom: 3px; }
+.billing-suspended-alert p { margin: 0; }
+
 /* Security badge */
 .security-badge {
   display: flex;

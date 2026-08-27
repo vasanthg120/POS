@@ -151,9 +151,13 @@ export class Header implements OnInit {
       '/admin/tracking': 'Tracking',
 
       '/admin/tenants': 'Add Tenant',
+      '/admin/billing': 'Tenant Billing',
 
       '/margin-calculator': 'Margin Calculator',
       '/admin/margin-calculator': 'Margin Calculator',
+
+      '/royalty': 'Royalty Management',
+      '/admin/royalty': 'Royalty Management',
 
       '/settings': 'Settings',
       '/admin/settings': 'Settings',

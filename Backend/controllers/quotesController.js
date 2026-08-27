@@ -45,7 +45,7 @@ const fetchAllQuotes = async (apiKey, search = '') => {
 // ── GET /tenant/quotes ────────────────────────────────────────────────────────
 exports.getQuotes = async (req, res) => {
   try {
-    const tenant = await Tenant.findById(req.tenant.sub).select('+crm.apiKey');
+    const tenant = await Tenant.findById(req.user.id).select('+crm.apiKey');
     if (!tenant) return res.status(404).json({ success: false, message: 'Tenant not found.' });
 
     if (!tenant.crm.isConfigured) {
@@ -71,7 +71,7 @@ exports.getQuotes = async (req, res) => {
 // ── GET /tenant/quotes/:quoteId ───────────────────────────────────────────────
 exports.getQuote = async (req, res) => {
   try {
-    const tenant = await Tenant.findById(req.tenant.sub).select('+crm.apiKey');
+    const tenant = await Tenant.findById(req.user.id).select('+crm.apiKey');
     if (!tenant || !tenant.crm.isConfigured) {
       return res.status(400).json({ success: false, message: 'CRM not configured.' });
     }
@@ -117,7 +117,7 @@ exports.getQuote = async (req, res) => {
 exports.search = async (req, res) => {
   try {
     const q   = String(req.query.q || '').trim();
-    const key = req.tenant ? await getTenantCRMKey(req.tenant.tenantId) : null;
+    const key = req.user ? await getTenantCRMKey(req.user.tenantId) : null;
 
     if (!q) return res.status(400).json({ success: false, message: 'Search query required.' });
     if (!key) return res.status(400).json({ success: false, message: 'CRM not configured.' });
@@ -139,7 +139,7 @@ exports.search = async (req, res) => {
 // helper to get decrypted CRM key for tenant
 async function getTenantCRMKey(tenantId) {
   try {
-    const Tenant = require('../models/tenant.model');
+    const Tenant = require('../models/tenant');
     const t = await Tenant.findOne({ tenantId }).select('+crm.apiKey');
     if (!t || !t.crm?.isConfigured) return null;
     return t.getCRMKey();

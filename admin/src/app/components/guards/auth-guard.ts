@@ -15,6 +15,7 @@ export const authGuard: CanActivateFn = (route, state) => {
 };
 
 // ── superAdminGuard ───────────────────────────────────────────────────────────
+// Gates /admin/* — superadmin only.
 export const superAdminGuard: CanActivateFn = (_route, _state) => {
   const auth   = inject(Auth);
   const router = inject(Router);
@@ -107,6 +108,7 @@ export const rbacGuard: CanActivateFn = (route, _state) => {
     'quotations',
     'tracking',
     'margin-calculator',
+    'royalty',
     'settings',
   ].find(p => allowed.has(p));
 

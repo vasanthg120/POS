@@ -97,10 +97,12 @@
       <thead>
         <tr>
           <th class="tm-th">Tenant</th>
-          <th class="tm-th tm-th--hide-sm">Role</th>
           <th class="tm-th tm-th--hide-md">Business</th>
           <th class="tm-th">Status</th>
-          <th class="tm-th tm-th--hide-md">Setup</th>
+          <th class="tm-th tm-th--hide-sm">Integrations</th>
+          <th class="tm-th tm-th--hide-md tm-th--right">Quotations</th>
+          <th class="tm-th tm-th--hide-md tm-th--right">Collected</th>
+          <th class="tm-th tm-th--hide-lg tm-th--right">Royalty</th>
           <th class="tm-th tm-th--hide-lg">Joined</th>
           <th class="tm-th tm-th--center">Actions</th>
         </tr>
@@ -119,10 +121,6 @@
                 <span class="tm-phone" *ngIf="t.phone">{{ t.phone }}</span>
               </div>
             </div>
-          </td>
-
-          <td class="tm-td tm-th--hide-sm">
-            <span class="tm-role-chip" [attr.data-role]="t.role">{{ t.role | titlecase }}</span>
           </td>
 
           <td class="tm-td tm-th--hide-md">
@@ -146,13 +144,28 @@
             </div>
           </td>
 
-          <td class="tm-td tm-th--hide-md">
-            <div class="tm-setup">
-              <div class="tm-setup-bar">
-                <div class="tm-setup-fill" [style.width.%]="getSetupPct(t.setupStep)"></div>
-              </div>
-              <span class="tm-setup-label" [attr.data-step]="t.setupStep">{{ getSetupLabel(t.setupStep) }}</span>
+          <td class="tm-td tm-th--hide-sm">
+            <div class="tm-integ-cell" *ngIf="t.snapshot; else integLoading">
+              <span class="tm-int-badge" [class.tm-int-badge--on]="t.snapshot.crm.isConfigured">CRM</span>
+              <span class="tm-int-badge" [class.tm-int-badge--on]="t.snapshot.razorpay.isConfigured">RZP</span>
+              <span class="tm-sync-err" *ngIf="t.snapshot.syncStatus === 'error'" [title]="t.snapshot.syncError || 'Sync failed'">⚠</span>
             </div>
+            <ng-template #integLoading><span class="tm-int-loading">…</span></ng-template>
+          </td>
+
+          <td class="tm-td tm-th--hide-md tm-td--right">
+            <span *ngIf="t.snapshot">{{ t.snapshot.quotations.total }}</span>
+            <span *ngIf="!t.snapshot" class="tm-int-loading">…</span>
+          </td>
+
+          <td class="tm-td tm-th--hide-md tm-td--right">
+            <span *ngIf="t.snapshot">₹{{ t.snapshot.payments.totalCollected | number:'1.0-0' }}</span>
+            <span *ngIf="!t.snapshot" class="tm-int-loading">…</span>
+          </td>
+
+          <td class="tm-td tm-th--hide-lg tm-td--right">
+            <span *ngIf="t.snapshot">₹{{ t.snapshot.royalty.totalPayable | number:'1.0-0' }}</span>
+            <span *ngIf="!t.snapshot" class="tm-int-loading">…</span>
           </td>
 
           <td class="tm-td tm-th--hide-lg">
@@ -161,11 +174,20 @@
 
           <td class="tm-td tm-td--actions">
             <div class="tm-actions">
-              <button class="tm-action-btn" title="View details" (click)="viewTenant(t)">
+              <button class="tm-action-btn" title="Open tenant overview" (click)="openTenantOverview(t)">
+                <svg viewBox="0 0 16 16"><path d="M2 8h10M8 4l4 4-4 4" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </button>
+              <button class="tm-action-btn" title="Quick view" (click)="viewTenant(t)">
                 <svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="3"/><path d="M1 8s2.5-5 7-5 7 5 7 5-2.5 5-7 5-7-5-7-5z"/></svg>
+              </button>
+              <button class="tm-action-btn" title="Edit" (click)="editTenant(t)">
+                <svg viewBox="0 0 16 16"><path d="M11.5 2.5l2 2L5 13l-3 1 1-3 8.5-8.5z" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
               </button>
               <button class="tm-action-btn tm-action-btn--warn" title="Reset password" (click)="resetPassword(t)">
                 <svg viewBox="0 0 16 16"><rect x="3" y="7" width="10" height="8" rx="1.5"/><path d="M5 7V5a3 3 0 0 1 6 0v2"/><circle cx="8" cy="11" r="1" fill="currentColor" stroke="none"/></svg>
+              </button>
+              <button class="tm-action-btn tm-action-btn--danger" title="Delete" (click)="deleteTenant(t)">
+                <svg viewBox="0 0 16 16"><path d="M3 4.5h10M6 4.5V3a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v1.5M6.5 7.5v4M9.5 7.5v4M4 4.5l.6 8.5a1.2 1.2 0 0 0 1.2 1.1h4.4a1.2 1.2 0 0 0 1.2-1.1l.6-8.5" stroke-width="1.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
               </button>
             </div>
           </td>
@@ -388,7 +410,12 @@
 <div class="tm-modal-scrim" *ngIf="activeModal" (click)="closeModal()">
   <div class="tm-modal" (click)="$event.stopPropagation()">
     <div class="tm-modal-head">
-      <h3>{{ activeModal === 'view' ? 'Tenant Details' : 'Reset Password' }}</h3>
+      <h3>
+        {{ activeModal === 'view' ? 'Tenant Details'
+          : activeModal === 'edit' ? 'Edit Tenant'
+          : activeModal === 'delete' ? 'Delete Tenant'
+          : 'Reset Password' }}
+      </h3>
       <button class="at-close" (click)="closeModal()">
         <svg viewBox="0 0 16 16"><line x1="12" y1="4" x2="4" y2="12"/><line x1="4" y1="4" x2="12" y2="12"/></svg>
       </button>
@@ -447,6 +474,80 @@
         <button class="at-btn at-btn--warn" (click)="confirmResetPassword()" [disabled]="resettingId">
           <span class="at-spinner at-spinner--dark" *ngIf="resettingId"></span>
           {{ resettingId ? 'Resetting…' : 'Yes, Reset Password' }}
+        </button>
+      </div>
+    </div>
+
+    <div class="tm-modal-body" *ngIf="activeModal === 'edit' && selectedTenant">
+      <div class="at-alerts" style="padding:0; margin-bottom:12px" *ngIf="editErrorMsg">
+        <div class="at-alert at-alert--err" role="alert">
+          <svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="7" stroke-width="1.5" fill="none"/><line x1="8" y1="5" x2="8" y2="8.5" stroke-width="2"/><circle cx="8" cy="11" r="0.8" fill="currentColor"/></svg>
+          {{ editErrorMsg }}
+        </div>
+      </div>
+      <form [formGroup]="editForm" autocomplete="off" novalidate>
+        <div class="at-grid-2">
+          <div class="at-field" [class.at-field--err]="isEditInvalid('firstName')">
+            <label class="at-lbl">First Name <em>*</em></label>
+            <input type="text" formControlName="firstName" class="at-inp" />
+            <span class="at-err" *ngIf="isEditInvalid('firstName')">{{ getEditErr('firstName') }}</span>
+          </div>
+          <div class="at-field" [class.at-field--err]="isEditInvalid('lastName')">
+            <label class="at-lbl">Last Name <em>*</em></label>
+            <input type="text" formControlName="lastName" class="at-inp" />
+            <span class="at-err" *ngIf="isEditInvalid('lastName')">{{ getEditErr('lastName') }}</span>
+          </div>
+        </div>
+        <div class="at-field" [class.at-field--err]="isEditInvalid('email')">
+          <label class="at-lbl">Work Email <em>*</em></label>
+          <input type="email" formControlName="email" class="at-inp" />
+          <span class="at-err" *ngIf="isEditInvalid('email')">{{ getEditErr('email') }}</span>
+        </div>
+        <div class="at-field" [class.at-field--err]="isEditInvalid('phone')">
+          <label class="at-lbl">Phone <em>*</em></label>
+          <input type="tel" formControlName="phone" class="at-inp" />
+          <span class="at-err" *ngIf="isEditInvalid('phone')">{{ getEditErr('phone') }}</span>
+        </div>
+        <div class="at-grid-2">
+          <div class="at-field">
+            <label class="at-lbl">Business Name</label>
+            <input type="text" formControlName="businessName" class="at-inp" />
+          </div>
+          <div class="at-field">
+            <label class="at-lbl">City</label>
+            <input type="text" formControlName="city" class="at-inp" />
+          </div>
+        </div>
+      </form>
+      <div class="tm-modal-actions">
+        <button class="at-btn at-btn--ghost" (click)="closeModal()" [disabled]="editSubmitting">Cancel</button>
+        <button class="at-btn at-btn--primary" (click)="submitEdit()" [disabled]="editSubmitting">
+          <span class="at-spinner" *ngIf="editSubmitting"></span>
+          {{ editSubmitting ? 'Saving…' : 'Save Changes' }}
+        </button>
+      </div>
+    </div>
+
+    <div class="tm-modal-body" *ngIf="activeModal === 'delete' && selectedTenant">
+      <div class="at-dispatch at-dispatch--warn">
+        <div class="at-dispatch-icon at-dispatch-icon--warn">
+          <svg viewBox="0 0 20 20"><path d="M3 4.5h14M8 4.5V3a1.5 1.5 0 0 1 1.5-1.5h1A1.5 1.5 0 0 1 12 3v1.5M9 8.5v6M11 8.5v6M5.5 4.5l.8 11.5A1.5 1.5 0 0 0 7.8 17.5h4.4a1.5 1.5 0 0 0 1.5-1.5l.8-11.5" stroke-width="1.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <div class="at-dispatch-body">
+          <strong class="at-dispatch-body--warn">Delete {{ selectedTenant.firstName }} {{ selectedTenant.lastName }}?</strong>
+          <span>{{ selectedTenant.email }}</span>
+          <p>This permanently removes the tenant account and its access. This cannot be undone.</p>
+        </div>
+      </div>
+      <div class="at-alert at-alert--err" role="alert" style="margin-top:12px">
+        <svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="7" stroke-width="1.5" fill="none"/><line x1="8" y1="5" x2="8" y2="8.5" stroke-width="2"/><circle cx="8" cy="11" r="0.8" fill="currentColor"/></svg>
+        Quotations remain in the tenant's own CRM; only this platform account is removed.
+      </div>
+      <div class="tm-modal-actions">
+        <button class="at-btn at-btn--ghost" (click)="closeModal()" [disabled]="deletingId">Cancel</button>
+        <button class="at-btn at-btn--danger" (click)="confirmDeleteTenant()" [disabled]="deletingId">
+          <span class="at-spinner at-spinner--dark" *ngIf="deletingId"></span>
+          {{ deletingId ? 'Deleting…' : 'Yes, Delete Tenant' }}
         </button>
       </div>
     </div>

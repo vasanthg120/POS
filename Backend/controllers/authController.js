@@ -116,7 +116,7 @@ exports.login = async (req, res) => {
 
     const tenant = await Tenant
       .findOne({ email: rawEmail.toLowerCase() })
-      .select('+password +loginAttempts +lockUntil +refreshTokens +isEmailVerified +isActive +isSubUser +parentTenantId +rbacRoleId +rbacRoleName +subUserStatus')
+      .select('+password +loginAttempts +lockUntil +refreshTokens +isEmailVerified +isActive +billingSuspended +isSubUser +parentTenantId +rbacRoleId +rbacRoleName +subUserStatus')
       .populate('rbacRoleId', 'permissions');
 
     if (!tenant) {
@@ -148,6 +148,14 @@ exports.login = async (req, res) => {
 
     if (!tenant.isActive) {
       return res.status(403).json({ success: false, code: 'ACCOUNT_DISABLED', message: 'Your account has been disabled.' });
+    }
+
+    if (tenant.billingSuspended) {
+      return res.status(403).json({
+        success: false,
+        code: 'BILLING_SUSPENDED',
+        message: 'Your subscription payment is overdue. Please contact the platform admin to resume access.',
+      });
     }
 
     await Tenant.findByIdAndUpdate(tenant._id, {
@@ -380,8 +388,8 @@ exports.refresh = async (req, res) => {
 exports.logout = async (req, res) => {
   try {
     const token = req.cookies?.refreshToken;
-    if (token && req.tenant) {
-      await Tenant.findByIdAndUpdate(req.tenant.sub, { $pull: { refreshTokens: { token } } });
+    if (token && req.user) {
+      await Tenant.findByIdAndUpdate(req.user.sub, { $pull: { refreshTokens: { token } } });
     }
     res.clearCookie('refreshToken', { path: '/api/auth/refresh' });
     return res.status(200).json({ success: true, message: 'Logged out.' });
@@ -394,7 +402,7 @@ exports.logout = async (req, res) => {
 // ── ME ────────────────────────────────────────────────────────────────────────
 exports.me = async (req, res) => {
   try {
-    const tenant = await Tenant.findById(req.tenant.sub);
+    const tenant = await Tenant.findById(req.user.sub);
     if (!tenant) return res.status(404).json({ success: false, message: 'User not found.' });
     return res.status(200).json({ success: true, data: sanitizeTenant(tenant) });
   } catch (err) {

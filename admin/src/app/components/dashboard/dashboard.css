@@ -1548,3 +1548,58 @@
     padding: 12px;
   }
 }
+
+/* ── Session expired state ─────────────────────────────────────────────── */
+.dash-session-error {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  padding: 24px;
+}
+
+.dash-session-card {
+  text-align: center;
+  max-width: 380px;
+  padding: 32px 28px;
+  border: 1px solid var(--border, #e5e7eb);
+  border-radius: 16px;
+  background: var(--surface, #fff);
+  box-shadow: var(--sh-sm, 0 1px 3px rgba(0,0,0,.08));
+}
+
+.dash-session-card svg {
+  width: 44px;
+  height: 44px;
+  color: var(--error, #dc2626);
+  margin-bottom: 12px;
+}
+
+.dash-session-card h2 {
+  font-size: 1.15rem;
+  font-weight: 700;
+  margin: 0 0 6px;
+  color: var(--text-primary, #111827);
+}
+
+.dash-session-card p {
+  font-size: .9rem;
+  color: var(--text-muted, #6b7280);
+  margin: 0 0 20px;
+}
+
+.dash-session-btn {
+  padding: 10px 24px;
+  border: none;
+  border-radius: 9px;
+  background: var(--primary, #0e64a3);
+  color: #fff;
+  font-size: .9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity .16s ease;
+}
+
+.dash-session-btn:hover {
+  opacity: .9;
+}

@@ -5,7 +5,7 @@ const permissionSchema = new mongoose.Schema({
     pageKey: {
         type: String,
         required: true,
-        enum: ['dashboard', 'payments', 'quotations', 'tracking', 'margin-calculator', 'rbac', 'settings', 'tenants'],
+        enum: ['dashboard', 'payments', 'quotations', 'tracking', 'margin-calculator', 'royalty', 'rbac', 'settings', 'tenants'],
     },
     actions: [{ type: String, enum: ['view', 'create', 'edit', 'delete', 'export'] }],
 }, { _id: false });

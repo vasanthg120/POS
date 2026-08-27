@@ -1,6 +1,23 @@
 <!-- dashboard.html -->
 <div class="dash-root" [class.is-loading]="loading()">
 
+  <!-- ── Session expired ──────────────────────────────────────────────── -->
+  @if (sessionError()) {
+  <div class="dash-session-error">
+    <div class="dash-session-card">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
+           stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="12" cy="12" r="10"/>
+        <line x1="12" y1="8" x2="12" y2="12"/>
+        <line x1="12" y1="16" x2="12.01" y2="16"/>
+      </svg>
+      <h2>Your session has expired</h2>
+      <p>Please sign in again to view your dashboard.</p>
+      <button type="button" class="dash-session-btn" (click)="goToLogin()">Sign in</button>
+    </div>
+  </div>
+  } @else {
+
   <!-- ── Tooltip ──────────────────────────────────────────────────────── -->
   @if (tooltip()) {
   <div class="chart-tooltip" [style.left.px]="tooltip()!.x" [style.top.px]="tooltip()!.y">
@@ -561,6 +578,8 @@
     </div>
 
   </div>
+  }
+
   }
 
 </div>

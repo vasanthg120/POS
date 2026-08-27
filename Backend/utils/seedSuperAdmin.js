@@ -3,6 +3,15 @@
 const crypto = require('crypto');
 const Tenant = require('../models/tenant');
 const logger = require('./logger');
+const { seedTenantRoles } = require('./seedTenantRoles');
+
+// The superadmin's own tenant space uses this fixed tenantId (see
+// admin/src/app/components/services/auth.ts SUPERADMIN_TENANT_ID). Every
+// regular tenant gets its Owner/Admin/Staff RBAC roles seeded on creation
+// (adminController.createTenant → seedTenantRoles) — the superadmin never
+// goes through that flow, so it must be seeded here instead, or the RBAC
+// page has no roles to select and every role/member action is unreachable.
+const SUPERADMIN_TENANT_ID = 'SUPERADMIN';
 
 const seedSuperAdmin = async () => {
   const email    = process.env.SUPERADMIN_EMAIL;
@@ -29,6 +38,7 @@ const seedSuperAdmin = async () => {
     } else {
       logger.info(`[SeedSuperAdmin] Superadmin ${email} already exists — skipping.`);
     }
+    await seedTenantRoles(SUPERADMIN_TENANT_ID);
     return;
   }
 
@@ -37,13 +47,15 @@ const seedSuperAdmin = async () => {
     firstName      : process.env.SUPERADMIN_FIRST_NAME || 'Super',
     lastName       : process.env.SUPERADMIN_LAST_NAME  || 'Admin',
     email,
-    password,      
-    tenantId       : 'SUPERADMIN',
+    password,
+    tenantId       : SUPERADMIN_TENANT_ID,
     role           : 'superadmin',
     isActive       : true,
     isEmailVerified: true,
     setupStep      : 'complete',
   });
+
+  await seedTenantRoles(SUPERADMIN_TENANT_ID);
 
   logger.info(`[SeedSuperAdmin] Superadmin account created: ${email}`);
 };

@@ -5,6 +5,7 @@ const { body, param, query, validationResult } = require('express-validator');
 const ctrl          = require('../controllers/memberController');
 const { protect }   = require('../middleware/auth');
 const requireTenant = require('../middleware/requireTenant');
+const requirePermission = require('../middleware/requirePermission');
 
 const router = express.Router();
 
@@ -26,13 +27,13 @@ const mongoId = () => param('id').isMongoId().withMessage('Invalid member ID.');
 router.use(protect, requireTenant);
 
 // ── List members (filter by roleId or status) ─────────────────────────────────
-router.get('/', [
+router.get('/', requirePermission('rbac', 'view'), [
   query('roleId').optional().isMongoId(),
   query('status').optional().isIn(['active', 'suspended']),
 ], validate, ctrl.listMembers);
 
 // ── Invite a new user (temp password emailed) ─────────────────────────────────
-router.post('/invite', [
+router.post('/invite', requirePermission('rbac', 'edit'), [
   body('email').isEmail().withMessage('Valid email required.').normalizeEmail(),
   body('roleId').isMongoId().withMessage('Valid role ID required.'),
   body('firstName').optional().trim().isLength({ max: 50 }),
@@ -41,27 +42,27 @@ router.post('/invite', [
 ], validate, ctrl.inviteMember);
 
 // ── Assign an already-registered user ────────────────────────────────────────
-router.post('/assign', [
+router.post('/assign', requirePermission('rbac', 'edit'), [
   body('email').isEmail().withMessage('Valid email required.').normalizeEmail(),
   body('roleId').isMongoId().withMessage('Valid role ID required.'),
 ], validate, ctrl.assignExistingMember);
 
 // ── Reassign role ─────────────────────────────────────────────────────────────
-router.patch('/:id/role', [
+router.patch('/:id/role', requirePermission('rbac', 'edit'), [
   mongoId(),
   body('roleId').isMongoId().withMessage('Valid role ID required.'),
 ], validate, ctrl.reassignRole);
 
 // ── Suspend or reactivate ─────────────────────────────────────────────────────
-router.patch('/:id/status', [
+router.patch('/:id/status', requirePermission('rbac', 'edit'), [
   mongoId(),
   body('status').isIn(['active', 'suspended']).withMessage('Must be "active" or "suspended".'),
 ], validate, ctrl.setStatus);
 
 // ── Remove from team ──────────────────────────────────────────────────────────
-router.delete('/:id', [mongoId()], validate, ctrl.removeMember);
+router.delete('/:id', requirePermission('rbac', 'edit'), [mongoId()], validate, ctrl.removeMember);
 
 // ── Resend credentials (generates a fresh temp password) ─────────────────────
-router.post('/:id/resend-invite', [mongoId()], validate, ctrl.resendInvite);
+router.post('/:id/resend-invite', requirePermission('rbac', 'edit'), [mongoId()], validate, ctrl.resendInvite);
 
 module.exports = router;

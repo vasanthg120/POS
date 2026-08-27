@@ -4,9 +4,7 @@
   <header class="header">
     <div class="header-inner">
       <div class="brand">
-        <div class="brand-name">
-          {{ tenant?.businessName || 'Secure Payment' }}
-        </div>
+        <img class="brand-logo" src="assets/images/fp.png" alt="Fully Promoted India" />
       </div>
       <div class="header-badges">
         <div class="trust-chip">
@@ -129,7 +127,7 @@
               </span>
               <button type="button" class="lookup-clear"
                       *ngIf="lookupForm.value.quotationNo && !isSearching"
-                      (click)="lookupForm.reset(); resolvedQuote = null; lookupError = ''">
+                      (click)="lookupForm.reset(); lookupError = ''">
                 <svg viewBox="0 0 14 14" fill="none">
                   <path d="M2 2l10 10M12 2L2 12" stroke="currentColor" stroke-width="1.8"
                         stroke-linecap="round"/>
@@ -139,38 +137,6 @@
             <span class="field-err" *ngIf="isLookupFieldInvalid('quotationNo')">
               {{ getLookupFieldError('quotationNo') }}
             </span>
-          </div>
-
-          <!-- Quote preview -->
-          <div class="quote-preview slide-in" *ngIf="resolvedQuote && !isSearching">
-            <div class="quote-preview-head">
-              <span class="quote-preview-badge">
-                <svg viewBox="0 0 12 12" fill="none">
-                  <path d="M2 6l3 3 5-5" stroke="#fff" stroke-width="1.8"
-                        stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-                Quote Found
-              </span>
-              <span class="quote-preview-ref">{{ resolvedQuote.quotationNo }}</span>
-            </div>
-            <div class="quote-preview-grid">
-              <div class="qp-item" *ngIf="resolvedQuote.customerName">
-                <span class="qp-label">Customer</span>
-                <span class="qp-value">{{ resolvedQuote.customerName }}</span>
-              </div>
-              <div class="qp-item" *ngIf="resolvedQuote.customerEmail">
-                <span class="qp-label">Email</span>
-                <span class="qp-value">{{ resolvedQuote.customerEmail }}</span>
-              </div>
-              <div class="qp-item" *ngIf="resolvedQuote.amount">
-                <span class="qp-label">Amount</span>
-                <span class="qp-value qp-amount">{{ formatAmount(resolvedQuote.amount) }}</span>
-              </div>
-              <div class="qp-item" *ngIf="resolvedQuote.status">
-                <span class="qp-label">Status</span>
-                <span class="qp-status-chip">{{ resolvedQuote.status }}</span>
-              </div>
-            </div>
           </div>
 
           <!-- Error -->
@@ -184,7 +150,7 @@
           </div>
 
           <!-- Hint -->
-          <p class="lookup-hint" *ngIf="!resolvedQuote && !lookupError && !isSearching">
+          <p class="lookup-hint" *ngIf="!lookupError && !isSearching">
             Your quotation number can be found at the top of your quote document
             (e.g. <code>22</code>)
           </p>
@@ -192,10 +158,7 @@
 
         <div class="cta-row">
           <button class="btn-primary" type="submit" [disabled]="isSearching || isLoading">
-            <span *ngIf="!isSearching && !isLoading">
-              <ng-container *ngIf="!resolvedQuote">Search Quote</ng-container>
-              <ng-container *ngIf="resolvedQuote">Continue</ng-container>
-            </span>
+            <span *ngIf="!isSearching && !isLoading">Continue</span>
             <span *ngIf="isSearching || isLoading" class="btn-spinner">
               <svg viewBox="0 0 24 24" fill="none">
                 <circle cx="12" cy="12" r="9" stroke="rgba(255,255,255,0.3)" stroke-width="3"/>
@@ -203,13 +166,7 @@
                       stroke-linecap="round"/>
               </svg>
             </span>
-            <svg *ngIf="!isSearching && !isLoading && !resolvedQuote"
-                 viewBox="0 0 18 18" fill="none" class="btn-icon">
-              <circle cx="8" cy="8" r="5" stroke="currentColor" stroke-width="1.8"/>
-              <path d="M12 12l4 4" stroke="currentColor" stroke-width="1.8"
-                    stroke-linecap="round"/>
-            </svg>
-            <svg *ngIf="!isSearching && !isLoading && resolvedQuote"
+            <svg *ngIf="!isSearching && !isLoading"
                  viewBox="0 0 18 18" fill="none" class="btn-icon">
               <path d="M3 9h12M10 4l5 5-5 5" stroke="currentColor" stroke-width="1.8"
                     stroke-linecap="round" stroke-linejoin="round"/>
@@ -246,7 +203,7 @@
         </div>
       </div>
 
-      <div class="prefill-notice" *ngIf="resolvedQuote">
+      <div class="prefill-notice" *ngIf="detailsForm.value.quotationNo">
         <svg viewBox="0 0 16 16" fill="none">
           <circle cx="8" cy="8" r="6.5" fill="rgba(14,100,163,0.08)"
                   stroke="#0e64a3" stroke-width="1.2"/>
@@ -306,11 +263,12 @@
             <span class="section-label">Contact Information</span>
             <span class="editable-hint">
               <svg viewBox="0 0 14 14" fill="none">
-                <path d="M9.5 2.5L11.5 4.5L5 11H3V9L9.5 2.5Z"
-                      stroke="currentColor" stroke-width="1.3"
-                      stroke-linecap="round" stroke-linejoin="round"/>
+                <rect x="3" y="6.5" width="8" height="6" rx="1.2"
+                      stroke="currentColor" stroke-width="1.3"/>
+                <path d="M4.5 6.5V4.5a2.5 2.5 0 0 1 5 0v2"
+                      stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
               </svg>
-              Editable
+              From your quotation
             </span>
           </div>
 
@@ -318,7 +276,7 @@
             <div class="field" [class.err]="isFieldInvalid('name')">
               <label for="name">Full Name <em>*</em></label>
               <input id="name" type="text" formControlName="name"
-                     placeholder="e.g. John Doe" autocomplete="name"/>
+                     placeholder="e.g. John Doe" autocomplete="name" readonly/>
               <span class="field-err" *ngIf="isFieldInvalid('name')">
                 {{ getFieldError('name') }}
               </span>
@@ -326,7 +284,7 @@
             <div class="field" [class.err]="isFieldInvalid('email')">
               <label for="email">Email Address <em>*</em></label>
               <input id="email" type="email" formControlName="email"
-                     placeholder="john@company.com" autocomplete="email"/>
+                     placeholder="john@company.com" autocomplete="email" readonly/>
               <span class="field-err" *ngIf="isFieldInvalid('email')">
                 {{ getFieldError('email') }}
               </span>
@@ -337,7 +295,7 @@
             <div class="field" [class.err]="isFieldInvalid('phone')">
               <label for="phone">Mobile Number <em>*</em></label>
               <input id="phone" type="tel" formControlName="phone"
-                     placeholder="+91 98765 43210" autocomplete="tel"/>
+                     placeholder="+91 98765 43210" autocomplete="tel" readonly/>
               <span class="field-err" *ngIf="isFieldInvalid('phone')">
                 {{ getFieldError('phone') }}
               </span>

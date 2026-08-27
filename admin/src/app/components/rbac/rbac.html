@@ -19,7 +19,7 @@
         <span class="rbac-stat-value">{{ totalMembers() }}</span>
         <span class="rbac-stat-label">Members</span>
       </div>
-      <button class="rbac-btn-primary" (click)="openCreateDrawer()">
+      <button class="rbac-btn-primary" *ngIf="canManageRoles()" (click)="openCreateDrawer()">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
           stroke-linecap="round" stroke-linejoin="round">
           <line x1="12" y1="5" x2="12" y2="19" />
@@ -109,7 +109,7 @@
             <div class="rbac-detail-subtitle">{{ role.description }}</div>
           </div>
         </div>
-        <div class="rbac-detail-actions">
+        <div class="rbac-detail-actions" *ngIf="canManageRoles()">
           <button class="rbac-icon-btn" title="Duplicate role" (click)="duplicateRole(role)">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
               stroke-linecap="round" stroke-linejoin="round">
@@ -183,7 +183,7 @@
             <!-- Data rows -->
             <div class="rbac-perm-row" *ngFor="let page of cat[1]">
               <div class="rbac-perm-page-col">
-                <span class="rbac-perm-page-icon" [innerHTML]="page.icon"></span>
+                <span class="rbac-perm-page-icon" [innerHTML]="safeIcon(page.icon)"></span>
                 <span class="rbac-perm-page-name">{{ page.label }}</span>
               </div>
               <div class="rbac-perm-actions-col">
@@ -211,7 +211,7 @@
 
         <!-- Toolbar -->
         <div class="rbac-members-toolbar">
-          <div class="rbac-members-toolbar-left">
+          <div class="rbac-members-toolbar-left" *ngIf="canManageRoles()">
             <button class="rbac-btn-primary" (click)="openInvitePanel('invite')">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
                 stroke-linecap="round" stroke-linejoin="round">
@@ -276,7 +276,7 @@
             <div class="rbac-member-role-chip">{{ m.rbacRoleName }}</div>
 
             <!-- Action buttons -->
-            <div class="rbac-member-actions">
+            <div class="rbac-member-actions" *ngIf="canManageRoles()">
               <button *ngIf="m.subUserStatus === 'invited'" class="rbac-icon-btn" title="Resend invite"
                 (click)="resendInvite(m)">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
@@ -677,7 +677,7 @@
                     <span *ngIf="isPagePartialAccess(page.key) && !isPageFullAccess(page.key, page)"
                       class="rbac-partial-dash"></span>
                   </div>
-                  <span class="rbac-drawer-page-icon" [innerHTML]="page.icon"></span>
+                  <span class="rbac-drawer-page-icon" [innerHTML]="safeIcon(page.icon)"></span>
                   <span class="rbac-drawer-page-name">{{ page.label }}</span>
                 </label>
               </div>
