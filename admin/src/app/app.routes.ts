@@ -139,7 +139,7 @@ export const routes: Routes = [
         path         : 'billing',
         loadComponent: () =>
           import('./components/super-admin-billing/super-admin-billing').then(m => m.SuperAdminBilling),
-        title        : 'Tenant Billing',
+        title        : 'Billing & Subscriptions',
       },
     ],
   },

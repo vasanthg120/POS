@@ -204,10 +204,27 @@ module.exports = (app) => {
   ], validate, subscriptionPlanCtrl.setPlanStatus);
 
   // Cross-tenant billing views — registered BEFORE '/billing/tenants/:tenantId'
-  // so Express doesn't treat "follow-ups"/"calendar"/"analytics" as a tenantId.
+  // so Express doesn't treat "follow-ups"/"calendar"/"analytics"/"settings" as a tenantId.
   admin.get('/billing/follow-ups', billingCtrl.getFollowUpBuckets);
   admin.get('/billing/calendar', billingCtrl.getCalendar);
   admin.get('/billing/analytics', billingCtrl.getAnalytics);
+
+  // Platform-wide billing configuration (GST/grace-period/reminder defaults,
+  // invoice company details) — superadmin only, same as everything else here.
+  admin.get('/billing/settings', billingCtrl.getSettings);
+  admin.patch('/billing/settings', [
+    body('defaultGstPercent').optional().isFloat({ min: 0, max: 100 }),
+    body('defaultGracePeriodDays').optional().isInt({ min: 0 }),
+    body('reminderDaysBeforeDue').optional().isArray(),
+    body('reminderDaysBeforeDue.*').optional().isInt({ min: 0 }),
+    body('reminderDaysOverdue').optional().isArray(),
+    body('reminderDaysOverdue.*').optional().isInt({ min: 0 }),
+    body('invoiceNumberPrefix').optional().isString().trim().isLength({ max: 10 }),
+    body('companyLegalName').optional().isString().trim().isLength({ max: 120 }),
+    body('companyGSTIN').optional().isString().trim().isLength({ max: 20 }),
+    body('companyAddress').optional().isString().trim().isLength({ max: 300 }),
+    body('companyLogoUrl').optional().isString().trim(),
+  ], validate, billingCtrl.updateSettings);
 
   admin.get('/billing/tenants', billingCtrl.getBillingOverview);
 
@@ -370,12 +387,24 @@ module.exports = (app) => {
 
   tenant.get('/payments', requirePermission('payments', 'view'), paymentsCtrl.getTenantPayments);
 
-  // Own subscription/billing — strictly read-only (config/payments stay
-  // superadmin-only, wired under /api/admin/billing above).
+  // Own subscription/billing — read-only except paying their own outstanding
+  // invoice online below (config/manual payment recording stay superadmin-only,
+  // wired under /api/admin/billing above).
   tenant.get('/billing', requirePermission('billing', 'view'), tenantBillingCtrl.getMyBilling);
   tenant.get('/billing/invoices/:invoiceId/pdf', requirePermission('billing', 'view'), [
     param('invoiceId').notEmpty(),
   ], validate, tenantBillingCtrl.downloadMyInvoicePdf);
+
+  tenant.post('/billing/invoices/:invoiceId/pay', requirePermission('billing', 'view'), limiter(20, 15), [
+    param('invoiceId').notEmpty(),
+  ], validate, tenantBillingCtrl.createPaymentOrder);
+
+  tenant.post('/billing/invoices/:invoiceId/verify', requirePermission('billing', 'view'), limiter(20, 15), [
+    param('invoiceId').notEmpty(),
+    body('razorpay_order_id').notEmpty(),
+    body('razorpay_payment_id').notEmpty(),
+    body('razorpay_signature').notEmpty(),
+  ], validate, tenantBillingCtrl.verifyPayment);
 
   app.use('/api/tenant', tenant);
 

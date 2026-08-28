@@ -273,6 +273,7 @@ export interface BillingAnalytics {
     outstanding: number; refunded: number; failedPayments: number;
     revenueByPlan: Record<string, number>;
     revenueByTenant: Record<string, number>;
+    revenueTrend: { month: number; year: number; billed: number; collected: number }[];
   };
   subscriptions: {
     active: number; trial: number; gracePeriod: number; suspended: number; cancelled: number;

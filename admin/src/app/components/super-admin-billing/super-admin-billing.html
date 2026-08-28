@@ -1,40 +1,47 @@
-<div class="shell">
+<div class="sb-root">
 
-  <header class="page-header">
-    <div class="page-header-inner">
-      <div class="header-left">
-        <div class="brand-mark">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-            <rect x="2" y="5" width="20" height="14" rx="2" />
-            <path d="M2 10h20" />
-            <path d="M6 15h4" />
-          </svg>
+  <!-- ══ HERO ═══════════════════════════════════════════════════════ -->
+  <div class="sb-hero">
+    <div class="hero-bg-mesh"></div>
+    <div class="hero-scanlines"></div>
+    <div class="hero-content">
+      <div class="hero-left">
+        <div class="hero-eyebrow">
+          <span class="live-indicator"><span class="live-ring"></span><span class="live-core"></span></span>
+          <span class="eyebrow-text">Live · Billing Intelligence</span>
         </div>
-        <div class="header-title-block">
-          <span class="header-title">Billing &amp; Subscriptions</span>
-          <span class="header-breadcrumb">All Tenants → Billing</span>
+        <h1 class="hero-title">Billing &amp; Subscriptions</h1>
+        <p class="hero-sub">Plans, invoices, payments and revenue across every tenant</p>
+      </div>
+      <div class="hero-right">
+        <div class="hero-meta-group">
+          <div class="meta-chip">
+            <svg class="meta-chip__icon" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            <span class="meta-chip__label">Enrolled</span>
+            <span class="meta-chip__value">{{ summary.enrolled }} / {{ summary.totalTenants }}</span>
+          </div>
+          <div class="meta-chip">
+            <svg class="meta-chip__icon" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+            <span class="meta-chip__label">MRR</span>
+            <span class="meta-chip__value">{{ fmtINR(summary.mrr) }}</span>
+          </div>
+          <div class="meta-chip">
+            <svg class="meta-chip__icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            <span class="meta-chip__label">Updated</span>
+            <span class="meta-chip__value">{{ lastRefreshedAt | date: 'HH:mm' }}</span>
+          </div>
         </div>
-      </div>
-      <div class="header-right" *ngIf="activeTab === 'overview'">
-        <button class="hdr-btn" [disabled]="isLoading" (click)="refresh()">
-          <svg viewBox="0 0 16 16" fill="none" width="14" height="14" [class.btn-spin]="isLoading">
-            <path d="M13.5 8a5.5 5.5 0 1 1-1.6-3.9M13.5 2.5v3h-3" stroke="currentColor" stroke-width="1.4"
-              stroke-linecap="round" stroke-linejoin="round" />
-          </svg>
-          Refresh
+        <button class="btn-refresh" *ngIf="activeTab === 'overview'" [class.spinning]="isLoading" (click)="refresh()">
+          <svg viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+          <span>Refresh</span>
         </button>
-        <button class="hdr-btn hdr-btn--primary" [disabled]="!summary.totalTenants || isExporting" (click)="exportCSV()">
-          <svg viewBox="0 0 16 16" fill="none" width="14" height="14" [class.btn-spin]="isExporting">
-            <path d="M8 2v8M4.5 6.5 8 10l3.5-3.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" />
-            <path d="M2.5 12h11" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" />
-          </svg>
-          {{ isExporting ? 'Exporting…' : 'Export CSV' }}
+        <button class="btn-primary-hero" *ngIf="activeTab === 'overview'" [disabled]="!summary.totalTenants || isExporting" (click)="exportCSV()">
+          <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          <span>{{ isExporting ? 'Exporting…' : 'Export CSV' }}</span>
         </button>
-      </div>
-      <div class="header-right" *ngIf="activeTab === 'plans'">
-        <button class="hdr-btn hdr-btn--primary" (click)="openCreatePlan()">
-          <svg viewBox="0 0 16 16" fill="none" width="14" height="14"><line x1="8" y1="3" x2="8" y2="13" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="3" y1="8" x2="13" y2="8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
-          New Plan
+        <button class="btn-primary-hero" *ngIf="activeTab === 'plans'" (click)="openCreatePlan()">
+          <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          <span>New Plan</span>
         </button>
       </div>
     </div>
@@ -45,158 +52,127 @@
       <button class="tab-btn" [class.tab-btn--active]="activeTab === 'followups'" (click)="switchTab('followups')">Payment Follow-Ups</button>
       <button class="tab-btn" [class.tab-btn--active]="activeTab === 'calendar'" (click)="switchTab('calendar')">Billing Calendar</button>
       <button class="tab-btn" [class.tab-btn--active]="activeTab === 'analytics'" (click)="switchTab('analytics')">Analytics</button>
+      <button class="tab-btn" [class.tab-btn--active]="activeTab === 'settings'" (click)="switchTab('settings')">Settings</button>
     </div>
-  </header>
+  </div>
 
-  <main class="page-body">
+  <div class="sb-main">
 
     <!-- ══════════════════════════ TAB: OVERVIEW ══════════════════════════ -->
     <ng-container *ngIf="activeTab === 'overview'">
 
-      <div class="kpi-strip sb-kpi-strip">
+      <div class="kpi-strip">
         <ng-container *ngIf="isLoading">
-          <div class="kpi-card kpi-skeleton" *ngFor="let _ of skeletonRows; trackBy: trackByIdx"></div>
+          <div class="kpi-card loading" *ngFor="let _ of skeletonRows; trackBy: trackByIdx" style="min-height:96px"></div>
         </ng-container>
         <ng-container *ngIf="!isLoading">
-          <div class="kpi-card">
-            <div class="kpi-body"><div class="kpi-label">Enrolled</div><div class="kpi-value">{{ summary.enrolled }} <span class="kpi-of">/ {{ summary.totalTenants }}</span></div></div>
+          <div class="kpi-card kpi-card--hero">
+            <div class="kpi-card__top"><div class="kpi-icon sky"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div></div>
+            <div class="kpi-card__body"><span class="kpi-label">Enrolled</span><div class="kpi-value"><span class="kpi-amount">{{ summary.enrolled }}</span></div><span class="kpi-sub">of {{ summary.totalTenants }} tenants</span></div>
           </div>
           <div class="kpi-card kpi-card--hero">
-            <div class="kpi-body"><div class="kpi-label">Monthly Recurring Revenue</div><div class="kpi-value">{{ fmtINR(summary.mrr) }}</div></div>
+            <div class="kpi-card__top"><div class="kpi-icon emerald"><svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div></div>
+            <div class="kpi-card__body"><span class="kpi-label">Monthly Recurring Revenue</span><div class="kpi-value"><span class="kpi-amount">{{ fmtINR(summary.mrr) }}</span></div></div>
+          </div>
+          <div class="kpi-card kpi-card--clickable" (click)="filterByStatus('active')">
+            <div class="kpi-card__top"><div class="kpi-icon emerald"><svg viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div></div>
+            <div class="kpi-card__body"><span class="kpi-label">Active</span><div class="kpi-value"><span class="kpi-amount">{{ summary.active }}</span></div></div>
+          </div>
+          <div class="kpi-card kpi-card--clickable" (click)="filterByStatus('trial')">
+            <div class="kpi-card__top"><div class="kpi-icon violet"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div></div>
+            <div class="kpi-card__body"><span class="kpi-label">Trial</span><div class="kpi-value"><span class="kpi-amount">{{ summary.trial }}</span></div></div>
+          </div>
+          <div class="kpi-card kpi-card--clickable" (click)="filterByStatus('grace_period')">
+            <div class="kpi-card__top"><div class="kpi-icon amber"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div></div>
+            <div class="kpi-card__body"><span class="kpi-label">Grace Period</span><div class="kpi-value"><span class="kpi-amount">{{ summary.gracePeriod }}</span></div></div>
+          </div>
+          <div class="kpi-card kpi-card--clickable" (click)="filterByStatus('overdue')">
+            <div class="kpi-card__top"><div class="kpi-icon amber"><svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div></div>
+            <div class="kpi-card__body"><span class="kpi-label">Overdue</span><div class="kpi-value"><span class="kpi-amount">{{ summary.overdue }}</span></div></div>
+          </div>
+          <div class="kpi-card kpi-card--clickable" (click)="filterByStatus('suspended')">
+            <div class="kpi-card__top"><div class="kpi-icon rose"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg></div></div>
+            <div class="kpi-card__body"><span class="kpi-label">Suspended</span><div class="kpi-value"><span class="kpi-amount">{{ summary.suspended }}</span></div></div>
           </div>
           <div class="kpi-card">
-            <div class="kpi-body"><div class="kpi-label">Active</div><div class="kpi-value">{{ summary.active }}</div></div>
+            <div class="kpi-card__top"><div class="kpi-icon emerald"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div></div>
+            <div class="kpi-card__body"><span class="kpi-label">Paid This Month</span><div class="kpi-value"><span class="kpi-amount">{{ fmtINR(summary.paidThisMonth) }}</span></div></div>
           </div>
           <div class="kpi-card">
-            <div class="kpi-body"><div class="kpi-label">Trial</div><div class="kpi-value">{{ summary.trial }}</div></div>
-          </div>
-          <div class="kpi-card kpi-card--warn">
-            <div class="kpi-body"><div class="kpi-label">Grace Period</div><div class="kpi-value">{{ summary.gracePeriod }}</div></div>
-          </div>
-          <div class="kpi-card kpi-card--warn">
-            <div class="kpi-body"><div class="kpi-label">Overdue</div><div class="kpi-value">{{ summary.overdue }}</div></div>
-          </div>
-          <div class="kpi-card kpi-card--danger">
-            <div class="kpi-body"><div class="kpi-label">Suspended</div><div class="kpi-value">{{ summary.suspended }}</div></div>
-          </div>
-          <div class="kpi-card">
-            <div class="kpi-body"><div class="kpi-label">Paid This Month</div><div class="kpi-value">{{ fmtINR(summary.paidThisMonth) }}</div></div>
-          </div>
-          <div class="kpi-card">
-            <div class="kpi-body"><div class="kpi-label">Total Outstanding</div><div class="kpi-value">{{ fmtINR(summary.totalOutstanding) }}</div></div>
+            <div class="kpi-card__top"><div class="kpi-icon rose"><span class="kpi-badge amber" *ngIf="summary.totalOutstanding">Watch</span></div></div>
+            <div class="kpi-card__body"><span class="kpi-label">Total Outstanding</span><div class="kpi-value"><span class="kpi-amount">{{ fmtINR(summary.totalOutstanding) }}</span></div></div>
           </div>
         </ng-container>
-      </div>
-
-      <div class="filter-panel">
-        <div class="filter-toggle" (click)="toggleFilters()">
-          <div class="filter-toggle-left">
-            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M2 4h12M4.5 8h7M7 12h2" stroke-linecap="round" /></svg>
-            Filters
-            <span class="active-pill" *ngIf="activeFilterCount > 0">{{ activeFilterCount }}</span>
-          </div>
-          <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" [class.rotated]="!filtersCollapsed">
-            <path d="M4 6l4 4 4-4" stroke-linecap="round" stroke-linejoin="round" />
-          </svg>
-        </div>
-
-        <div class="filter-body" [class.collapsed]="filtersCollapsed">
-          <div class="search-row">
-            <div class="search-wrap">
-              <svg class="search-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="7" cy="7" r="5" /><path d="M13 13l-2.5-2.5" stroke-linecap="round" /></svg>
-              <input class="search-input" type="text" placeholder="Search tenant, owner, email…"
-                [(ngModel)]="searchQuery" (ngModelChange)="applyFiltersDebounced()" />
-              <button class="search-clear-btn" *ngIf="searchQuery" (click)="searchQuery=''; applyFiltersDebounced()">
-                <svg width="12" height="12" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M2 2l10 10M12 2L2 12" stroke-linecap="round" /></svg>
-              </button>
-            </div>
-          </div>
-
-          <div class="filter-chips-grid">
-            <div class="fchip-group">
-              <span class="fchip-label">Status</span>
-              <div class="fchip-row">
-                <button class="fchip" *ngFor="let s of statusOptions; trackBy: trackByIdx"
-                  [class.fchip--active]="activeStatus === s.value"
-                  (click)="activeStatus = s.value; applyFiltersDebounced()">{{ s.label }}</button>
-              </div>
-            </div>
-            <div class="fchip-group">
-              <span class="fchip-label">Due Window</span>
-              <div class="fchip-row">
-                <button class="fchip" *ngFor="let d of dueWindowOptions; trackBy: trackByIdx"
-                  [class.fchip--active]="dueWindowFilter === d.value"
-                  (click)="dueWindowFilter = d.value; applyFiltersDebounced()">{{ d.label }}</button>
-              </div>
-            </div>
-          </div>
-
-          <div class="filter-chips-grid">
-            <div class="fchip-group">
-              <span class="fchip-label">Plan</span>
-              <select class="range-input" [(ngModel)]="planFilter" (ngModelChange)="applyFiltersDebounced()">
-                <option value="">All Plans</option>
-                <option *ngFor="let p of allPlans" [ngValue]="p._id">{{ p.name }}</option>
-              </select>
-            </div>
-            <div class="fchip-group">
-              <span class="fchip-label">Payment Method</span>
-              <select class="range-input" [(ngModel)]="paymentMethodFilter" (ngModelChange)="applyFiltersDebounced()">
-                <option value="">Any Method</option>
-                <option *ngFor="let m of overviewPaymentMethodOptions" [ngValue]="m">{{ m }}</option>
-              </select>
-            </div>
-            <div class="fchip-group">
-              <span class="fchip-label">Follow-Up Status</span>
-              <select class="range-input" [(ngModel)]="followUpStatusFilter" (ngModelChange)="applyFiltersDebounced()">
-                <option value="">Any</option>
-                <option *ngFor="let o of followUpStatusOptions" [ngValue]="o.value">{{ o.label }}</option>
-              </select>
-            </div>
-            <div class="fchip-group">
-              <span class="fchip-label">Outstanding Amount (₹)</span>
-              <div class="range-inputs">
-                <input type="number" class="range-input" placeholder="Min" style="max-width:90px" [(ngModel)]="minAmountFilter" (ngModelChange)="applyFiltersDebounced()" />
-                <input type="number" class="range-input" placeholder="Max" style="max-width:90px" [(ngModel)]="maxAmountFilter" (ngModelChange)="applyFiltersDebounced()" />
-              </div>
-            </div>
-          </div>
-
-          <div class="filter-bottom-row">
-            <div class="date-range-group">
-              <span class="fchip-label">Billing Period</span>
-              <div class="range-inputs">
-                <div class="range-field">
-                  <label>Month</label>
-                  <select class="range-input" [(ngModel)]="selectedMonth" (ngModelChange)="onPeriodChange()">
-                    <option *ngFor="let m of monthOptions" [ngValue]="m.value">{{ m.label }}</option>
-                  </select>
-                </div>
-                <div class="range-field">
-                  <label>Year</label>
-                  <select class="range-input" [(ngModel)]="selectedYear" (ngModelChange)="onPeriodChange()">
-                    <option *ngFor="let y of yearOptions" [ngValue]="y">{{ y }}</option>
-                  </select>
-                </div>
-              </div>
-            </div>
-            <button class="reset-btn" (click)="resetFilters()">
-              <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M13.5 8a5.5 5.5 0 1 1-1.6-3.9M13.5 2.5v3h-3" stroke-linecap="round" stroke-linejoin="round" /></svg>
-              Reset filters
-            </button>
-          </div>
-        </div>
       </div>
 
       <div class="table-panel">
-        <div class="table-header">
-          <div class="table-header-left">
-            <span class="table-title">Tenants</span>
-            <span class="record-count" *ngIf="summary.totalTenants">{{ pagination.total }} record{{ pagination.total !== 1 ? 's' : '' }}</span>
+        <div class="filter-bar">
+          <div class="search-wrap">
+            <svg class="search-icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input class="search-input" type="text" placeholder="Search tenant, owner, email…" [(ngModel)]="searchQuery" (ngModelChange)="applyFiltersDebounced()" />
+            <button class="search-clear" *ngIf="searchQuery" (click)="searchQuery=''; applyFiltersDebounced()">
+              <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
           </div>
+
+          <div class="fchip-row">
+            <button class="fchip" *ngFor="let s of statusOptions; trackBy: trackByIdx" [class.fchip--active]="activeStatus === s.value" (click)="activeStatus = s.value; applyFiltersDebounced()">{{ s.label }}</button>
+          </div>
+
+          <div class="filter-divider"></div>
+
+          <div class="filter-selects">
+            <select class="range-input" [(ngModel)]="dueWindowFilter" (ngModelChange)="applyFiltersDebounced()">
+              <option *ngFor="let d of dueWindowOptions" [ngValue]="d.value">{{ d.label }}</option>
+            </select>
+            <select class="range-input" [(ngModel)]="planFilter" (ngModelChange)="applyFiltersDebounced()">
+              <option value="">All Plans</option>
+              <option *ngFor="let p of allPlans" [ngValue]="p._id">{{ p.name }}</option>
+            </select>
+            <select class="range-input" [(ngModel)]="paymentMethodFilter" (ngModelChange)="applyFiltersDebounced()">
+              <option value="">Any Method</option>
+              <option *ngFor="let m of overviewPaymentMethodOptions" [ngValue]="m">{{ m }}</option>
+            </select>
+            <select class="range-input" [(ngModel)]="followUpStatusFilter" (ngModelChange)="applyFiltersDebounced()">
+              <option value="">Any Follow-up</option>
+              <option *ngFor="let o of followUpStatusOptions" [ngValue]="o.value">{{ o.label }}</option>
+            </select>
+            <select class="range-input" [(ngModel)]="selectedMonth" (ngModelChange)="onPeriodChange()">
+              <option *ngFor="let m of monthOptions" [ngValue]="m.value">{{ m.label }}</option>
+            </select>
+            <select class="range-input" [(ngModel)]="selectedYear" (ngModelChange)="onPeriodChange()">
+              <option *ngFor="let y of yearOptions" [ngValue]="y">{{ y }}</option>
+            </select>
+          </div>
+
+          <div class="filter-spacer"></div>
+          <button class="reset-btn" (click)="toggleFilters()">
+            <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M2 4h12M4.5 8h7M7 12h2" stroke-linecap="round"/></svg>
+            {{ filtersCollapsed ? 'More filters' : 'Fewer filters' }}
+          </button>
+          <span class="active-pill" *ngIf="activeFilterCount > 0">{{ activeFilterCount }}</span>
+          <button class="reset-btn" *ngIf="activeFilterCount > 0" (click)="resetFilters()">Reset</button>
+        </div>
+
+        <div class="filter-bar" *ngIf="!filtersCollapsed" style="border-bottom:1px solid var(--border)">
+          <div class="filter-group">
+            <input type="number" class="range-input" placeholder="Min ₹" style="width:100px" [(ngModel)]="minAmountFilter" (ngModelChange)="applyFiltersDebounced()" />
+          </div>
+          <div class="filter-group">
+            <input type="number" class="range-input" placeholder="Max ₹" style="width:100px" [(ngModel)]="maxAmountFilter" (ngModelChange)="applyFiltersDebounced()" />
+          </div>
+          <span style="font-size:.72rem;color:var(--tx-4)">Outstanding amount range</span>
         </div>
 
         <div class="load-bar" *ngIf="isLoading"><div class="load-bar-fill"></div></div>
+
+        <div class="tbl-skel" *ngIf="isLoading">
+          <div class="skel-row" *ngFor="let _ of skeletonRows; trackBy: trackByIdx">
+            <div class="skel-cell" style="width:26%"></div><div class="skel-cell" style="width:14%"></div>
+            <div class="skel-cell" style="width:10%"></div><div class="skel-cell" style="width:14%"></div>
+            <div class="skel-cell" style="width:12%"></div><div class="skel-cell" style="width:10%"></div>
+          </div>
+        </div>
 
         <div class="empty-state" *ngIf="!isLoading && rows.length === 0">
           <div class="empty-title">No tenants match this filter</div>
@@ -207,17 +183,9 @@
           <table class="sb-tbl">
             <thead>
               <tr>
-                <th>Tenant</th>
-                <th>Plan</th>
-                <th class="text-right">Monthly Fee</th>
-                <th>Billing Date</th>
-                <th>Due Date</th>
-                <th>Last Payment</th>
-                <th class="text-right">Outstanding</th>
-                <th>Payment Status</th>
-                <th>Subscription Status</th>
-                <th>Follow-Up</th>
-                <th class="text-center">Actions</th>
+                <th>Tenant</th><th>Plan</th><th class="text-right">Monthly Fee</th><th>Billing Date</th>
+                <th>Due Date</th><th>Last Payment</th><th class="text-right">Outstanding</th>
+                <th>Payment Status</th><th>Subscription Status</th><th>Follow-Up</th><th class="text-center">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -225,10 +193,7 @@
                 <td>
                   <div class="cust-cell">
                     <div class="cust-av">{{ initials(r.tenantName) }}</div>
-                    <div class="cust-info">
-                      <div class="cust-name">{{ r.tenantName }}</div>
-                      <div class="cust-email">{{ r.email }}</div>
-                    </div>
+                    <div class="cust-info"><div class="cust-name">{{ r.tenantName }}</div><div class="cust-email">{{ r.email }}</div></div>
                   </div>
                 </td>
                 <td class="muted-cell">{{ r.isEnrolled ? r.planName : '—' }}</td>
@@ -244,10 +209,10 @@
                 </td>
                 <td class="text-right"><span class="amount-main" [class.amount-warn]="r.outstandingAmount > 0">{{ fmtINR(r.outstandingAmount) }}</span></td>
                 <td>
-                  <span class="pay-badge" *ngIf="r.currentInvoice" [ngClass]="'sbadge--inv-' + r.currentInvoice.status">{{ invoiceStatusLabel(r.currentInvoice.status) }}</span>
+                  <span class="status-tag" *ngIf="r.currentInvoice" [ngClass]="'stag--' + r.currentInvoice.status"><span class="stag-dot"></span>{{ invoiceStatusLabel(r.currentInvoice.status) }}</span>
                   <span class="muted-cell" *ngIf="!r.currentInvoice">—</span>
                 </td>
-                <td><span class="pay-badge" [ngClass]="'sbadge--' + r.billingState">{{ stateLabel(r.billingState) }}</span></td>
+                <td><span class="status-tag" [ngClass]="'stag--' + r.billingState"><span class="stag-dot"></span>{{ stateLabel(r.billingState) }}</span></td>
                 <td class="text-center muted-cell">{{ r.currentInvoice?.followUpCount || '—' }}</td>
                 <td class="text-center" (click)="$event.stopPropagation()">
                   <button class="tbl-action-btn" title="Manage billing" (click)="openDetail(r)">
@@ -263,10 +228,9 @@
           <div class="page-size-wrap">
             <span>Rows per page</span>
             <select class="range-input" [(ngModel)]="pageSize" (ngModelChange)="onPageSizeChange()">
-              <option [ngValue]="25">25</option>
-              <option [ngValue]="50">50</option>
-              <option [ngValue]="100">100</option>
+              <option [ngValue]="25">25</option><option [ngValue]="50">50</option><option [ngValue]="100">100</option>
             </select>
+            <span class="record-count">{{ pagination.total }} record{{ pagination.total !== 1 ? 's' : '' }}</span>
           </div>
           <div class="pager" *ngIf="pagination.pages > 1">
             <button class="pager-btn" [disabled]="pagination.page === 1" (click)="goToPage(pagination.page - 1)">‹ Prev</button>
@@ -280,9 +244,7 @@
     <!-- ══════════════════════════ TAB: SUBSCRIPTION PLANS ══════════════════════════ -->
     <ng-container *ngIf="activeTab === 'plans'">
       <div class="table-panel">
-        <div class="table-header">
-          <div class="table-header-left"><span class="table-title">Plans</span></div>
-        </div>
+        <div class="table-header"><div class="table-header-left"><span class="table-title">Plans</span></div></div>
         <div class="empty-state" *ngIf="!allPlans.length">
           <div class="empty-title">No subscription plans yet</div>
           <button class="hdr-btn hdr-btn--primary" (click)="openCreatePlan()">Create your first plan</button>
@@ -291,7 +253,7 @@
           <div class="plan-card" *ngFor="let p of allPlans; trackBy: trackByPlan" [class.plan-card--inactive]="!p.isActive">
             <div class="plan-card-top">
               <div class="plan-name">{{ p.name }}</div>
-              <span class="pay-badge" [ngClass]="p.isActive ? 'sbadge--active' : 'sbadge--unenrolled'">{{ p.isActive ? 'Active' : 'Inactive' }}</span>
+              <span class="status-tag" [ngClass]="p.isActive ? 'stag--active' : 'stag--unenrolled'"><span class="stag-dot"></span>{{ p.isActive ? 'Active' : 'Inactive' }}</span>
             </div>
             <div class="plan-price">{{ fmtINR(p.monthlyPrice) }}<span>/mo</span></div>
             <div class="plan-meta">
@@ -300,9 +262,7 @@
               <span *ngIf="p.gracePeriodDays !== null">· {{ p.gracePeriodDays }}-day grace period</span>
             </div>
             <p class="plan-desc" *ngIf="p.description">{{ p.description }}</p>
-            <ul class="plan-features" *ngIf="p.features.length">
-              <li *ngFor="let f of p.features">{{ f }}</li>
-            </ul>
+            <ul class="plan-features" *ngIf="p.features.length"><li *ngFor="let f of p.features">{{ f }}</li></ul>
             <div class="plan-actions">
               <button class="sb-btn sb-btn--sm" (click)="openEditPlan(p)">Edit</button>
               <button class="sb-btn sb-btn--sm sb-btn--ghost" (click)="togglePlanStatus(p)">{{ p.isActive ? 'Deactivate' : 'Activate' }}</button>
@@ -316,10 +276,7 @@
     <ng-container *ngIf="activeTab === 'followups'">
       <div class="fu-board" *ngIf="followUpBuckets">
         <div class="fu-col" [ngClass]="col.cls" *ngFor="let col of followUpBucketMeta">
-          <div class="fu-col-head">
-            <span>{{ col.label }}</span>
-            <span class="fu-col-count">{{ followUpBuckets[col.key].length }}</span>
-          </div>
+          <div class="fu-col-head"><span>{{ col.label }}</span><span class="fu-col-count">{{ followUpBuckets[col.key].length }}</span></div>
           <div class="fu-col-body">
             <div class="fu-empty" *ngIf="!followUpBuckets[col.key].length">None</div>
             <div class="fu-card" *ngFor="let e of followUpBuckets[col.key]" (click)="openTenantFromFollowUp(e.tenantId)">
@@ -337,7 +294,7 @@
 
     <!-- ══════════════════════════ TAB: BILLING CALENDAR ══════════════════════════ -->
     <ng-container *ngIf="activeTab === 'calendar'">
-      <div class="cal-panel">
+      <div class="panel cal-panel">
         <div class="cal-header">
           <button class="pager-btn" (click)="calendarPrevMonth()">‹ Prev</button>
           <span class="cal-title">{{ monthOptions[calendarMonth - 1].label }} {{ calendarYear }}</span>
@@ -363,24 +320,22 @@
           <span class="cal-legend-item"><i class="cal-dot cal-dot--followup"></i> Follow-up</span>
         </div>
 
-        <div class="cal-grid cal-grid--dow">
-          <div class="cal-dow" *ngFor="let d of ['Sun','Mon','Tue','Wed','Thu','Fri','Sat']">{{ d }}</div>
-        </div>
-        <div class="cal-grid">
+        <div class="cal-grid cal-grid--dow"><div class="cal-dow" *ngFor="let d of ['Sun','Mon','Tue','Wed','Thu','Fri','Sat']">{{ d }}</div></div>
+        <div class="cal-grid" *ngIf="!calendarLoading">
           <div class="cal-blank" *ngFor="let _ of calendarLeadingBlanks"></div>
           <div class="cal-day" *ngFor="let day of calendarDays" [class.cal-day--active]="selectedCalendarDay === day.iso" (click)="selectCalendarDay(day.iso)">
             <span class="cal-day-num">{{ day.date }}</span>
             <div class="cal-day-dots" *ngIf="day.events.length">
-              <i class="cal-dot" [ngClass]="'cal-dot--' + (e.type === 'due' ? 'due' : e.type === 'overdue' ? 'overdue' : e.type === 'suspension' ? 'suspend' : 'followup')" *ngFor="let e of day.events.slice(0,4)"></i>
+              <i class="cal-dot" [ngClass]="calendarEventDotClass(e.type)" *ngFor="let e of day.events.slice(0,4)"></i>
             </div>
           </div>
         </div>
 
         <div class="cal-day-detail" *ngIf="selectedCalendarDay">
           <div class="cal-day-detail-head">{{ fmtDate(selectedCalendarDay) }}</div>
-          <div class="cal-empty" *ngIf="!selectedDayEvents.length">No events on this day.</div>
+          <div class="empty-state" *ngIf="!selectedDayEvents.length" style="padding:14px 0">No events on this day.</div>
           <div class="cal-event-row" *ngFor="let e of selectedDayEvents" (click)="openTenantFromFollowUp(e.tenantId)">
-            <span class="cal-dot" [ngClass]="'cal-dot--' + (e.type === 'due' ? 'due' : e.type === 'overdue' ? 'overdue' : e.type === 'suspension' ? 'suspend' : 'followup')"></span>
+            <span class="cal-dot" [ngClass]="calendarEventDotClass(e.type)"></span>
             <span class="cal-event-tenant">{{ e.tenantName }}</span>
             <span class="cal-event-desc">{{ e.type === 'follow_up' ? e.note : (e.invoiceNumber + (e.amount ? ' · ' + fmtINR(e.amount) : '')) }}</span>
           </div>
@@ -392,39 +347,70 @@
     <ng-container *ngIf="activeTab === 'analytics'">
       <div class="empty-state" *ngIf="analyticsLoading">Loading analytics…</div>
       <ng-container *ngIf="analytics as a">
+
+        <div class="analytics-row">
+          <div class="panel panel--trend">
+            <div class="panel__header">
+              <div><h3 class="panel__title">Revenue Trend</h3><p class="panel__sub">Billing-period revenue collected · last 12 months</p></div>
+              <div class="panel__badge"><span class="badge-dot emerald-dot"></span>Monthly</div>
+            </div>
+            <div class="chart-host" *ngIf="a.revenue.revenueTrend.length">
+              <svg class="trend-svg" viewBox="0 0 700 200" preserveAspectRatio="none">
+                <defs>
+                  <linearGradient id="sbAreaGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="#059669" stop-opacity="0.18"/>
+                    <stop offset="100%" stop-color="#059669" stop-opacity="0"/>
+                  </linearGradient>
+                </defs>
+                <line *ngFor="let y of [40, 80, 120, 160]" x1="0" [attr.y1]="y" x2="700" [attr.y2]="y" class="trend-grid"/>
+                <path [attr.d]="trendAreaPath" fill="url(#sbAreaGrad)"/>
+                <path [attr.d]="trendLinePath" class="trend-line"/>
+                <circle *ngFor="let pt of trendPoints; let i = index" [attr.cx]="pt.x" [attr.cy]="pt.y" r="4"
+                  class="trend-dot" [class.active]="hoveredTrendIndex === i" (mouseenter)="hoveredTrendIndex = i" (mouseleave)="hoveredTrendIndex = -1"/>
+              </svg>
+              <div class="trend-tooltip" *ngIf="hoveredTrendIndex >= 0 && trendPoints[hoveredTrendIndex]" [style.left.%]="(trendPoints[hoveredTrendIndex].x / 700) * 100">
+                <span class="tt-date">{{ periodLabel(a.revenue.revenueTrend[hoveredTrendIndex].month, a.revenue.revenueTrend[hoveredTrendIndex].year) }}</span>
+                <span class="tt-val">{{ fmtINR(a.revenue.revenueTrend[hoveredTrendIndex].collected) }}</span>
+              </div>
+            </div>
+            <div class="chart-empty" *ngIf="!a.revenue.revenueTrend.length">No revenue data yet</div>
+          </div>
+
+          <div class="panel">
+            <div class="panel__header"><div><h3 class="panel__title">Payment Performance</h3><p class="panel__sub">All-time</p></div></div>
+            <div class="rbp-list" style="padding:0">
+              <div class="rbp-row"><span class="rbp-plan">Collection Rate</span><div class="rbp-bar-track"><div class="rbp-bar-fill" [style.width.%]="a.payments.collectionRate"></div></div><span class="rbp-amount">{{ a.payments.collectionRate }}%</span></div>
+              <div class="rbp-row"><span class="rbp-plan">On-Time Rate</span><div class="rbp-bar-track"><div class="rbp-bar-fill" [style.width.%]="a.payments.onTimeRate"></div></div><span class="rbp-amount">{{ a.payments.onTimeRate }}%</span></div>
+              <div class="rbp-row"><span class="rbp-plan">Late Rate</span><div class="rbp-bar-track"><div class="rbp-bar-fill" [style.width.%]="a.payments.lateRate"></div></div><span class="rbp-amount">{{ a.payments.lateRate }}%</span></div>
+              <div class="rbp-row"><span class="rbp-plan">Failed Rate</span><div class="rbp-bar-track"><div class="rbp-bar-fill" [style.width.%]="a.payments.failedRate"></div></div><span class="rbp-amount">{{ a.payments.failedRate }}%</span></div>
+            </div>
+            <p class="panel__sub" style="margin-top:10px">Avg. payment delay: {{ a.payments.averagePaymentDelayDays }} day(s)</p>
+          </div>
+        </div>
+
         <div class="analytics-section-title">Revenue</div>
-        <div class="kpi-strip sb-kpi-strip">
-          <div class="kpi-card kpi-card--hero"><div class="kpi-body"><div class="kpi-label">MRR</div><div class="kpi-value">{{ fmtINR(a.revenue.mrr) }}</div></div></div>
-          <div class="kpi-card kpi-card--hero"><div class="kpi-body"><div class="kpi-label">ARR</div><div class="kpi-value">{{ fmtINR(a.revenue.arr) }}</div></div></div>
-          <div class="kpi-card"><div class="kpi-body"><div class="kpi-label">Collected (This Year)</div><div class="kpi-value">{{ fmtINR(a.revenue.collectedThisYear) }}</div></div></div>
-          <div class="kpi-card"><div class="kpi-body"><div class="kpi-label">Billed (This Year)</div><div class="kpi-value">{{ fmtINR(a.revenue.billedThisYear) }}</div></div></div>
-          <div class="kpi-card kpi-card--warn"><div class="kpi-body"><div class="kpi-label">Outstanding</div><div class="kpi-value">{{ fmtINR(a.revenue.outstanding) }}</div></div></div>
-          <div class="kpi-card"><div class="kpi-body"><div class="kpi-label">Refunded</div><div class="kpi-value">{{ fmtINR(a.revenue.refunded) }}</div></div></div>
-          <div class="kpi-card kpi-card--danger"><div class="kpi-body"><div class="kpi-label">Failed Payments</div><div class="kpi-value">{{ a.revenue.failedPayments }}</div></div></div>
+        <div class="kpi-strip">
+          <div class="kpi-card kpi-card--hero"><div class="kpi-card__body"><span class="kpi-label">MRR</span><div class="kpi-value"><span class="kpi-amount">{{ fmtINR(a.revenue.mrr) }}</span></div></div></div>
+          <div class="kpi-card kpi-card--hero"><div class="kpi-card__body"><span class="kpi-label">ARR</span><div class="kpi-value"><span class="kpi-amount">{{ fmtINR(a.revenue.arr) }}</span></div></div></div>
+          <div class="kpi-card"><div class="kpi-card__body"><span class="kpi-label">Collected (YTD)</span><div class="kpi-value"><span class="kpi-amount">{{ fmtINR(a.revenue.collectedThisYear) }}</span></div></div></div>
+          <div class="kpi-card"><div class="kpi-card__body"><span class="kpi-label">Billed (YTD)</span><div class="kpi-value"><span class="kpi-amount">{{ fmtINR(a.revenue.billedThisYear) }}</span></div></div></div>
+          <div class="kpi-card"><div class="kpi-card__top"><div class="kpi-icon amber"><svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div></div><div class="kpi-card__body"><span class="kpi-label">Outstanding</span><div class="kpi-value"><span class="kpi-amount">{{ fmtINR(a.revenue.outstanding) }}</span></div></div></div>
+          <div class="kpi-card"><div class="kpi-card__body"><span class="kpi-label">Refunded</span><div class="kpi-value"><span class="kpi-amount">{{ fmtINR(a.revenue.refunded) }}</span></div></div></div>
+          <div class="kpi-card"><div class="kpi-card__top"><div class="kpi-icon rose"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg></div></div><div class="kpi-card__body"><span class="kpi-label">Failed Payments</span><div class="kpi-value"><span class="kpi-amount">{{ a.revenue.failedPayments }}</span></div></div></div>
         </div>
 
         <div class="analytics-section-title">Subscriptions</div>
-        <div class="kpi-strip sb-kpi-strip">
-          <div class="kpi-card"><div class="kpi-body"><div class="kpi-label">Active</div><div class="kpi-value">{{ a.subscriptions.active }}</div></div></div>
-          <div class="kpi-card"><div class="kpi-body"><div class="kpi-label">Trial</div><div class="kpi-value">{{ a.subscriptions.trial }}</div></div></div>
-          <div class="kpi-card kpi-card--warn"><div class="kpi-body"><div class="kpi-label">Grace Period</div><div class="kpi-value">{{ a.subscriptions.gracePeriod }}</div></div></div>
-          <div class="kpi-card kpi-card--danger"><div class="kpi-body"><div class="kpi-label">Suspended</div><div class="kpi-value">{{ a.subscriptions.suspended }}</div></div></div>
-          <div class="kpi-card"><div class="kpi-body"><div class="kpi-label">Cancelled</div><div class="kpi-value">{{ a.subscriptions.cancelled }}</div></div></div>
-          <div class="kpi-card"><div class="kpi-body"><div class="kpi-label">New (30d)</div><div class="kpi-value">{{ a.subscriptions.newLast30Days }}</div></div></div>
-          <div class="kpi-card"><div class="kpi-body"><div class="kpi-label">Cancelled (30d)</div><div class="kpi-value">{{ a.subscriptions.cancelledLast30Days }}</div></div></div>
-          <div class="kpi-card"><div class="kpi-body"><div class="kpi-label">Reactivated (30d)</div><div class="kpi-value">{{ a.subscriptions.reactivatedLast30Days }}</div></div></div>
-          <div class="kpi-card"><div class="kpi-body"><div class="kpi-label">Trial Conversion Rate</div><div class="kpi-value">{{ a.subscriptions.trialConversionRate }}%</div></div></div>
-          <div class="kpi-card kpi-card--warn"><div class="kpi-body"><div class="kpi-label">Churn Rate (30d)</div><div class="kpi-value">{{ a.subscriptions.churnRate }}%</div></div></div>
-          <div class="kpi-card"><div class="kpi-body"><div class="kpi-label">Renewal Rate</div><div class="kpi-value">{{ a.subscriptions.renewalRate }}%</div></div></div>
-        </div>
-
-        <div class="analytics-section-title">Payments</div>
-        <div class="kpi-strip sb-kpi-strip">
-          <div class="kpi-card"><div class="kpi-body"><div class="kpi-label">Collection Rate</div><div class="kpi-value">{{ a.payments.collectionRate }}%</div></div></div>
-          <div class="kpi-card"><div class="kpi-body"><div class="kpi-label">On-Time Rate</div><div class="kpi-value">{{ a.payments.onTimeRate }}%</div></div></div>
-          <div class="kpi-card"><div class="kpi-body"><div class="kpi-label">Late Rate</div><div class="kpi-value">{{ a.payments.lateRate }}%</div></div></div>
-          <div class="kpi-card kpi-card--danger"><div class="kpi-body"><div class="kpi-label">Failed Rate</div><div class="kpi-value">{{ a.payments.failedRate }}%</div></div></div>
-          <div class="kpi-card"><div class="kpi-body"><div class="kpi-label">Avg. Payment Delay</div><div class="kpi-value">{{ a.payments.averagePaymentDelayDays }}d</div></div></div>
+        <div class="kpi-strip">
+          <div class="kpi-card"><div class="kpi-card__body"><span class="kpi-label">Active</span><div class="kpi-value"><span class="kpi-amount">{{ a.subscriptions.active }}</span></div></div></div>
+          <div class="kpi-card"><div class="kpi-card__body"><span class="kpi-label">Trial</span><div class="kpi-value"><span class="kpi-amount">{{ a.subscriptions.trial }}</span></div></div></div>
+          <div class="kpi-card"><div class="kpi-card__body"><span class="kpi-label">Grace Period</span><div class="kpi-value"><span class="kpi-amount">{{ a.subscriptions.gracePeriod }}</span></div></div></div>
+          <div class="kpi-card"><div class="kpi-card__body"><span class="kpi-label">Suspended</span><div class="kpi-value"><span class="kpi-amount">{{ a.subscriptions.suspended }}</span></div></div></div>
+          <div class="kpi-card"><div class="kpi-card__body"><span class="kpi-label">Cancelled</span><div class="kpi-value"><span class="kpi-amount">{{ a.subscriptions.cancelled }}</span></div></div></div>
+          <div class="kpi-card"><div class="kpi-card__body"><span class="kpi-label">New (30d)</span><div class="kpi-value"><span class="kpi-amount">{{ a.subscriptions.newLast30Days }}</span></div></div></div>
+          <div class="kpi-card"><div class="kpi-card__body"><span class="kpi-label">Cancelled (30d)</span><div class="kpi-value"><span class="kpi-amount">{{ a.subscriptions.cancelledLast30Days }}</span></div></div></div>
+          <div class="kpi-card"><div class="kpi-card__body"><span class="kpi-label">Reactivated (30d)</span><div class="kpi-value"><span class="kpi-amount">{{ a.subscriptions.reactivatedLast30Days }}</span></div></div></div>
+          <div class="kpi-card"><div class="kpi-card__body"><span class="kpi-label">Trial Conversion</span><div class="kpi-value"><span class="kpi-amount">{{ a.subscriptions.trialConversionRate }}%</span></div></div></div>
+          <div class="kpi-card"><div class="kpi-card__body"><span class="kpi-label">Churn Rate (30d)</span><div class="kpi-value"><span class="kpi-amount">{{ a.subscriptions.churnRate }}%</span></div></div></div>
         </div>
 
         <div class="table-panel" *ngIf="revenueByPlanEntries.length">
@@ -451,338 +437,334 @@
       </ng-container>
     </ng-container>
 
-  </main>
+    <!-- ══════════════════════════ TAB: SETTINGS ══════════════════════════ -->
+    <ng-container *ngIf="activeTab === 'settings'">
+      <div class="empty-state" *ngIf="settingsLoading">Loading settings…</div>
+      <div class="settings-shell" *ngIf="!settingsLoading && settingsForm">
+
+        <div class="settings-section">
+          <div class="settings-section-head">Tax &amp; Grace Period Defaults</div>
+          <p class="settings-section-hint">Used as the starting point for new plans and new tenants — existing tenants keep whatever they were already configured with.</p>
+          <div class="sb-field-grid">
+            <div class="sb-field">
+              <label>Default GST %</label>
+              <input type="number" class="sb-inp" min="0" max="100" [(ngModel)]="settingsForm.defaultGstPercent" />
+            </div>
+            <div class="sb-field">
+              <label>Default Grace Period (days)</label>
+              <input type="number" class="sb-inp" min="0" [(ngModel)]="settingsForm.defaultGracePeriodDays" />
+              <span class="sb-field-hint">Applies to any tenant without its own override.</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="settings-section">
+          <div class="settings-section-head">Reminder Schedule</div>
+          <p class="settings-section-hint">Days before/after the due date the daily sweep sends an automatic reminder email.</p>
+
+          <div class="sb-field" style="margin-bottom:14px">
+            <label>Before due date (days)</label>
+            <div class="day-chip-input">
+              <div class="day-chips">
+                <span class="day-chip" *ngFor="let d of settingsForm.reminderDaysBeforeDue">{{ d === 0 ? 'Due day' : d + 'd' }}<button (click)="removeBeforeDay(d)"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></span>
+              </div>
+              <div class="day-chip-add">
+                <input type="number" class="sb-inp" min="0" placeholder="days" [(ngModel)]="newBeforeDay" />
+                <button class="day-chip-add-btn" (click)="addBeforeDay()" title="Add"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
+              </div>
+            </div>
+          </div>
+
+          <div class="sb-field">
+            <label>After due date — overdue (days)</label>
+            <div class="day-chip-input">
+              <div class="day-chips">
+                <span class="day-chip" *ngFor="let d of settingsForm.reminderDaysOverdue">{{ d }}d<button (click)="removeOverdueDay(d)"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></span>
+              </div>
+              <div class="day-chip-add">
+                <input type="number" class="sb-inp" min="0" placeholder="days" [(ngModel)]="newOverdueDay" />
+                <button class="day-chip-add-btn" (click)="addOverdueDay()" title="Add"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="settings-section">
+          <div class="settings-section-head">Invoice &amp; Company Details</div>
+          <p class="settings-section-hint">Printed on every invoice/receipt PDF. Left blank fields are simply omitted from the PDF.</p>
+          <div class="sb-field-grid">
+            <div class="sb-field">
+              <label>Invoice Number Prefix</label>
+              <input type="text" class="sb-inp" maxlength="10" [(ngModel)]="settingsForm.invoiceNumberPrefix" placeholder="INV" />
+            </div>
+            <div class="sb-field">
+              <label>Company Legal Name</label>
+              <input type="text" class="sb-inp" maxlength="120" [(ngModel)]="settingsForm.companyLegalName" placeholder="e.g. Fully Promoted India Pvt. Ltd." />
+            </div>
+            <div class="sb-field">
+              <label>Company GSTIN</label>
+              <input type="text" class="sb-inp" maxlength="20" [(ngModel)]="settingsForm.companyGSTIN" />
+            </div>
+            <div class="sb-field">
+              <label>Company Logo URL</label>
+              <input type="text" class="sb-inp" [(ngModel)]="settingsForm.companyLogoUrl" placeholder="https://…" />
+            </div>
+          </div>
+          <div class="sb-field" style="margin-top:14px">
+            <label>Company Billing Address</label>
+            <textarea class="sb-textarea" rows="2" maxlength="300" [(ngModel)]="settingsForm.companyAddress"></textarea>
+          </div>
+        </div>
+
+        <div class="settings-footer">
+          <button class="sb-btn" [disabled]="settingsSaving" (click)="openSettingsConfirm()">{{ settingsSaving ? 'Saving…' : 'Save Settings' }}</button>
+          <div class="sb-alert sb-alert--err" *ngIf="settingsErrorMsg">{{ settingsErrorMsg }}</div>
+        </div>
+      </div>
+    </ng-container>
+
+  </div>
+</div>
+
+<!-- ════ SETTINGS CONFIRM MODAL ════ -->
+<div class="sb-modal-scrim" *ngIf="showSettingsConfirm" (click)="closeSettingsConfirm()">
+  <div class="sb-modal" (click)="$event.stopPropagation()">
+    <h3>Apply these billing settings?</h3>
+    <p>This changes platform-wide defaults — grace period and reminder cadence take effect on tomorrow's automated billing sweep. Existing tenant/plan overrides are unaffected.</p>
+    <div class="sb-modal-actions">
+      <button class="sb-btn sb-btn--ghost" (click)="closeSettingsConfirm()" [disabled]="settingsSaving">Cancel</button>
+      <button class="sb-btn" (click)="saveSettings()" [disabled]="settingsSaving">{{ settingsSaving ? 'Saving…' : 'Yes, Apply' }}</button>
+    </div>
+  </div>
 </div>
 
 <!-- ════ CREATE / EDIT PLAN DRAWER ════ -->
 <ng-container *ngIf="planDrawerVisible">
-  <div class="sb-scrim" (click)="closePlanDrawer()">
-    <div class="sb-sheet sb-sheet--open sb-sheet--narrow" (click)="$event.stopPropagation()">
-      <div class="sb-head">
-        <div class="sb-head-info"><h2>{{ planDrawerMode === 'edit' ? 'Edit Plan' : 'New Subscription Plan' }}</h2></div>
-        <button class="sb-close" (click)="closePlanDrawer()" aria-label="Close">
-          <svg viewBox="0 0 16 16"><line x1="12" y1="4" x2="4" y2="12"/><line x1="4" y1="4" x2="12" y2="12"/></svg>
-        </button>
-      </div>
-      <div class="sb-body">
-        <div class="sb-field">
-          <label>Plan Name <em>*</em></label>
-          <input type="text" class="sb-inp" placeholder="e.g. Growth" [(ngModel)]="planForm.name" />
+  <div class="drawer-backdrop open" (click)="closePlanDrawer()"></div>
+  <div class="detail-drawer open" style="width:420px">
+    <div class="dr-header">
+      <div class="dr-header__left"><span class="dr-header__label">{{ planDrawerMode === 'edit' ? 'Edit Plan' : 'New Subscription Plan' }}</span></div>
+      <button class="dr-close" (click)="closePlanDrawer()"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div class="dr-body">
+      <div class="dr-section">
+        <div class="sb-field" style="margin-bottom:12px"><label>Plan Name *</label><input type="text" class="sb-inp" placeholder="e.g. Growth" [(ngModel)]="planForm.name" /></div>
+        <div class="sb-field" style="margin-bottom:12px"><label>Description</label><textarea class="sb-textarea" rows="2" [(ngModel)]="planForm.description"></textarea></div>
+        <div class="sb-field-grid" style="margin-bottom:12px">
+          <div class="sb-field"><label>Monthly Price (₹) *</label><input type="number" class="sb-inp" min="0" [(ngModel)]="planForm.monthlyPrice" /></div>
+          <div class="sb-field"><label>GST %</label><input type="number" class="sb-inp" min="0" max="100" [(ngModel)]="planForm.gstPercent" /></div>
         </div>
-        <div class="sb-field">
-          <label>Description</label>
-          <textarea class="sb-inp" rows="2" [(ngModel)]="planForm.description"></textarea>
+        <div class="sb-field-grid" style="margin-bottom:12px">
+          <div class="sb-field"><label>Trial Days (0 = none)</label><input type="number" class="sb-inp" min="0" [(ngModel)]="planForm.trialDays" /></div>
+          <div class="sb-field"><label>Grace Period (days)</label><input type="number" class="sb-inp" min="0" placeholder="Platform default" [(ngModel)]="planForm.gracePeriodDays" /></div>
         </div>
-        <div class="sb-field-row">
-          <div class="sb-field">
-            <label>Monthly Price (₹) <em>*</em></label>
-            <input type="number" class="sb-inp" min="0" [(ngModel)]="planForm.monthlyPrice" />
-          </div>
-          <div class="sb-field">
-            <label>GST %</label>
-            <input type="number" class="sb-inp" min="0" max="100" [(ngModel)]="planForm.gstPercent" />
-          </div>
-        </div>
-        <div class="sb-field-row">
-          <div class="sb-field">
-            <label>Trial Days (0 = no trial)</label>
-            <input type="number" class="sb-inp" min="0" [(ngModel)]="planForm.trialDays" />
-          </div>
-          <div class="sb-field">
-            <label>Grace Period (days)</label>
-            <input type="number" class="sb-inp" min="0" placeholder="Platform default (7)" [(ngModel)]="planForm.gracePeriodDays" />
-          </div>
-        </div>
-        <div class="sb-field">
-          <label>Features (one per line)</label>
-          <textarea class="sb-inp" rows="4" placeholder="Unlimited quotations&#10;Priority support" [(ngModel)]="planForm.featuresText"></textarea>
-        </div>
+        <div class="sb-field" style="margin-bottom:12px"><label>Features (one per line)</label><textarea class="sb-textarea" rows="4" placeholder="Unlimited quotations&#10;Priority support" [(ngModel)]="planForm.featuresText"></textarea></div>
         <div class="sb-alert sb-alert--err" *ngIf="planErrorMsg">{{ planErrorMsg }}</div>
       </div>
-      <div class="sb-foot">
-        <button class="sb-btn sb-btn--ghost" (click)="closePlanDrawer()" [disabled]="planSaving">Cancel</button>
-        <button class="sb-btn sb-btn--primary" (click)="savePlan()" [disabled]="planSaving">{{ planSaving ? 'Saving…' : 'Save Plan' }}</button>
-      </div>
+    </div>
+    <div class="sb-modal-actions" style="padding:14px 18px;border-top:1px solid var(--border);margin:0">
+      <button class="sb-btn sb-btn--ghost" (click)="closePlanDrawer()" [disabled]="planSaving">Cancel</button>
+      <button class="sb-btn" (click)="savePlan()" [disabled]="planSaving">{{ planSaving ? 'Saving…' : 'Save Plan' }}</button>
     </div>
   </div>
 </ng-container>
 
 <!-- ════ MANAGE BILLING DRAWER ════ -->
 <ng-container *ngIf="drawerVisible">
-  <div class="sb-scrim" (click)="onOverlayClick($event)">
-    <div class="sb-sheet" [class.sb-sheet--open]="drawerOpen">
+  <div class="drawer-backdrop" [class.open]="drawerOpen" (click)="onOverlayClick($event)"></div>
+  <div class="detail-drawer" [class.open]="drawerOpen">
 
-      <div class="sb-head">
-        <div class="sb-head-info" *ngIf="detail as d">
-          <h2>{{ d.tenant.businessName || d.tenant.ownerName }}</h2>
-          <p>{{ d.tenant.email }} · {{ d.tenant.tenantId }}</p>
+    <div class="dr-header">
+      <div class="dr-header__left" *ngIf="detail as d">
+        <div class="dr-status-orb" [ngClass]="'orb--' + d.subscription.tenantStatus">
+          <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
         </div>
-        <div class="sb-head-info" *ngIf="!detail"><h2>Manage Billing</h2></div>
-        <button class="sb-close" (click)="closeDetail()" aria-label="Close">
-          <svg viewBox="0 0 16 16"><line x1="12" y1="4" x2="4" y2="12"/><line x1="4" y1="4" x2="12" y2="12"/></svg>
-        </button>
+        <div>
+          <div class="dr-header__label">{{ d.tenant.businessName || d.tenant.ownerName }}</div>
+          <div class="dr-header__id">{{ d.tenant.email }} · {{ d.tenant.tenantId }}</div>
+        </div>
       </div>
+      <div class="dr-header__left" *ngIf="!detail"><span class="dr-header__label">Manage Billing</span></div>
+      <button class="dr-close" (click)="closeDetail()"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
 
-      <div class="sb-tabs" *ngIf="detail">
-        <button class="sb-tab" [class.sb-tab--active]="drawerSection === 'config'" (click)="switchDrawerSection('config')">Configuration</button>
-        <button class="sb-tab" [class.sb-tab--active]="drawerSection === 'statement'" (click)="switchDrawerSection('statement')">Statement</button>
-        <button class="sb-tab" [class.sb-tab--active]="drawerSection === 'activity'" (click)="switchDrawerSection('activity')">Activity Log</button>
-      </div>
+    <div class="dr-tabs" *ngIf="detail">
+      <button class="dr-tab" [class.dr-tab--active]="drawerSection === 'config'" (click)="switchDrawerSection('config')">Configuration</button>
+      <button class="dr-tab" [class.dr-tab--active]="drawerSection === 'statement'" (click)="switchDrawerSection('statement')">Statement</button>
+      <button class="dr-tab" [class.dr-tab--active]="drawerSection === 'activity'" (click)="switchDrawerSection('activity')">Activity Log</button>
+    </div>
 
-      <div class="sb-body">
+    <div class="dr-body">
+      <div class="empty-state" *ngIf="detailLoading">Loading billing details…</div>
+      <div class="sb-alert sb-alert--err" style="margin:14px 18px" *ngIf="detailErrorMsg">{{ detailErrorMsg }}</div>
 
-        <div class="sb-loading" *ngIf="detailLoading">Loading billing details…</div>
-        <div class="sb-error" *ngIf="detailErrorMsg">{{ detailErrorMsg }}</div>
+      <ng-container *ngIf="detail as d">
 
-        <ng-container *ngIf="detail as d">
+        <div class="dr-suspend-banner" *ngIf="d.tenant.billingSuspended">
+          <div><strong>This tenant is suspended</strong><p>Login is blocked until an overdue invoice is paid, waived, or manually reactivated.</p></div>
+          <button class="sb-btn sb-btn--sm" [disabled]="reactivating" (click)="doReactivate()">{{ reactivating ? 'Reactivating…' : 'Reactivate' }}</button>
+        </div>
 
-          <div class="sb-suspend-banner" *ngIf="d.tenant.billingSuspended">
-            <div>
-              <strong>This tenant is suspended</strong>
-              <p>Login is blocked until an overdue invoice is paid, waived, or manually reactivated.</p>
-            </div>
-            <button class="sb-btn sb-btn--primary" [disabled]="reactivating" (click)="doReactivate()">
-              {{ reactivating ? 'Reactivating…' : 'Reactivate Now' }}
-            </button>
+        <!-- ═══ CONFIGURATION ═══ -->
+        <ng-container *ngIf="drawerSection === 'config'">
+          <div class="dr-section">
+            <div class="dr-section-head">Subscription Overview</div>
+            <dl class="dr-dl">
+              <div class="dr-row"><dt>Subscription Start</dt><dd>{{ fmtDate(d.subscription.createdAt) }}</dd></div>
+              <div class="dr-row"><dt>Status</dt><dd><span class="status-tag" [ngClass]="'stag--' + d.subscription.tenantStatus"><span class="stag-dot"></span>{{ stateLabel(d.subscription.tenantStatus) }}</span></dd></div>
+              <div class="dr-row" *ngIf="d.subscription.trialEndsAt"><dt>Trial Ends</dt><dd>{{ fmtDate(d.subscription.trialEndsAt) }}</dd></div>
+            </dl>
+            <button class="sb-btn sb-btn--danger sb-btn--sm" style="margin-top:12px" *ngIf="!d.tenant.billingSuspended && d.subscription.tenantStatus !== 'cancelled'" (click)="openSuspendConfirm()">Suspend Tenant</button>
           </div>
 
-          <!-- ═══ CONFIGURATION SECTION ═══ -->
-          <ng-container *ngIf="drawerSection === 'config'">
-
-            <div class="sb-section">
-              <div class="sb-section-head">Subscription Overview</div>
-              <div class="sb-stmt-summary">
-                <div class="sb-stmt-item"><span>Subscription Start Date</span><strong>{{ fmtDate(d.subscription.createdAt) }}</strong></div>
-                <div class="sb-stmt-item"><span>Subscription Status</span><strong><span class="pay-badge" [ngClass]="'sbadge--' + d.subscription.tenantStatus">{{ stateLabel(d.subscription.tenantStatus) }}</span></strong></div>
-                <div class="sb-stmt-item" *ngIf="d.subscription.trialEndsAt"><span>Trial Ends</span><strong>{{ fmtDate(d.subscription.trialEndsAt) }}</strong></div>
-              </div>
-              <button class="sb-btn sb-btn--danger" style="margin-top:12px" *ngIf="!d.tenant.billingSuspended && d.subscription.tenantStatus !== 'cancelled'" (click)="openSuspendConfirm()">
-                Suspend Tenant
-              </button>
-            </div>
-
-            <div class="sb-section">
-              <div class="sb-section-head">Assign Plan</div>
-              <div class="sb-field-row">
-                <div class="sb-field" style="flex:2">
-                  <label>Subscription Plan</label>
-                  <select class="sb-inp" [(ngModel)]="selectedPlanId">
-                    <option value="">— Custom pricing (no plan) —</option>
-                    <option *ngFor="let p of activePlans" [ngValue]="p._id">{{ planLabel(p) }}</option>
-                  </select>
-                </div>
-                <div class="sb-field" style="justify-content:flex-end">
-                  <button class="sb-btn sb-btn--primary" [disabled]="!selectedPlanId || planChanging" (click)="applyPlan()">
-                    {{ planChanging ? 'Applying…' : 'Apply Plan' }}
-                  </button>
-                </div>
-              </div>
-              <p class="sb-hint">Assigning a plan copies its price and GST into this tenant's own settings below — still independently editable afterward (custom/negotiated pricing).</p>
-            </div>
-
-            <div class="sb-section">
-              <div class="sb-section-head">Billing Configuration</div>
-              <div class="sb-cfg-grid">
-                <div class="sb-field sb-field--toggle">
-                  <label>Enrolled in Billing</label>
-                  <button class="sb-toggle" [class.sb-toggle--on]="cfgIsEnrolled" (click)="cfgIsEnrolled = !cfgIsEnrolled">
-                    <span class="sb-toggle-knob"></span>
-                  </button>
-                </div>
-                <div class="sb-field">
-                  <label>Monthly Fee (₹)</label>
-                  <input type="number" class="sb-inp" min="0" step="1" [(ngModel)]="cfgMonthlyFee" />
-                </div>
-                <div class="sb-field">
-                  <label>GST %</label>
-                  <input type="number" class="sb-inp" min="0" max="100" [(ngModel)]="cfgGstPercent" />
-                </div>
-                <div class="sb-field">
-                  <label>Discount Type</label>
-                  <select class="sb-inp" [(ngModel)]="cfgDiscountType">
-                    <option value="percent">Percent (%)</option>
-                    <option value="flat">Flat Amount (₹)</option>
-                  </select>
-                </div>
-                <div class="sb-field">
-                  <label>Discount Value</label>
-                  <input type="number" class="sb-inp" min="0" [(ngModel)]="cfgDiscountValue" />
-                </div>
-                <div class="sb-field">
-                  <label>Billing Day (1–28)</label>
-                  <input type="number" class="sb-inp" min="1" max="28" [(ngModel)]="cfgBillingDay" />
-                </div>
-                <div class="sb-field">
-                  <label>Grace Period (days)</label>
-                  <input type="number" class="sb-inp" min="0" placeholder="Platform default (7)" [(ngModel)]="cfgGracePeriodDays" />
-                </div>
-                <div class="sb-field" *ngIf="!d.subscription.invoices.length">
-                  <label>Trial Days (only before first invoice)</label>
-                  <input type="number" class="sb-inp" min="0" placeholder="0 = no trial" [(ngModel)]="cfgTrialDays" />
-                </div>
-              </div>
-              <div class="sb-alerts">
-                <div class="sb-alert sb-alert--ok" *ngIf="cfgSuccessMsg">{{ cfgSuccessMsg }}</div>
-                <div class="sb-alert sb-alert--err" *ngIf="cfgErrorMsg">{{ cfgErrorMsg }}</div>
-              </div>
-              <button class="sb-btn sb-btn--primary" [disabled]="cfgSaving" (click)="saveConfig()">
-                {{ cfgSaving ? 'Saving…' : 'Save Configuration' }}
-              </button>
-            </div>
-
-            <div class="sb-section sb-section--danger" *ngIf="d.subscription.tenantStatus !== 'cancelled'">
-              <div class="sb-section-head">Cancel Subscription</div>
-              <p class="sb-hint">Ends billing entirely — any pending/overdue invoices are cancelled and the tenant is unsuspended if applicable. This is different from suspension for non-payment.</p>
-              <button class="sb-btn sb-btn--danger" (click)="openCancelConfirm()" *ngIf="!showCancelConfirm">Cancel Subscription</button>
-              <div class="sb-cancel-confirm" *ngIf="showCancelConfirm">
-                <textarea class="sb-inp" rows="2" placeholder="Reason (optional)" [(ngModel)]="cancelReason"></textarea>
-                <div class="sb-modal-actions">
-                  <button class="sb-btn sb-btn--ghost" (click)="closeCancelConfirm()" [disabled]="cancelling">Never mind</button>
-                  <button class="sb-btn sb-btn--danger" (click)="doCancelSubscription()" [disabled]="cancelling">{{ cancelling ? 'Cancelling…' : 'Confirm Cancellation' }}</button>
-                </div>
+          <div class="dr-section">
+            <div class="dr-section-head">Assign Plan</div>
+            <div class="dr-cfg-grid">
+              <div class="sb-field" style="grid-column:1/-1">
+                <select class="sb-inp" [(ngModel)]="selectedPlanId">
+                  <option value="">— Custom pricing (no plan) —</option>
+                  <option *ngFor="let p of activePlans" [ngValue]="p._id">{{ planLabel(p) }}</option>
+                </select>
               </div>
             </div>
-          </ng-container>
+            <button class="sb-btn sb-btn--sm" [disabled]="!selectedPlanId || planChanging" (click)="applyPlan()">{{ planChanging ? 'Applying…' : 'Apply Plan' }}</button>
+            <p class="dr-hint">Copies the plan's price and GST into this tenant's own settings below — still independently editable afterward.</p>
+          </div>
 
-          <!-- ═══ STATEMENT SECTION ═══ -->
-          <ng-container *ngIf="drawerSection === 'statement'">
+          <div class="dr-section">
+            <div class="dr-section-head">Billing Configuration</div>
+            <div class="dr-cfg-grid">
+              <div class="dr-field dr-field--toggle" style="grid-column:1/-1">
+                <label>Enrolled in Billing</label>
+                <button class="sb-toggle" [class.sb-toggle--on]="cfgIsEnrolled" (click)="cfgIsEnrolled = !cfgIsEnrolled"><span class="sb-toggle-knob"></span></button>
+              </div>
+              <div class="dr-field"><label>Monthly Fee (₹)</label><input type="number" class="sb-inp" min="0" step="1" [(ngModel)]="cfgMonthlyFee" /></div>
+              <div class="dr-field"><label>GST %</label><input type="number" class="sb-inp" min="0" max="100" [(ngModel)]="cfgGstPercent" /></div>
+              <div class="dr-field"><label>Discount Type</label><select class="sb-inp" [(ngModel)]="cfgDiscountType"><option value="percent">Percent (%)</option><option value="flat">Flat (₹)</option></select></div>
+              <div class="dr-field"><label>Discount Value</label><input type="number" class="sb-inp" min="0" [(ngModel)]="cfgDiscountValue" /></div>
+              <div class="dr-field"><label>Billing Day (1–28)</label><input type="number" class="sb-inp" min="1" max="28" [(ngModel)]="cfgBillingDay" /></div>
+              <div class="dr-field"><label>Grace Period (days)</label><input type="number" class="sb-inp" min="0" placeholder="Platform default" [(ngModel)]="cfgGracePeriodDays" /></div>
+              <div class="dr-field" *ngIf="!d.subscription.invoices.length"><label>Trial Days</label><input type="number" class="sb-inp" min="0" placeholder="0 = none" [(ngModel)]="cfgTrialDays" /></div>
+            </div>
+            <div class="sb-alert sb-alert--ok" style="margin:12px 0" *ngIf="cfgSuccessMsg">{{ cfgSuccessMsg }}</div>
+            <div class="sb-alert sb-alert--err" style="margin:12px 0" *ngIf="cfgErrorMsg">{{ cfgErrorMsg }}</div>
+            <button class="sb-btn sb-btn--sm" [disabled]="cfgSaving" (click)="saveConfig()">{{ cfgSaving ? 'Saving…' : 'Save Configuration' }}</button>
+          </div>
 
-            <div class="sb-section">
-              <div class="sb-section-head">Account Summary</div>
-              <div class="sb-stmt-summary">
-                <div class="sb-stmt-item"><span>Total Billed</span><strong>{{ fmtINR(statementTotals.totalBilled) }}</strong></div>
-                <div class="sb-stmt-item"><span>Total Paid</span><strong class="ok">{{ fmtINR(statementTotals.totalPaid) }}</strong></div>
-                <div class="sb-stmt-item"><span>Outstanding</span><strong class="warn">{{ fmtINR(statementTotals.totalOutstanding) }}</strong></div>
-                <div class="sb-stmt-item"><span>Overdue</span><strong class="danger">{{ fmtINR(statementTotals.totalOverdue) }}</strong></div>
-                <div class="sb-stmt-item"><span>Refunded</span><strong>{{ fmtINR(statementTotals.totalRefunded) }}</strong></div>
-                <div class="sb-stmt-item"><span>Last Payment</span><strong>{{ statementTotals.lastPaid ? (fmtINR(statementTotals.lastPaid.paidAmount) + ' · ' + fmtDate(statementTotals.lastPaid.paidAt)) : '—' }}</strong></div>
-                <div class="sb-stmt-item"><span>Next Due</span><strong>{{ statementTotals.nextDue ? fmtDate(statementTotals.nextDue.dueDate) : '—' }}</strong></div>
+          <div class="dr-section" *ngIf="d.subscription.tenantStatus !== 'cancelled'">
+            <div class="dr-section-head" style="color:var(--rose)">Cancel Subscription</div>
+            <p class="dr-hint">Ends billing entirely — pending/overdue invoices are cancelled and the tenant is unsuspended if applicable.</p>
+            <button class="sb-btn sb-btn--danger sb-btn--sm" (click)="openCancelConfirm()" *ngIf="!showCancelConfirm">Cancel Subscription</button>
+            <div class="sb-cancel-confirm" *ngIf="showCancelConfirm">
+              <textarea class="sb-textarea" rows="2" placeholder="Reason (optional)" [(ngModel)]="cancelReason"></textarea>
+              <div class="sb-modal-actions" style="margin-top:0">
+                <button class="sb-btn sb-btn--ghost" (click)="closeCancelConfirm()" [disabled]="cancelling">Never mind</button>
+                <button class="sb-btn sb-btn--danger" (click)="doCancelSubscription()" [disabled]="cancelling">{{ cancelling ? 'Cancelling…' : 'Confirm' }}</button>
               </div>
             </div>
-
-            <div class="sb-section">
-              <div class="sb-section-head-row">
-                <div class="sb-section-head">Statement — Invoice History</div>
-                <div class="sb-stmt-filters">
-                  <input type="date" class="sb-inp sb-inp--sm" [(ngModel)]="statementFrom" placeholder="From" />
-                  <input type="date" class="sb-inp sb-inp--sm" [(ngModel)]="statementTo" placeholder="To" />
-                  <button class="sb-btn sb-btn--sm sb-btn--ghost" (click)="clearStatementFilter()" *ngIf="statementFrom || statementTo">Clear</button>
-                  <button class="sb-btn sb-btn--sm" (click)="exportStatementCSV()">Export CSV</button>
-                </div>
-              </div>
-
-              <div class="sb-empty" *ngIf="!filteredStatementInvoices.length">No invoices in this range.</div>
-
-              <div class="table-scroll" *ngIf="filteredStatementInvoices.length">
-                <table class="sb-tbl sb-tbl--stmt">
-                  <thead>
-                    <tr><th>Date</th><th>Invoice</th><th>Description</th><th class="text-right">Amount</th><th class="text-right">Paid</th><th class="text-right">Balance</th><th>Status</th><th class="text-center">Actions</th></tr>
-                  </thead>
-                  <tbody>
-                    <tr *ngFor="let inv of filteredStatementInvoices; trackBy: trackByInvoice">
-                      <td class="date-cell">{{ fmtDate(inv.createdAt) }}</td>
-                      <td><span class="ticket-code">{{ inv.invoiceNumber }}</span></td>
-                      <td class="muted-cell">{{ inv.planName || 'Subscription' }} — {{ periodLabel(inv.periodMonth, inv.periodYear) }}</td>
-                      <td class="text-right"><span class="amount-main">{{ fmtINR(inv.totalAmount) }}</span></td>
-                      <td class="text-right muted-cell">{{ fmtINR(inv.paidAmount) }}</td>
-                      <td class="text-right"><span class="amount-main" [class.amount-warn]="inv.totalAmount - inv.paidAmount > 0">{{ fmtINR(inv.totalAmount - inv.paidAmount) }}</span></td>
-                      <td><span class="pay-badge" [ngClass]="'sbadge--inv-' + inv.status">{{ invoiceStatusLabel(inv.status) }}</span></td>
-                      <td class="text-center">
-                        <div class="sb-inv-actions-inline">
-                          <button class="tbl-action-btn" title="Download invoice" (click)="downloadPdf(inv, 'invoice')">
-                            <svg viewBox="0 0 16 16" fill="none" width="13" height="13"><path d="M8 2v8M4.5 6.5 8 10l3.5-3.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                          </button>
-                          <button class="tbl-action-btn" title="Download receipt" *ngIf="inv.paidAmount > 0" (click)="downloadPdf(inv, 'receipt')">
-                            <svg viewBox="0 0 16 16" fill="none" width="13" height="13"><rect x="3" y="2" width="10" height="12" rx="1" stroke="currentColor" stroke-width="1.3"/><path d="M5.5 6h5M5.5 8.5h5M5.5 11h3" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/></svg>
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-
-              <!-- Per-invoice management (expanded actions + follow-ups) -->
-              <div class="sb-invoice-list">
-                <div class="sb-invoice-card" *ngFor="let inv of filteredStatementInvoices; trackBy: trackByInvoice">
-                  <div class="sb-invoice-top">
-                    <div class="sb-invoice-period">{{ inv.invoiceNumber }} — {{ periodLabel(inv.periodMonth, inv.periodYear) }}</div>
-                    <span class="pay-badge" [ngClass]="'sbadge--inv-' + inv.status">{{ invoiceStatusLabel(inv.status) }}</span>
-                  </div>
-                  <div class="sb-invoice-grid">
-                    <div class="sb-inv-item"><span class="sb-inv-label">Base</span><span class="sb-inv-value">{{ fmtINR(inv.baseAmount) }}</span></div>
-                    <div class="sb-inv-item" *ngIf="inv.discountAmount"><span class="sb-inv-label">Discount</span><span class="sb-inv-value">- {{ fmtINR(inv.discountAmount) }}</span></div>
-                    <div class="sb-inv-item"><span class="sb-inv-label">GST ({{ inv.gstPercent }}%)</span><span class="sb-inv-value">{{ fmtINR(inv.gstAmount) }}</span></div>
-                    <div class="sb-inv-item"><span class="sb-inv-label">Total</span><span class="sb-inv-value">{{ fmtINR(inv.totalAmount) }}</span></div>
-                    <div class="sb-inv-item" *ngIf="inv.paidAt"><span class="sb-inv-label">Paid On</span><span class="sb-inv-value">{{ fmtDate(inv.paidAt) }} · {{ inv.paymentMethod || '—' }}</span></div>
-                    <div class="sb-inv-item" *ngIf="inv.referenceNumber"><span class="sb-inv-label">Reference</span><span class="sb-inv-value">{{ inv.referenceNumber }}</span></div>
-                    <div class="sb-inv-item" *ngIf="inv.refunds.length"><span class="sb-inv-label">Refunded</span><span class="sb-inv-value">{{ fmtINR(inv.refunds.reduce((s,r)=>s+r.amount,0)) }}</span></div>
-                    <div class="sb-inv-item" *ngIf="inv.failureReason"><span class="sb-inv-label">Failure Reason</span><span class="sb-inv-value">{{ inv.failureReason }}</span></div>
-                  </div>
-
-                  <div class="sb-adjustments" *ngIf="inv.adjustments.length">
-                    <div class="sb-adjustment-row" *ngFor="let a of inv.adjustments">
-                      <span class="pay-badge" [ngClass]="a.type === 'credit' ? 'sbadge--active' : 'sbadge--overdue'">{{ a.type === 'credit' ? '− Credit' : '+ Debit' }} {{ fmtINR(a.amount) }}</span>
-                      <span class="sb-followup-meta">{{ a.reason || 'No reason given' }} · {{ a.addedByName }} · {{ fmtDate(a.createdAt) }}</span>
-                    </div>
-                  </div>
-
-                  <div class="sb-followups" *ngIf="inv.followUps.length">
-                    <div class="sb-followup-row" *ngFor="let f of inv.followUps">
-                      <div class="sb-followup-main">
-                        <span class="sb-followup-note">{{ f.note }}</span>
-                        <span class="sb-followup-meta">
-                          {{ f.type }} <span *ngIf="f.contactMethod">· {{ f.contactMethod }}</span>
-                          <span *ngIf="f.assignedStaffName">· {{ f.assignedStaffName }}</span>
-                          · {{ f.addedByName }} · {{ fmtDate(f.createdAt) }}
-                          <ng-container *ngIf="f.nextFollowUpDate">· next {{ fmtDate(f.nextFollowUpDate) }}</ng-container>
-                        </span>
-                      </div>
-                      <select class="sb-inp sb-inp--sm sb-followup-status" [ngModel]="f.followUpStatus" (ngModelChange)="updateFollowUpStatusInline(inv, f._id, $event)">
-                        <option *ngFor="let o of followUpStatusOptions" [ngValue]="o.value">{{ o.label }}</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  <div class="sb-invoice-actions" *ngIf="inv.status !== 'paid' && inv.status !== 'cancelled' && inv.status !== 'refunded'">
-                    <button class="sb-btn sb-btn--sm sb-btn--primary" (click)="openPaymentModal(inv)">Record Payment</button>
-                    <button class="sb-btn sb-btn--sm" [disabled]="remindingId === inv._id" (click)="sendReminderNow(inv)">{{ remindingId === inv._id ? 'Sending…' : 'Send Reminder' }}</button>
-                    <button class="sb-btn sb-btn--sm" (click)="openFollowUpModal(inv)">Add Follow-up</button>
-                    <button class="sb-btn sb-btn--sm sb-btn--ghost" (click)="openAdjustmentModal(inv)">Add Adjustment</button>
-                    <button class="sb-btn sb-btn--sm sb-btn--ghost" (click)="openFailModal(inv)">Mark Failed</button>
-                    <button class="sb-btn sb-btn--sm sb-btn--ghost" (click)="confirmWaive(inv)">Waive</button>
-                  </div>
-                  <div class="sb-invoice-actions" *ngIf="inv.status === 'paid'">
-                    <button class="sb-btn sb-btn--sm" (click)="openFollowUpModal(inv)">Add Note</button>
-                    <button class="sb-btn sb-btn--sm sb-btn--ghost" (click)="openAdjustmentModal(inv)">Add Adjustment</button>
-                    <button class="sb-btn sb-btn--sm sb-btn--ghost" (click)="openRefundModal(inv)">Issue Refund</button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </ng-container>
-
-          <!-- ═══ ACTIVITY LOG SECTION ═══ -->
-          <ng-container *ngIf="drawerSection === 'activity'">
-            <div class="sb-section">
-              <div class="sb-section-head">Audit Trail</div>
-              <div class="sb-loading" *ngIf="auditLoading">Loading…</div>
-              <div class="sb-empty" *ngIf="!auditLoading && !auditLog.length">No activity recorded yet.</div>
-              <div class="sb-audit-list">
-                <div class="sb-audit-row" *ngFor="let a of auditLog">
-                  <div class="sb-audit-icon"></div>
-                  <div class="sb-audit-body">
-                    <div class="sb-audit-title">{{ auditActionLabel(a.action) }}</div>
-                    <div class="sb-audit-desc">{{ a.description }}</div>
-                    <div class="sb-audit-meta">{{ a.performedByName }} · {{ fmtDate(a.createdAt) }}</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </ng-container>
-
+          </div>
         </ng-container>
-      </div>
+
+        <!-- ═══ STATEMENT ═══ -->
+        <ng-container *ngIf="drawerSection === 'statement'">
+          <div class="dr-section">
+            <div class="dr-section-head">Account Summary</div>
+            <div class="dr-stmt-summary">
+              <div class="dr-stmt-item"><span>Total Billed</span><strong>{{ fmtINR(statementTotals.totalBilled) }}</strong></div>
+              <div class="dr-stmt-item"><span>Total Paid</span><strong class="ok">{{ fmtINR(statementTotals.totalPaid) }}</strong></div>
+              <div class="dr-stmt-item"><span>Outstanding</span><strong class="warn">{{ fmtINR(statementTotals.totalOutstanding) }}</strong></div>
+              <div class="dr-stmt-item"><span>Overdue</span><strong class="danger">{{ fmtINR(statementTotals.totalOverdue) }}</strong></div>
+              <div class="dr-stmt-item"><span>Refunded</span><strong>{{ fmtINR(statementTotals.totalRefunded) }}</strong></div>
+              <div class="dr-stmt-item"><span>Next Due</span><strong>{{ statementTotals.nextDue ? fmtDate(statementTotals.nextDue.dueDate) : '—' }}</strong></div>
+            </div>
+          </div>
+
+          <div class="dr-section">
+            <div class="dr-section-head" style="display:flex;align-items:center;justify-content:space-between">
+              <span>Invoice History</span>
+              <div class="dr-stmt-filters">
+                <input type="date" class="sb-inp dr-inp-sm" [(ngModel)]="statementFrom" />
+                <input type="date" class="sb-inp dr-inp-sm" [(ngModel)]="statementTo" />
+                <button class="hdr-btn" style="padding:4px 8px" (click)="clearStatementFilter()" *ngIf="statementFrom || statementTo">Clear</button>
+                <button class="hdr-btn" style="padding:4px 8px" (click)="exportStatementCSV()">CSV</button>
+              </div>
+            </div>
+
+            <div class="empty-state" style="padding:20px 0" *ngIf="!filteredStatementInvoices.length">No invoices in this range.</div>
+
+            <div class="invoice-card" *ngFor="let inv of filteredStatementInvoices; trackBy: trackByInvoice">
+              <div class="invoice-top">
+                <div class="invoice-period"><span class="ticket-code">{{ inv.invoiceNumber }}</span> {{ periodLabel(inv.periodMonth, inv.periodYear) }}</div>
+                <span class="status-tag" [ngClass]="'stag--' + inv.status"><span class="stag-dot"></span>{{ invoiceStatusLabel(inv.status) }}</span>
+              </div>
+              <div class="invoice-grid">
+                <div class="inv-item"><span class="inv-label">Base</span><span class="inv-value">{{ fmtINR(inv.baseAmount) }}</span></div>
+                <div class="inv-item" *ngIf="inv.discountAmount"><span class="inv-label">Discount</span><span class="inv-value">− {{ fmtINR(inv.discountAmount) }}</span></div>
+                <div class="inv-item"><span class="inv-label">GST ({{ inv.gstPercent }}%)</span><span class="inv-value">{{ fmtINR(inv.gstAmount) }}</span></div>
+                <div class="inv-item"><span class="inv-label">Total</span><span class="inv-value">{{ fmtINR(inv.totalAmount) }}</span></div>
+                <div class="inv-item" *ngIf="inv.paidAt"><span class="inv-label">Paid On</span><span class="inv-value">{{ fmtDate(inv.paidAt) }}</span></div>
+                <div class="inv-item" *ngIf="inv.referenceNumber"><span class="inv-label">Reference</span><span class="inv-value">{{ inv.referenceNumber }}</span></div>
+              </div>
+
+              <div *ngIf="inv.adjustments.length">
+                <div class="adjustment-row" *ngFor="let a of inv.adjustments">
+                  <span class="status-tag" [ngClass]="a.type === 'credit' ? 'stag--active' : 'stag--overdue'"><span class="stag-dot"></span>{{ a.type === 'credit' ? '− Credit' : '+ Debit' }} {{ fmtINR(a.amount) }}</span>
+                  <span class="followup-meta">{{ a.reason || 'No reason' }} · {{ fmtDate(a.createdAt) }}</span>
+                </div>
+              </div>
+
+              <div *ngIf="inv.followUps.length">
+                <div class="followup-row" *ngFor="let f of inv.followUps">
+                  <div class="followup-main">
+                    <span class="followup-note">{{ f.note }}</span>
+                    <span class="followup-meta">{{ f.type }} · {{ f.addedByName }} · {{ fmtDate(f.createdAt) }}</span>
+                  </div>
+                  <select class="sb-inp dr-inp-sm" [ngModel]="f.followUpStatus" (ngModelChange)="updateFollowUpStatusInline(inv, f._id, $event)">
+                    <option *ngFor="let o of followUpStatusOptions" [ngValue]="o.value">{{ o.label }}</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="invoice-actions" *ngIf="inv.status !== 'paid' && inv.status !== 'cancelled' && inv.status !== 'refunded'">
+                <button class="sb-btn sb-btn--sm" (click)="openPaymentModal(inv)">Record Payment</button>
+                <button class="sb-btn sb-btn--sm sb-btn--ghost" [disabled]="remindingId === inv._id" (click)="sendReminderNow(inv)">{{ remindingId === inv._id ? 'Sending…' : 'Send Reminder' }}</button>
+                <button class="sb-btn sb-btn--sm sb-btn--ghost" (click)="openFollowUpModal(inv)">Add Follow-up</button>
+                <button class="sb-btn sb-btn--sm sb-btn--ghost" (click)="openAdjustmentModal(inv)">Adjustment</button>
+                <button class="sb-btn sb-btn--sm sb-btn--ghost" (click)="openFailModal(inv)">Mark Failed</button>
+                <button class="sb-btn sb-btn--sm sb-btn--ghost" (click)="confirmWaive(inv)">Waive</button>
+                <button class="tbl-action-btn" title="Download invoice" (click)="downloadPdf(inv, 'invoice')"><svg viewBox="0 0 16 16" fill="none" width="13" height="13"><path d="M8 2v8M4.5 6.5 8 10l3.5-3.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+              </div>
+              <div class="invoice-actions" *ngIf="inv.status === 'paid'">
+                <button class="sb-btn sb-btn--sm sb-btn--ghost" (click)="openFollowUpModal(inv)">Add Note</button>
+                <button class="sb-btn sb-btn--sm sb-btn--ghost" (click)="openAdjustmentModal(inv)">Adjustment</button>
+                <button class="sb-btn sb-btn--sm sb-btn--ghost" (click)="openRefundModal(inv)">Issue Refund</button>
+                <button class="tbl-action-btn" title="Download invoice" (click)="downloadPdf(inv, 'invoice')"><svg viewBox="0 0 16 16" fill="none" width="13" height="13"><path d="M8 2v8M4.5 6.5 8 10l3.5-3.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+                <button class="tbl-action-btn" title="Download receipt" (click)="downloadPdf(inv, 'receipt')"><svg viewBox="0 0 16 16" fill="none" width="13" height="13"><rect x="3" y="2" width="10" height="12" rx="1" stroke="currentColor" stroke-width="1.3"/><path d="M5.5 6h5M5.5 8.5h5M5.5 11h3" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/></svg></button>
+              </div>
+            </div>
+          </div>
+        </ng-container>
+
+        <!-- ═══ ACTIVITY LOG ═══ -->
+        <ng-container *ngIf="drawerSection === 'activity'">
+          <div class="dr-section">
+            <div class="dr-section-head">Audit Trail</div>
+            <div class="empty-state" style="padding:20px 0" *ngIf="auditLoading">Loading…</div>
+            <div class="empty-state" style="padding:20px 0" *ngIf="!auditLoading && !auditLog.length">No activity recorded yet.</div>
+            <div class="audit-list">
+              <div class="audit-row" *ngFor="let a of auditLog">
+                <div class="audit-icon"></div>
+                <div class="audit-body">
+                  <div class="audit-title">{{ auditActionLabel(a.action) }}</div>
+                  <div class="audit-desc">{{ a.description }}</div>
+                  <div class="audit-meta">{{ a.performedByName }} · {{ fmtDate(a.createdAt) }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </ng-container>
+
+      </ng-container>
     </div>
   </div>
 </ng-container>
@@ -792,39 +774,17 @@
   <div class="sb-modal" (click)="$event.stopPropagation()">
     <h3>Record Payment</h3>
     <p>{{ paymentTarget.invoiceNumber }} · {{ periodLabel(paymentTarget.periodMonth, paymentTarget.periodYear) }} · Due {{ fmtINR(paymentTarget.totalAmount) }}</p>
-
-    <div class="sb-field">
-      <label>Amount Received (₹) <em>*</em></label>
-      <input type="number" class="sb-inp" min="0.01" step="0.01" [(ngModel)]="paymentAmount" />
+    <div class="sb-field" style="margin-bottom:12px"><label>Amount Received (₹) *</label><input type="number" class="sb-inp" min="0.01" step="0.01" [(ngModel)]="paymentAmount" /></div>
+    <div class="sb-field-grid" style="margin-bottom:12px">
+      <div class="sb-field"><label>Method</label><select class="sb-inp" [(ngModel)]="paymentMethod"><option *ngFor="let m of paymentMethodOptions" [ngValue]="m">{{ m }}</option></select></div>
+      <div class="sb-field"><label>Payment Date</label><input type="date" class="sb-inp" [(ngModel)]="paymentDate" /></div>
     </div>
-    <div class="sb-field-row">
-      <div class="sb-field">
-        <label>Method</label>
-        <select class="sb-inp" [(ngModel)]="paymentMethod">
-          <option *ngFor="let m of paymentMethodOptions" [ngValue]="m">{{ m }}</option>
-        </select>
-      </div>
-      <div class="sb-field">
-        <label>Payment Date</label>
-        <input type="date" class="sb-inp" [(ngModel)]="paymentDate" />
-      </div>
-    </div>
-    <div class="sb-field">
-      <label>Reference Number</label>
-      <input type="text" class="sb-inp" placeholder="Transaction / cheque number" [(ngModel)]="paymentReference" />
-    </div>
-    <div class="sb-field">
-      <label>Notes</label>
-      <textarea class="sb-inp" rows="2" [(ngModel)]="paymentNotes"></textarea>
-    </div>
-
-    <div class="sb-alert sb-alert--err" *ngIf="paymentErrorMsg">{{ paymentErrorMsg }}</div>
-
+    <div class="sb-field" style="margin-bottom:12px"><label>Reference Number</label><input type="text" class="sb-inp" placeholder="Transaction / cheque number" [(ngModel)]="paymentReference" /></div>
+    <div class="sb-field"><label>Notes</label><textarea class="sb-textarea" rows="2" [(ngModel)]="paymentNotes"></textarea></div>
+    <div class="sb-alert sb-alert--err" style="margin-top:12px" *ngIf="paymentErrorMsg">{{ paymentErrorMsg }}</div>
     <div class="sb-modal-actions">
       <button class="sb-btn sb-btn--ghost" (click)="cancelPayment()" [disabled]="paymentSaving">Cancel</button>
-      <button class="sb-btn sb-btn--primary" (click)="submitPayment()" [disabled]="paymentSaving">
-        {{ paymentSaving ? 'Saving…' : 'Record Payment' }}
-      </button>
+      <button class="sb-btn" (click)="submitPayment()" [disabled]="paymentSaving">{{ paymentSaving ? 'Saving…' : 'Record Payment' }}</button>
     </div>
   </div>
 </div>
@@ -834,10 +794,7 @@
   <div class="sb-modal" (click)="$event.stopPropagation()">
     <h3>Mark Payment Attempt Failed</h3>
     <p>{{ failTarget.invoiceNumber }} · {{ fmtINR(failTarget.totalAmount) }}</p>
-    <div class="sb-field">
-      <label>Reason</label>
-      <textarea class="sb-inp" rows="2" placeholder="e.g. Card declined, tenant reported failed transfer" [(ngModel)]="failReason"></textarea>
-    </div>
+    <div class="sb-field"><label>Reason</label><textarea class="sb-textarea" rows="2" placeholder="e.g. Card declined, tenant reported failed transfer" [(ngModel)]="failReason"></textarea></div>
     <div class="sb-modal-actions">
       <button class="sb-btn sb-btn--ghost" (click)="cancelFail()" [disabled]="failSaving">Cancel</button>
       <button class="sb-btn sb-btn--warn" (click)="submitFail()" [disabled]="failSaving">{{ failSaving ? 'Saving…' : 'Mark Failed' }}</button>
@@ -850,15 +807,9 @@
   <div class="sb-modal" (click)="$event.stopPropagation()">
     <h3>Issue Refund</h3>
     <p>{{ refundTarget.invoiceNumber }} · Paid {{ fmtINR(refundTarget.paidAmount) }}</p>
-    <div class="sb-field">
-      <label>Refund Amount (₹) <em>*</em></label>
-      <input type="number" class="sb-inp" min="0.01" step="0.01" [(ngModel)]="refundAmount" />
-    </div>
-    <div class="sb-field">
-      <label>Reason</label>
-      <textarea class="sb-inp" rows="2" [(ngModel)]="refundReason"></textarea>
-    </div>
-    <div class="sb-alert sb-alert--err" *ngIf="refundErrorMsg">{{ refundErrorMsg }}</div>
+    <div class="sb-field" style="margin-bottom:12px"><label>Refund Amount (₹) *</label><input type="number" class="sb-inp" min="0.01" step="0.01" [(ngModel)]="refundAmount" /></div>
+    <div class="sb-field"><label>Reason</label><textarea class="sb-textarea" rows="2" [(ngModel)]="refundReason"></textarea></div>
+    <div class="sb-alert sb-alert--err" style="margin-top:12px" *ngIf="refundErrorMsg">{{ refundErrorMsg }}</div>
     <div class="sb-modal-actions">
       <button class="sb-btn sb-btn--ghost" (click)="cancelRefund()" [disabled]="refundSaving">Cancel</button>
       <button class="sb-btn sb-btn--warn" (click)="submitRefund()" [disabled]="refundSaving">{{ refundSaving ? 'Saving…' : 'Issue Refund' }}</button>
@@ -871,47 +822,20 @@
   <div class="sb-modal" (click)="$event.stopPropagation()">
     <h3>Add Follow-up</h3>
     <p>{{ followUpTarget.invoiceNumber }} · {{ periodLabel(followUpTarget.periodMonth, followUpTarget.periodYear) }}</p>
-
-    <div class="sb-field">
-      <label>Note <em>*</em></label>
-      <textarea class="sb-inp" rows="3" placeholder="e.g. Called owner, promised payment by Friday" [(ngModel)]="followUpNote"></textarea>
+    <div class="sb-field" style="margin-bottom:12px"><label>Note *</label><textarea class="sb-textarea" rows="3" placeholder="e.g. Called owner, promised payment by Friday" [(ngModel)]="followUpNote"></textarea></div>
+    <div class="sb-field-grid" style="margin-bottom:12px">
+      <div class="sb-field"><label>Type</label><select class="sb-inp" [(ngModel)]="followUpType"><option *ngFor="let o of followUpTypeOptions" [ngValue]="o.value">{{ o.label }}</option></select></div>
+      <div class="sb-field"><label>Contact Method</label><input type="text" class="sb-inp" placeholder="e.g. +91 98765 43210" [(ngModel)]="followUpContact" /></div>
     </div>
-    <div class="sb-field-row">
-      <div class="sb-field">
-        <label>Type</label>
-        <select class="sb-inp" [(ngModel)]="followUpType">
-          <option *ngFor="let o of followUpTypeOptions" [ngValue]="o.value">{{ o.label }}</option>
-        </select>
-      </div>
-      <div class="sb-field">
-        <label>Contact Method</label>
-        <input type="text" class="sb-inp" placeholder="e.g. +91 98765 43210" [(ngModel)]="followUpContact" />
-      </div>
+    <div class="sb-field-grid" style="margin-bottom:12px">
+      <div class="sb-field"><label>Assigned Staff</label><input type="text" class="sb-inp" placeholder="e.g. Priya" [(ngModel)]="followUpStaff" /></div>
+      <div class="sb-field"><label>Status</label><select class="sb-inp" [(ngModel)]="followUpStatusVal"><option *ngFor="let o of followUpStatusOptions" [ngValue]="o.value">{{ o.label }}</option></select></div>
     </div>
-    <div class="sb-field-row">
-      <div class="sb-field">
-        <label>Assigned Staff</label>
-        <input type="text" class="sb-inp" placeholder="e.g. Priya" [(ngModel)]="followUpStaff" />
-      </div>
-      <div class="sb-field">
-        <label>Status</label>
-        <select class="sb-inp" [(ngModel)]="followUpStatusVal">
-          <option *ngFor="let o of followUpStatusOptions" [ngValue]="o.value">{{ o.label }}</option>
-        </select>
-      </div>
-    </div>
-    <div class="sb-field">
-      <label>Next Follow-up Date</label>
-      <input type="date" class="sb-inp" [(ngModel)]="followUpDate" />
-    </div>
-
-    <div class="sb-alert sb-alert--err" *ngIf="followUpErrorMsg">{{ followUpErrorMsg }}</div>
-
+    <div class="sb-field"><label>Next Follow-up Date</label><input type="date" class="sb-inp" [(ngModel)]="followUpDate" /></div>
+    <div class="sb-alert sb-alert--err" style="margin-top:12px" *ngIf="followUpErrorMsg">{{ followUpErrorMsg }}</div>
     <div class="sb-modal-actions">
       <button class="sb-btn sb-btn--ghost" (click)="cancelFollowUp()" [disabled]="followUpSaving">Cancel</button>
-      <button class="sb-btn sb-btn--primary" (click)="submitFollowUp()" [disabled]="followUpSaving">
-        {{ followUpSaving ? 'Saving…' : 'Add Follow-up' }}
-      </button>
+      <button class="sb-btn" (click)="submitFollowUp()" [disabled]="followUpSaving">{{ followUpSaving ? 'Saving…' : 'Add Follow-up' }}</button>
     </div>
   </div>
 </div>
@@ -924,42 +848,29 @@
     <p class="sb-modal-warn">This marks the invoice cancelled without payment and reactivates the tenant if this was the only overdue invoice.</p>
     <div class="sb-modal-actions">
       <button class="sb-btn sb-btn--ghost" (click)="cancelWaive()" [disabled]="waiveSaving">Cancel</button>
-      <button class="sb-btn sb-btn--warn" (click)="doWaive()" [disabled]="waiveSaving">
-        {{ waiveSaving ? 'Waiving…' : 'Yes, Waive Invoice' }}
-      </button>
+      <button class="sb-btn sb-btn--warn" (click)="doWaive()" [disabled]="waiveSaving">{{ waiveSaving ? 'Waiving…' : 'Yes, Waive Invoice' }}</button>
     </div>
   </div>
 </div>
 
-<!-- ════ ADD ADJUSTMENT (CREDIT/DEBIT) MODAL ════ -->
+<!-- ════ ADD ADJUSTMENT MODAL ════ -->
 <div class="sb-modal-scrim" *ngIf="adjustmentTarget" (click)="cancelAdjustment()">
   <div class="sb-modal" (click)="$event.stopPropagation()">
     <h3>Add Credit / Debit Adjustment</h3>
     <p>{{ adjustmentTarget.invoiceNumber }} · Current total {{ fmtINR(adjustmentTarget.totalAmount) }}</p>
-
-    <div class="sb-field">
-      <label>Type <em>*</em></label>
+    <div class="sb-field" style="margin-bottom:12px">
+      <label>Type *</label>
       <div class="fchip-row">
         <button type="button" class="fchip" [class.fchip--active]="adjustmentType === 'credit'" (click)="adjustmentType = 'credit'">Credit (reduces total)</button>
         <button type="button" class="fchip" [class.fchip--active]="adjustmentType === 'debit'" (click)="adjustmentType = 'debit'">Debit (increases total)</button>
       </div>
     </div>
-    <div class="sb-field">
-      <label>Amount (₹) <em>*</em></label>
-      <input type="number" class="sb-inp" min="0.01" step="0.01" [(ngModel)]="adjustmentAmount" />
-    </div>
-    <div class="sb-field">
-      <label>Reason</label>
-      <textarea class="sb-inp" rows="2" placeholder="e.g. Goodwill discount, billing correction" [(ngModel)]="adjustmentReason"></textarea>
-    </div>
-
-    <div class="sb-alert sb-alert--err" *ngIf="adjustmentErrorMsg">{{ adjustmentErrorMsg }}</div>
-
+    <div class="sb-field" style="margin-bottom:12px"><label>Amount (₹) *</label><input type="number" class="sb-inp" min="0.01" step="0.01" [(ngModel)]="adjustmentAmount" /></div>
+    <div class="sb-field"><label>Reason</label><textarea class="sb-textarea" rows="2" placeholder="e.g. Goodwill discount, billing correction" [(ngModel)]="adjustmentReason"></textarea></div>
+    <div class="sb-alert sb-alert--err" style="margin-top:12px" *ngIf="adjustmentErrorMsg">{{ adjustmentErrorMsg }}</div>
     <div class="sb-modal-actions">
       <button class="sb-btn sb-btn--ghost" (click)="cancelAdjustment()" [disabled]="adjustmentSaving">Cancel</button>
-      <button class="sb-btn sb-btn--primary" (click)="submitAdjustment()" [disabled]="adjustmentSaving">
-        {{ adjustmentSaving ? 'Saving…' : 'Apply Adjustment' }}
-      </button>
+      <button class="sb-btn" (click)="submitAdjustment()" [disabled]="adjustmentSaving">{{ adjustmentSaving ? 'Saving…' : 'Apply Adjustment' }}</button>
     </div>
   </div>
 </div>
@@ -969,21 +880,13 @@
   <div class="sb-modal" (click)="$event.stopPropagation()">
     <h3>Suspend this tenant?</h3>
     <p>Login will be blocked immediately, independent of any invoice due date.</p>
-    <div class="sb-field">
-      <label>Reason</label>
-      <textarea class="sb-inp" rows="2" [(ngModel)]="suspendReason"></textarea>
-    </div>
+    <div class="sb-field"><label>Reason</label><textarea class="sb-textarea" rows="2" [(ngModel)]="suspendReason"></textarea></div>
     <div class="sb-modal-actions">
       <button class="sb-btn sb-btn--ghost" (click)="closeSuspendConfirm()" [disabled]="suspending">Cancel</button>
-      <button class="sb-btn sb-btn--danger" (click)="doSuspend()" [disabled]="suspending">
-        {{ suspending ? 'Suspending…' : 'Yes, Suspend Tenant' }}
-      </button>
+      <button class="sb-btn sb-btn--danger" (click)="doSuspend()" [disabled]="suspending">{{ suspending ? 'Suspending…' : 'Yes, Suspend Tenant' }}</button>
     </div>
   </div>
 </div>
 
 <!-- ════ TOAST ════ -->
-<div class="toast" [class.toast--show]="showToast" [class.toast--error]="toastType === 'error'">
-  {{ toastMsg }}
-</div>
-
+<div class="toast" [class.toast--show]="showToast" [class.toast--error]="toastType === 'error'">{{ toastMsg }}</div>

@@ -11,6 +11,7 @@ const morgan         = require('morgan');
 const logger         = require('./utils/logger');
 const registerRoutes = require('./routes/index');
 const seedSuperAdmin = require('./utils/seedSuperAdmin');
+const seedDefaultPlan = require('./utils/seedDefaultPlan');
 const path           = require('path');
 
 // ✅ REMOVED broken authMiddleware import — auth is handled inside the router 
@@ -112,6 +113,7 @@ mongoose.connect(process.env.MONGODB_URI || process.env.MONGO_URI, {
 }).then(async () => {
   logger.info('✅ MongoDB connected');
   await seedSuperAdmin();
+  await seedDefaultPlan();
   require('./jobs/billingCron').start();
 
   const server = app.listen(PORT, () => {

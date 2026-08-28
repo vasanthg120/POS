@@ -35,6 +35,7 @@ const BillingAuditLog = require('../models/billingAuditLog');
 const { nextSequence } = require('../models/counter');
 const emailUtil = require('../utils/email');
 const { bufferInvoicePdf } = require('./invoicePdf.service');
+const billingSettingsService = require('./billingSettings.service');
 const logger = require('../utils/logger');
 
 const DEFAULT_GRACE_PERIOD_DAYS = 7;
@@ -42,8 +43,9 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 
 const round2 = (n) => Math.round((Number(n) || 0) * 100) / 100;
 
-const graceDaysFor = (subscription) =>
-  Number.isFinite(subscription.gracePeriodDays) ? subscription.gracePeriodDays : DEFAULT_GRACE_PERIOD_DAYS;
+/** `defaultDays` is the platform-configured fallback (BillingSettings.defaultGracePeriodDays); callers that haven't fetched settings can omit it to fall back to the built-in constant. */
+const graceDaysFor = (subscription, defaultDays = DEFAULT_GRACE_PERIOD_DAYS) =>
+  Number.isFinite(subscription.gracePeriodDays) ? subscription.gracePeriodDays : defaultDays;
 
 const httpError = (message, status = 400) => {
   const err = new Error(message);
@@ -89,8 +91,9 @@ const nextUpcomingPeriod = (subscription, from) => {
 };
 
 const generateInvoiceNumber = async (year) => {
+  const settings = await billingSettingsService.getSettings();
   const seq = await nextSequence(`invoice-${year}`);
-  return `INV-${year}-${String(seq).padStart(4, '0')}`;
+  return `${settings.invoiceNumberPrefix || 'INV'}-${year}-${String(seq).padStart(4, '0')}`;
 };
 
 /** Base/discount/GST/total breakdown, frozen onto the invoice at generation time. */
@@ -150,8 +153,14 @@ const advanceToNextPeriodIfDue = async (subscription, now) => {
   return true;
 };
 
-const REMINDER_POINTS_BEFORE = [['7d_before', 7], ['3d_before', 3], ['1d_before', 1], ['due_today', 0]];
-const REMINDER_POINTS_OVERDUE = [['1d_overdue', 1], ['3d_overdue', 3]];
+/**
+ * Builds [key, dayOffset] pairs from admin-configured day lists (BillingSettings
+ * .reminderDaysBeforeDue/.reminderDaysOverdue), in the same key format the old
+ * hardcoded arrays used ('7d_before', 'due_today', '1d_overdue', ...) so the
+ * per-invoice `remindersSent` idempotency guard keeps working unchanged.
+ */
+const buildReminderPoints = (days, suffix) =>
+  [...new Set(days)].sort((a, b) => b - a).map((d) => [d === 0 ? 'due_today' : `${d}d_${suffix}`, d]);
 
 const sendSafely = (promise, label) => promise.catch((err) => logger.error(`[Billing] ${label} failed: ${err.message}`));
 
@@ -168,8 +177,15 @@ const sendSafely = (promise, label) => promise.catch((err) => logger.error(`[Bil
  * (e.g. after a server restart) has no extra side effects.
  */
 const runDailyBillingSweep = async () => {
-  const subscriptions = await TenantSubscription.find({ isEnrolled: true });
+  // tenantStatus:'cancelled' is excluded even though isEnrolled stays true
+  // (billingState/buildRow relies on isEnrolled to distinguish "unenrolled"
+  // from "cancelled" in the Overview table) — otherwise a cancelled tenant
+  // would keep getting fresh invoices generated every cycle.
+  const subscriptions = await TenantSubscription.find({ isEnrolled: true, tenantStatus: { $ne: 'cancelled' } });
   const now = new Date();
+  const settings = await billingSettingsService.getSettings();
+  const reminderPointsBefore = buildReminderPoints(settings.reminderDaysBeforeDue, 'before');
+  const reminderPointsOverdue = buildReminderPoints(settings.reminderDaysOverdue, 'overdue');
   let remindersSent = 0, overdueNotices = 0, suspended = 0, trialsGraduated = 0;
 
   for (const sub of subscriptions) {
@@ -204,7 +220,7 @@ const runDailyBillingSweep = async () => {
         sendSafely(emailUtil.sendInvoiceGeneratedEmail(tenant, inv), `Invoice-generated email for ${sub.tenantId}`);
       }
 
-      const graceDays = graceDaysFor(sub);
+      const graceDays = graceDaysFor(sub, settings.defaultGracePeriodDays);
       let anyOverdue = false;
 
       for (const invoice of sub.invoices) {
@@ -216,7 +232,7 @@ const runDailyBillingSweep = async () => {
 
         // Pre-due reminders (never sent once it's already overdue).
         if (invoice.status !== 'overdue') {
-          for (const [key, atDays] of REMINDER_POINTS_BEFORE) {
+          for (const [key, atDays] of reminderPointsBefore) {
             if (daysUntilDue === atDays && !invoice.remindersSent.includes(key)) {
               invoice.remindersSent.push(key);
               changed = true;
@@ -242,7 +258,7 @@ const runDailyBillingSweep = async () => {
         if (invoice.status === 'overdue') {
           anyOverdue = true;
 
-          for (const [key, atDays] of REMINDER_POINTS_OVERDUE) {
+          for (const [key, atDays] of reminderPointsOverdue) {
             if (daysPastDue === atDays && !invoice.remindersSent.includes(key)) {
               invoice.remindersSent.push(key);
               changed = true;
@@ -360,7 +376,8 @@ const recordManualPayment = async (tenantId, invoiceId, payload, actingUser) => 
     const tenantDoc = await Tenant.findOne({ tenantId });
     if (tenantDoc) {
       sendSafely(
-        bufferInvoicePdf({ tenant: tenantDoc, invoice, mode: 'receipt' })
+        billingSettingsService.getSettings()
+          .then((settings) => bufferInvoicePdf({ tenant: tenantDoc, invoice, mode: 'receipt', settings }))
           .then((pdfBuffer) => emailUtil.sendSubscriptionPaymentReceivedEmail(tenantDoc, invoice, pdfBuffer))
           .catch(() => emailUtil.sendSubscriptionPaymentReceivedEmail(tenantDoc, invoice, null)),
         `Payment-received email for ${tenantId}`,
@@ -795,6 +812,7 @@ const getAuditLog = async (tenantId, limit = 100) =>
 
 const categorizeFollowUps = async ({ upcomingWindowDays = 7 } = {}) => {
   const now = new Date();
+  const settings = await billingSettingsService.getSettings();
   const subs = await TenantSubscription.find({ isEnrolled: true });
   const tenants = await Tenant.find({ tenantId: { $in: subs.map((s) => s.tenantId) } }).select('+billingSuspended');
   const tenantById = new Map(tenants.map((t) => [t.tenantId, t]));
@@ -808,7 +826,7 @@ const categorizeFollowUps = async ({ upcomingWindowDays = 7 } = {}) => {
     if (!invoice) continue;
 
     const daysUntilDue = Math.ceil((invoice.dueDate - now) / DAY_MS);
-    const graceDays = graceDaysFor(sub);
+    const graceDays = graceDaysFor(sub, settings.defaultGracePeriodDays);
     const suspendDate = new Date(invoice.dueDate.getTime() + graceDays * DAY_MS);
     const daysUntilSuspend = Math.ceil((suspendDate - now) / DAY_MS);
 
@@ -905,6 +923,11 @@ const getAnalytics = async () => {
   let everTrialed = 0, trialConverted = 0;
   const thirtyDaysAgo = new Date(now.getTime() - 30 * DAY_MS);
   const revenueByTenant = {};
+  // Keyed by the invoice's own billing period (periodYear/periodMonth), not
+  // createdAt/paidAt — gives a stable "revenue by billing month" trend where
+  // a late payment doesn't retroactively move revenue into the paid month.
+  const revenueTrendMap = new Map();
+  const trendKey = (y, m) => `${y}-${m}`;
 
   for (const sub of subs) {
     if (sub.createdAt >= thirtyDaysAgo && sub.isEnrolled) newSubs30d++;
@@ -920,6 +943,12 @@ const getAnalytics = async () => {
       if (inv.status === 'failed') failedCount++;
       refundedAmount += round2(inv.refunds.reduce((s, r) => s + r.amount, 0));
 
+      const tKey = trendKey(inv.periodYear, inv.periodMonth);
+      if (!revenueTrendMap.has(tKey)) revenueTrendMap.set(tKey, { billed: 0, collected: 0 });
+      const tEntry = revenueTrendMap.get(tKey);
+      if (!['cancelled', 'refunded'].includes(inv.status)) tEntry.billed = round2(tEntry.billed + inv.totalAmount);
+      if (inv.paidAmount > 0) tEntry.collected = round2(tEntry.collected + inv.paidAmount);
+
       if ((inv.status === 'paid' || inv.status === 'partially_paid') && inv.paidAt) {
         if (inv.paidAt >= yearStart) collectedThisYear += inv.paidAmount;
         tenantPaid += inv.paidAmount;
@@ -932,6 +961,14 @@ const getAnalytics = async () => {
       const name = tenantNameById.get(sub.tenantId) || sub.tenantId;
       revenueByTenant[name] = round2((revenueByTenant[name] || 0) + tenantPaid);
     }
+  }
+
+  const revenueTrend = [];
+  for (let i = 11; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const y = d.getFullYear(), m = d.getMonth() + 1;
+    const entry = revenueTrendMap.get(trendKey(y, m));
+    revenueTrend.push({ month: m, year: y, billed: entry?.billed ?? 0, collected: entry?.collected ?? 0 });
   }
 
   const totalResolved = onTimeCount + latePaidCount;
@@ -964,6 +1001,7 @@ const getAnalytics = async () => {
       failedPayments: failedCount,
       revenueByPlan: byPlan,
       revenueByTenant,
+      revenueTrend,
     },
     subscriptions: {
       active: subs.filter((s) => s.tenantStatus === 'active').length,

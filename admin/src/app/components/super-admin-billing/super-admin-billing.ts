@@ -12,13 +12,14 @@ import {
   BillingCalendar, CalendarEvent, BillingAnalytics,
 } from '../services/billing';
 import { SubscriptionPlansService, SubscriptionPlan } from '../services/subscription-plans';
+import { BillingSettingsService, BillingSettings } from '../services/billing-settings';
 
 const MONTH_NAMES = [
   'January', 'February', 'March', 'April', 'May', 'June',
   'July', 'August', 'September', 'October', 'November', 'December',
 ];
 
-type Tab = 'overview' | 'plans' | 'followups' | 'calendar' | 'analytics';
+type Tab = 'overview' | 'plans' | 'followups' | 'calendar' | 'analytics' | 'settings';
 
 @Component({
   selector: 'app-super-admin-billing',
@@ -59,6 +60,7 @@ export class SuperAdminBilling implements OnInit, OnDestroy {
   constructor(
     private svc: SuperAdminBillingService,
     private plansSvc: SubscriptionPlansService,
+    private settingsSvc: BillingSettingsService,
     private cdr: ChangeDetectorRef,
   ) {}
 
@@ -84,6 +86,7 @@ export class SuperAdminBilling implements OnInit, OnDestroy {
       if (tab === 'followups') this.loadFollowUpBuckets();
       if (tab === 'calendar') this.loadCalendar();
       if (tab === 'analytics') this.loadAnalytics();
+      if (tab === 'settings') this.loadSettings();
     }
     this.cdr.markForCheck();
   }
@@ -152,16 +155,27 @@ export class SuperAdminBilling implements OnInit, OnDestroy {
         this.summary = res.data.summary;
         this.pagination = res.data.pagination;
         this.isLoading = false;
+        this.lastRefreshedAt = new Date();
         this.cdr.markForCheck();
       },
       error: () => { this.isLoading = false; this.cdr.markForCheck(); },
     });
   }
 
+  lastRefreshedAt = new Date();
+
   refresh(): void { this.loadOverview(false); }
   onPeriodChange(): void { this.overviewFilterTrigger$.next(); }
   applyFiltersDebounced(): void { this.overviewFilterTrigger$.next(); }
   toggleFilters(): void { this.filtersCollapsed = !this.filtersCollapsed; }
+
+  /** KPI cards are clickable — jumps to the Overview tab pre-filtered to that status. */
+  filterByStatus(status: string): void {
+    this.activeTab = 'overview';
+    this.activeStatus = status;
+    this.overviewFilterTrigger$.next();
+    this.cdr.markForCheck();
+  }
 
   resetFilters(): void {
     const now = new Date();
@@ -931,12 +945,17 @@ export class SuperAdminBilling implements OnInit, OnDestroy {
     return this.calendar.events.filter(e => new Date(e.date).toISOString().slice(0, 10) === this.selectedCalendarDay);
   }
 
+  calendarEventDotClass(type: string): string {
+    return 'cal-dot--' + (type === 'due' ? 'due' : type === 'overdue' ? 'overdue' : type === 'suspension' ? 'suspend' : 'followup');
+  }
+
   // ══════════════════════════════════════════════════════════════════════════
   // TAB 5 — ANALYTICS
   // ══════════════════════════════════════════════════════════════════════════
 
   analytics: BillingAnalytics | null = null;
   analyticsLoading = false;
+  hoveredTrendIndex = -1;
 
   loadAnalytics(): void {
     this.analyticsLoading = true;
@@ -960,6 +979,110 @@ export class SuperAdminBilling implements OnInit, OnDestroy {
     return entries.map(([tenant, amount]) => ({ tenant, amount, pct: Math.round((amount / max) * 100) }))
       .sort((a, b) => b.amount - a.amount)
       .slice(0, 15);
+  }
+
+  // Hand-rolled inline-SVG trend chart — same approach as the Payments/
+  // Statements page (getTrendLinePath/getTrendAreaPath/getTrendPoints), just
+  // plotted over the 12 monthly revenueTrend points instead of daily ones.
+  get trendPoints(): { x: number; y: number }[] {
+    const trend = this.analytics?.revenue.revenueTrend;
+    if (!trend?.length) return [];
+    const W = 700, H = 180, PAD_TOP = 20, PAD_BOTTOM = 10;
+    const maxAmt = Math.max(...trend.map(d => d.billed), 1);
+    const n = trend.length;
+    return trend.map((d, i) => ({
+      x: n === 1 ? W / 2 : (i / (n - 1)) * W,
+      y: PAD_TOP + (1 - d.collected / maxAmt) * (H - PAD_TOP - PAD_BOTTOM),
+    }));
+  }
+
+  get trendLinePath(): string {
+    const pts = this.trendPoints;
+    if (pts.length < 2) return '';
+    return pts.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
+  }
+
+  get trendAreaPath(): string {
+    const pts = this.trendPoints;
+    if (pts.length < 2) return '';
+    const line = pts.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
+    const last = pts[pts.length - 1];
+    const first = pts[0];
+    return `${line} L${last.x.toFixed(1)},200 L${first.x.toFixed(1)},200 Z`;
+  }
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // TAB 6 — SETTINGS
+  // ══════════════════════════════════════════════════════════════════════════
+
+  settings: BillingSettings | null = null;
+  settingsLoading = false;
+  settingsSaving = false;
+  settingsErrorMsg = '';
+  showSettingsConfirm = false;
+  newBeforeDay: number | null = null;
+  newOverdueDay: number | null = null;
+
+  settingsForm = {
+    defaultGstPercent: 18, defaultGracePeriodDays: 7,
+    reminderDaysBeforeDue: [] as number[], reminderDaysOverdue: [] as number[],
+    invoiceNumberPrefix: 'INV', companyLegalName: '', companyGSTIN: '', companyAddress: '', companyLogoUrl: '',
+  };
+
+  loadSettings(): void {
+    this.settingsLoading = true;
+    this.cdr.markForCheck();
+    this.settingsSvc.get().pipe(takeUntil(this.destroy$), finalize(() => { this.settingsLoading = false; this.cdr.markForCheck(); }))
+      .subscribe({
+        next: (res) => {
+          this.settings = res.data;
+          this.settingsForm = {
+            defaultGstPercent: res.data.defaultGstPercent, defaultGracePeriodDays: res.data.defaultGracePeriodDays,
+            reminderDaysBeforeDue: [...res.data.reminderDaysBeforeDue].sort((a, b) => b - a),
+            reminderDaysOverdue: [...res.data.reminderDaysOverdue].sort((a, b) => a - b),
+            invoiceNumberPrefix: res.data.invoiceNumberPrefix, companyLegalName: res.data.companyLegalName,
+            companyGSTIN: res.data.companyGSTIN, companyAddress: res.data.companyAddress, companyLogoUrl: res.data.companyLogoUrl,
+          };
+        },
+        error: () => {},
+      });
+  }
+
+  addBeforeDay(): void {
+    const d = this.newBeforeDay;
+    if (d === null || d < 0 || this.settingsForm.reminderDaysBeforeDue.includes(d)) return;
+    this.settingsForm.reminderDaysBeforeDue = [...this.settingsForm.reminderDaysBeforeDue, d].sort((a, b) => b - a);
+    this.newBeforeDay = null;
+  }
+  removeBeforeDay(d: number): void {
+    this.settingsForm.reminderDaysBeforeDue = this.settingsForm.reminderDaysBeforeDue.filter(x => x !== d);
+  }
+  addOverdueDay(): void {
+    const d = this.newOverdueDay;
+    if (d === null || d < 0 || this.settingsForm.reminderDaysOverdue.includes(d)) return;
+    this.settingsForm.reminderDaysOverdue = [...this.settingsForm.reminderDaysOverdue, d].sort((a, b) => a - b);
+    this.newOverdueDay = null;
+  }
+  removeOverdueDay(d: number): void {
+    this.settingsForm.reminderDaysOverdue = this.settingsForm.reminderDaysOverdue.filter(x => x !== d);
+  }
+
+  openSettingsConfirm(): void { this.showSettingsConfirm = true; }
+  closeSettingsConfirm(): void { this.showSettingsConfirm = false; }
+
+  saveSettings(): void {
+    this.settingsSaving = true;
+    this.settingsErrorMsg = '';
+    this.cdr.markForCheck();
+    this.settingsSvc.update(this.settingsForm)
+      .pipe(takeUntil(this.destroy$), finalize(() => { this.settingsSaving = false; this.showSettingsConfirm = false; this.cdr.markForCheck(); }))
+      .subscribe({
+        next: (res) => { this.settings = res.data; this.showToastMsg('Billing settings updated.'); },
+        error: (err) => {
+          this.settingsErrorMsg = err.error?.message || 'Failed to save settings.';
+          this.showToastMsg(this.settingsErrorMsg, 'error');
+        },
+      });
   }
 
   // ══════════════════════════════════════════════════════════════════════════

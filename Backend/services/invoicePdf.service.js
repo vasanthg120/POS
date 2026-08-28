@@ -17,10 +17,10 @@ const STATUS_LABEL = {
 const invoicePdfFilename = (invoice, mode) => `${mode === 'receipt' ? 'receipt' : 'invoice'}-${invoice.invoiceNumber}.pdf`;
 
 /** Draws the full invoice/receipt layout onto an already-constructed PDFDocument. Caller owns pipe/end. */
-const renderInvoicePdf = (doc, { tenant, invoice, mode = 'invoice' }) => {
+const renderInvoicePdf = (doc, { tenant, invoice, mode = 'invoice', settings = null }) => {
   // ── Header ──────────────────────────────────────────────────────────────
   doc.fontSize(20).fillColor('#0f172a').font('Helvetica-Bold')
-    .text(process.env.COMPANY_NAME || 'Fully Promoted India', 50, 50);
+    .text(settings?.companyLegalName || process.env.COMPANY_NAME || 'Fully Promoted India', 50, 50);
   doc.fontSize(10).fillColor('#64748b').font('Helvetica')
     .text('Platform Subscription Billing', 50, 74);
 
@@ -28,6 +28,17 @@ const renderInvoicePdf = (doc, { tenant, invoice, mode = 'invoice' }) => {
     .text(mode === 'receipt' ? 'PAYMENT RECEIPT' : 'INVOICE', 350, 50, { width: 200, align: 'right' });
   doc.fontSize(10).fillColor('#64748b').font('Helvetica')
     .text(invoice.invoiceNumber, 350, 72, { width: 200, align: 'right' });
+
+  // Company GSTIN/address — only rendered once the superadmin has actually
+  // filled them in via Billing → Settings, so PDFs look unchanged until then.
+  let headerY = 88;
+  if (settings?.companyAddress) {
+    doc.fontSize(8.5).fillColor('#94a3b8').font('Helvetica').text(settings.companyAddress, 50, headerY, { width: 280 });
+    headerY += 12;
+  }
+  if (settings?.companyGSTIN) {
+    doc.fontSize(8.5).fillColor('#94a3b8').font('Helvetica').text(`GSTIN: ${settings.companyGSTIN}`, 50, headerY, { width: 280 });
+  }
 
   doc.moveTo(50, 100).lineTo(545, 100).strokeColor('#e2e8f0').stroke();
 

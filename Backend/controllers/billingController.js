@@ -1,6 +1,7 @@
 'use strict';
 
 const billingService = require('../services/billing.service');
+const billingSettingsService = require('../services/billingSettings.service');
 const { streamInvoicePdf } = require('../services/invoicePdf.service');
 
 // Service errors carry an explicit `.status` + user-facing `.message` for
@@ -181,5 +182,18 @@ exports.downloadInvoicePdf = asyncHandler(async (req, res) => {
   const { tenant, subscription } = await billingService.getTenantBillingDetail(req.params.tenantId);
   const invoice = subscription.invoices.id(req.params.invoiceId);
   if (!invoice) return res.status(404).json({ success: false, message: 'Invoice not found.' });
-  streamInvoicePdf(res, { tenant, invoice, mode: req.query.mode === 'receipt' ? 'receipt' : 'invoice' });
+  const settings = await billingSettingsService.getSettings();
+  streamInvoicePdf(res, { tenant, invoice, mode: req.query.mode === 'receipt' ? 'receipt' : 'invoice', settings });
+});
+
+// ── GET /api/admin/billing/settings ────────────────────────────────────────────
+exports.getSettings = asyncHandler(async (req, res) => {
+  const settings = await billingSettingsService.getSettings();
+  return ok(res, settings);
+});
+
+// ── PATCH /api/admin/billing/settings ──────────────────────────────────────────
+exports.updateSettings = asyncHandler(async (req, res) => {
+  const settings = await billingSettingsService.updateSettings(req.body, req.user);
+  return ok(res, settings, 'Billing settings updated.');
 });

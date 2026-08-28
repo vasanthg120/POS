@@ -9,6 +9,21 @@ export interface MyBillingResponse {
   subscription: SubscriptionDetail;
 }
 
+export interface PaymentOrder {
+  razorpayOrderId: string;
+  amount: number;
+  currency: string;
+  keyId: string;
+  invoiceNumber: string;
+  outstanding: number;
+}
+
+export interface VerifyPaymentPayload {
+  razorpay_order_id: string;
+  razorpay_payment_id: string;
+  razorpay_signature: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class TenantBillingService {
   private readonly http = inject(HttpClient);
@@ -22,5 +37,13 @@ export class TenantBillingService {
     return this.http.get(`${this.base}/invoices/${invoiceId}/pdf`, {
       params: { mode }, responseType: 'blob',
     });
+  }
+
+  createPaymentOrder(invoiceId: string): Observable<{ success: boolean; data: PaymentOrder }> {
+    return this.http.post<{ success: boolean; data: PaymentOrder }>(`${this.base}/invoices/${invoiceId}/pay`, {});
+  }
+
+  verifyPayment(invoiceId: string, payload: VerifyPaymentPayload): Observable<{ success: boolean; message: string }> {
+    return this.http.post<{ success: boolean; message: string }>(`${this.base}/invoices/${invoiceId}/verify`, payload);
   }
 }

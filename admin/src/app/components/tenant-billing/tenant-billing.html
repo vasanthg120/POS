@@ -1,13 +1,16 @@
 <div class="tb-root">
 
-  <div class="tb-head">
-    <div>
-      <h1>Billing &amp; Subscription</h1>
-      <p>Your platform subscription, invoices, and payment history.</p>
+  <div class="tb-hero">
+    <div class="tb-hero-mesh"></div>
+    <div class="tb-hero-row">
+      <div>
+        <h1>Billing &amp; Subscription</h1>
+        <p>Your platform subscription, invoices, and payment history.</p>
+      </div>
+      <button class="tb-refresh-btn" (click)="load()" [class.tb-refresh-btn--spin]="isLoading" title="Refresh">
+        <svg viewBox="0 0 20 20"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4.5"/></svg>
+      </button>
     </div>
-    <button class="tb-refresh-btn" (click)="load()" [class.tb-refresh-btn--spin]="isLoading" title="Refresh">
-      <svg viewBox="0 0 20 20"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4.5"/></svg>
-    </button>
   </div>
 
   <div class="tb-loading" *ngIf="isLoading">Loading billing information…</div>
@@ -71,18 +74,25 @@
         </div>
 
         <div class="tb-pay-now">
-          <button class="tb-btn tb-btn--primary" disabled title="Online payment isn't set up yet — contact the platform admin to arrange payment.">
-            Pay Now
-          </button>
-          <span class="tb-pay-hint">Online payment isn't available yet. To settle an outstanding balance, contact the platform admin — they'll record your payment once received.</span>
+          <ng-container *ngIf="payableInvoice as pi; else noBalance">
+            <button class="tb-btn tb-btn--primary" [disabled]="payingId === pi._id" (click)="payNow(pi)">
+              {{ payingId === pi._id ? 'Processing…' : 'Pay Now' }}
+            </button>
+            <span class="tb-pay-hint">Pay {{ fmtINR(pi.totalAmount - pi.paidAmount) }} securely via Razorpay for {{ pi.invoiceNumber }}.</span>
+          </ng-container>
+          <ng-template #noBalance>
+            <button class="tb-btn tb-btn--primary" disabled>Pay Now</button>
+            <span class="tb-pay-hint">You're all caught up — no outstanding balance.</span>
+          </ng-template>
         </div>
+        <div class="tb-error" style="margin:0 18px 16px" *ngIf="payErrorMsg">{{ payErrorMsg }}</div>
       </div>
 
       <!-- ── Payment / Invoice History ────────────────────────────────── -->
       <div class="tb-section">
         <div class="tb-section-head">Payment History</div>
 
-        <div class="tb-empty" *ngIf="!sortedInvoices.length">No invoices yet.</div>
+        <div class="tb-empty" *ngIf="!sortedInvoices.length" style="border:none;padding:36px 20px">No invoices yet.</div>
 
         <div class="tb-table-scroll" *ngIf="sortedInvoices.length">
           <table class="tb-table">
