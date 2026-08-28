@@ -5,9 +5,15 @@ const logger = require('./logger');
 const fs = require('fs');
 const path = require('path');
 
-const COMPANY_LOGO = () =>
-  process.env.COMPANY_LOGO ||
-  `${(process.env.BACKEND_URL || 'http://localhost:3000').replace(/\/$/, '')}/assets/images/fp.png`;
+// A logo referenced by URL only loads if that URL is publicly reachable —
+// BACKEND_URL is typically http://localhost:3000 in dev, which no real email
+// client can fetch, so the <img> fails and the browser falls back to its alt
+// text. Embedding the file as an inline CID attachment works regardless of
+// what BACKEND_URL points to. process.env.COMPANY_LOGO still overrides with
+// an external URL when one is actually configured (e.g. a CDN link).
+const LOGO_PATH = path.join(__dirname, '..', 'assets', 'images', 'fp.png');
+const LOGO_CID = 'companylogo';
+const COMPANY_LOGO = () => process.env.COMPANY_LOGO || `cid:${LOGO_CID}`;
 
 // ─────────────────────────────────────────────────────────────
 // Singleton SMTP Transporter
@@ -93,7 +99,7 @@ const wrap = ({ title, subtitle = '', body }) => `
   .mail-container{ max-width:620px; margin:0 auto; background:#ffffff; border-radius:20px; overflow:hidden; border:1px solid #e2e8f0; box-shadow:0 4px 20px rgba(15,23,42,.06),0 2px 8px rgba(15,23,42,.04); }
   .mail-header{ background:linear-gradient(135deg,#ffffff 0%,#f8fafc 40%,#eef6ff 100%); padding:32px 36px; border-bottom:1px solid #e2e8f0; position:relative; }
   .mail-header::after{ content:''; position:absolute; bottom:0; left:0; width:100%; height:3px; background:linear-gradient(90deg,#0ea5e9,#1e40af,#4f46e5); }
-  .logo{ height:54px; object-fit:contain; margin-bottom:22px; }
+  .logo{ height:110px; object-fit:contain; margin-bottom:22px; }
   .header-title{ margin:0; font-size:28px; line-height:1.2; font-weight:800; color:#0f172a; letter-spacing:-0.5px; }
   .header-subtitle{ margin-top:10px; color:#64748b; font-size:14px; line-height:1.7; max-width:460px; }
   .mail-body{ padding:38px 36px; }
@@ -125,7 +131,7 @@ const wrap = ({ title, subtitle = '', body }) => `
 <div class="mail-wrapper">
   <div class="mail-container">
     <div class="mail-header">
-<img src="${COMPANY_LOGO()}" alt="${COMPANY_NAME}" class="logo" style="display:block;height:54px;width:auto;object-fit:contain;margin-bottom:22px;" />
+<img src="${COMPANY_LOGO()}" alt="${COMPANY_NAME}" class="logo" style="display:block;height:110px;width:auto;object-fit:contain;margin-bottom:22px;" />
 
       <h1 class="header-title">${title}</h1>
       ${subtitle ? `<div class="header-subtitle">${subtitle}</div>` : ''}
@@ -150,7 +156,13 @@ const wrap = ({ title, subtitle = '', body }) => `
 const send = async ({ to, subject, html, attachments }) => {
   try {
     const transporter = getTransporter();
-    const info = await transporter.sendMail({ from: FROM(), to, subject, html, attachments });
+    const inlineLogo = process.env.COMPANY_LOGO
+      ? []
+      : [{ filename: 'logo.png', path: LOGO_PATH, cid: LOGO_CID }];
+    const info = await transporter.sendMail({
+      from: FROM(), to, subject, html,
+      attachments: [...inlineLogo, ...(attachments || [])],
+    });
     logger.info(`[Email] "${subject}" sent successfully to ${to} | ${info.messageId}`);
     return info;
   } catch (err) {
