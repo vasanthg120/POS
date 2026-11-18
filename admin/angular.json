@@ -31,7 +31,7 @@
             "server": "src/main.server.ts",
             "outputMode": "server",
             "security": {
-              "allowedHosts": []
+              "allowedHosts": ["pos.pantheras.io"]
             },
             "ssr": {
               "entry": "src/server.ts"
@@ -56,7 +56,13 @@
             "development": {
               "optimization": false,
               "extractLicenses": false,
-              "sourceMap": true
+              "sourceMap": true,
+              "fileReplacements": [
+                {
+                  "replace": "src/app/components/environment/environment.ts",
+                  "with": "src/app/components/environment/environment.development.ts"
+                }
+              ]
             }
           },
           "defaultConfiguration": "production"

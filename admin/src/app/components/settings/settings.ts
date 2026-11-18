@@ -1,6 +1,6 @@
 // settings.component.ts
-import { Component, OnInit, signal, computed } from '@angular/core';
-import { CommonModule, TitleCasePipe } from '@angular/common';
+import { Component, OnInit, signal, computed, inject } from '@angular/core';
+import { CommonModule, DOCUMENT, TitleCasePipe } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import {
   ReactiveFormsModule, FormBuilder, FormGroup, Validators, AbstractControl,
@@ -43,6 +43,9 @@ export class Settings implements OnInit {
   showCRMKey = signal(false);
   copied = signal(false);
   private qrGenerated = false;
+
+  /** Base of the public payment link — same origin the copy/QR actions use */
+  readonly payBaseUrl = `${inject(DOCUMENT).location.origin}/pay/`;
 
   businessForm!: FormGroup;
   razorpayForm!: FormGroup;

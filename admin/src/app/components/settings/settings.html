@@ -797,7 +797,7 @@
               </div>
               <div class="puc-url-row">
                 <div class="puc-url">
-                  <span class="puc-domain">https://payment.pantheras.io/pay/</span>
+                  <span class="puc-domain">{{ payBaseUrl }}</span>
                   <span class="puc-slug">{{ auth.currentTenant()?.paymentPageSlug }}</span>
                 </div>
                 <div class="puc-actions">
@@ -918,7 +918,7 @@
       <div id="qr-canvas"></div>
     </div>
     <div class="qr-url-label">
-      {{ 'https://payment.pantheras.io/pay/' + auth.currentTenant()?.paymentPageSlug }}
+      {{ payBaseUrl + auth.currentTenant()?.paymentPageSlug }}
     </div>
     <div class="qr-modal-actions">
       <button class="btn-save" (click)="downloadQR()">
