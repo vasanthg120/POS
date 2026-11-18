@@ -71,7 +71,7 @@ const ADMIN_EMAIL = () =>
   'support@fullypromotedindia.com';
 
 const FRONTEND_BASE = () =>
-  (process.env.FRONTEND_URL || 'https://payment.pantheras.io').replace(/\/$/, '');
+  (process.env.FRONTEND_URL || 'https://pos.pantheras.io').replace(/\/$/, '');
 
 const COMPANY_NAME = process.env.COMPANY_NAME || 'Fully Promoted India';
 
