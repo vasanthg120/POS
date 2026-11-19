@@ -1,0 +1,87 @@
+
+name: POS CI Pipeline
+
+on:
+  push:
+    branches:
+      - main
+      - security/backend-dependency-remediation
+
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pos-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    name: Backend Validation
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: Backend
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: Backend/package-lock.json
+
+      - name: Install backend dependencies
+        run: npm ci
+
+      - name: Check backend syntax
+        run: |
+          node --check app.js
+          node --check utils/email.js
+          node --check utils/logger.js
+
+      - name: Run backend tests
+        run: npm test -- --passWithNoTests
+
+  frontend:
+    name: Angular Production Build
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: admin
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: admin/package-lock.json
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - name: Build Angular application
+        run: npm run build -- --configuration production
+
+      - name: Verify browser output
+        run: test -f dist/admin/browser/index.html
+
+      - name: Upload Angular browser artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: pos-angular-browser
+          path: admin/dist/admin/browser/
+          if-no-files-found: error
+          retention-days: 7
