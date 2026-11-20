@@ -1,5 +1,15 @@
 'use strict';
-require('dotenv').config();
+
+const path = require('path');
+
+const envFile =
+  process.env.NODE_ENV === 'production'
+    ? '.env.production'
+    : '.env';
+
+require('dotenv').config({
+  path: path.join(__dirname, envFile),
+});
 
 const express        = require('express');
 const mongoose       = require('mongoose');
@@ -12,7 +22,6 @@ const logger         = require('./utils/logger');
 const registerRoutes = require('./routes/index');
 const seedSuperAdmin = require('./utils/seedSuperAdmin');
 const seedDefaultPlan = require('./utils/seedDefaultPlan');
-const path           = require('path');
 
 // ✅ REMOVED broken authMiddleware import — auth is handled inside the router 
 
