@@ -114,6 +114,11 @@ export class TrackingService {
 
   // ── Load all quotes (auto-syncs Razorpay on the server side) ─────────────
 
+  /**
+   * Errors are passed to the caller, not turned into an empty list: an
+   * empty list read as "no CRM quotes" and hid real failures (CRM errors,
+   * or the API path not reaching the backend in production).
+   */
   loadAll(): Observable<TrackingRecord[]> {
     return this.http
       .get<any>(`${this.base}/tenant/quotes`)
@@ -122,7 +127,6 @@ export class TrackingService {
           const quotes: any[] = r?.data?.quotes ?? r?.data ?? [];
           return quotes.map(q => this.mapQuote(q));
         }),
-        catchError(() => of([])),
       );
   }
 
@@ -143,8 +147,9 @@ export class TrackingService {
     return this.http
       .post<any>(`${this.base}/tenant/quotes/sync-razorpay`, {})
       .pipe(
+        // No catchError: a failed request used to come back as { synced: 0 },
+        // which the page announced as "Already up to date".
         map(r => ({ synced: r?.data?.synced ?? 0, message: r?.message ?? '' })),
-        catchError(() => of({ synced: 0, message: 'Sync failed' })),
       );
   }
 

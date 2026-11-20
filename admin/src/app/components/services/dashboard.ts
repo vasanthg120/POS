@@ -12,6 +12,7 @@ import {
   TopTenant,
 } from '../dashboard/dashboard';
 import { Environment } from '../environment/environment';
+import { describeHttpError } from './api-error';
 
 // ── Token helpers (unchanged) ────────────────────────────────────────────────
 const TOKEN_KEYS = ['pos_token', 'accessToken', 'pos_access_token', 'token', 'auth_token', 'jwt'];
@@ -286,10 +287,10 @@ export class DashboardService {
   private onError(err: HttpErrorResponse | any) {
     if (err?.status === 401) {
       this.sessionError.set(true);
-    } else if (err?.status === 0) {
-      this.error.set('Cannot reach the POS server. Check your connection and try again.');
     } else {
-      this.error.set(err?.error?.message || `Could not load CRM data (HTTP ${err?.status ?? 'error'}).`);
+      // Also names the case of an HTML page served instead of JSON, which
+      // used to read as "Could not load CRM data (HTTP 200)".
+      this.error.set(describeHttpError(err, 'Could not load CRM data.'));
     }
     return of(null);
   }

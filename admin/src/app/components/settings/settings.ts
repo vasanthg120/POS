@@ -8,11 +8,14 @@ import {
 import { Tenant } from '../services/tenant';
 import { Auth } from '../services/auth';
 import { Crm, CrmSyncStatus } from '../services/crm';
+import { describeHttpError } from '../services/api-error';
 import { AfterViewChecked } from '@angular/core';
 
 /** The server's message from an HttpErrorResponse (err.message is Angular's generic text). */
-const apiMessage = (err: any, fallback: string): string =>
-  err?.error?.message || err?.message || fallback;
+const apiMessage = (err: any, fallback: string): string => describeHttpError(err, fallback);
+
+/** Display names for the `crm.provider` values the backend stores. */
+const CRM_PROVIDER_LABELS: Record<string, string> = { prospectconnect: 'ProspectConnect' };
 
 export type SettingsTab = 'business' | 'razorpay' | 'crm' | 'payment' | 'password';
 
@@ -53,6 +56,14 @@ export class Settings implements OnInit {
   private crm = inject(Crm);
   crmSync = signal<CrmSyncStatus | null>(null);
   syncingCRM = signal(false);
+  /** Why the sync status could not be loaded — shown instead of "not synced yet". */
+  crmSyncError = signal<string | null>(null);
+
+  /** Connected provider's name, from the tenant settings the backend returned. */
+  crmProviderLabel(): string {
+    const p = this.auth.currentTenant()?.crm?.provider;
+    return p ? (CRM_PROVIDER_LABELS[p] ?? p) : '—';
+  }
 
   /** Base of the public payment link — same origin the copy/QR actions use */
   readonly payBaseUrl = `${inject(DOCUMENT).location.origin}/pay/`;
@@ -174,10 +185,15 @@ export class Settings implements OnInit {
 
   /** Real sync health for the connected-CRM card (replaces the old hardcoded "Active"). */
   loadCrmSyncStatus(): void {
-    if (!this.auth.currentTenant()?.crm?.isConfigured) { this.crmSync.set(null); return; }
+    if (!this.auth.currentTenant()?.crm?.isConfigured) {
+      this.crmSync.set(null); this.crmSyncError.set(null); return;
+    }
     this.crm.getSyncStatus().subscribe({
-      next: (res) => this.crmSync.set(res.data),
-      error: () => this.crmSync.set(null),
+      next: (res) => { this.crmSync.set(res.data); this.crmSyncError.set(null); },
+      error: (err) => {
+        this.crmSync.set(null);
+        this.crmSyncError.set(describeHttpError(err, 'Could not load the CRM sync status.'));
+      },
     });
   }
 
@@ -188,6 +204,7 @@ export class Settings implements OnInit {
       next: (res) => {
         this.success.set(res.message || 'CRM sync complete.');
         this.crmSync.set(res.data?.status ?? null);
+        this.crmSyncError.set(null);
         this.syncingCRM.set(false);
       },
       error: (err) => {
@@ -200,7 +217,7 @@ export class Settings implements OnInit {
 
   crmSyncLabel(): string {
     const s = this.crmSync();
-    if (!s) return '—';
+    if (!s) return this.crmSyncError() ? '● Unavailable' : '—';
     switch (s.status) {
       case 'running': return '● Syncing…';
       case 'success': return '● Healthy';
@@ -334,7 +351,11 @@ export class Settings implements OnInit {
     if (!confirm('Remove CRM integration? Quotes synced from the CRM will be cleared from the POS (payment tracking is kept).')) return;
     this.clearMessages();
     this.tenant.removeCRMCredentials().subscribe({
-      next: () => { this.success.set('CRM integration removed.'); this.crmSync.set(null); },
+      next: () => {
+        this.success.set('CRM integration removed.');
+        this.crmSync.set(null);
+        this.crmSyncError.set(null);
+      },
       error: (err) => this.error.set(apiMessage(err, 'Failed.')),
     });
   }
