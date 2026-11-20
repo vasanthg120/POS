@@ -1,0 +1,27 @@
+services:
+  backend:
+    build:
+      context: ./Backend
+      dockerfile: Dockerfile
+    image: pos-backend:local
+    container_name: pos-backend-test
+    network_mode: host
+    environment:
+      NODE_ENV: production
+      PORT: "3001"
+      ENABLE_STARTUP_SEEDS: "false"
+      ENABLE_BILLING_CRON: "false"
+    volumes:
+      - /var/www/html/Backend/.env.production:/app/.env.production:ro
+      - /var/www/html/Backend/logs:/app/logs
+    restart: "no"
+
+  frontend:
+    build:
+      context: ./admin
+      dockerfile: Dockerfile
+    image: pos-frontend:local
+    container_name: pos-frontend-test
+    ports:
+      - "127.0.0.1:8081:80"
+    restart: "no"

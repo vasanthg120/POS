@@ -121,9 +121,18 @@ mongoose.connect(process.env.MONGODB_URI || process.env.MONGO_URI, {
   socketTimeoutMS         : 45000,
 }).then(async () => {
   logger.info('✅ MongoDB connected');
-  await seedSuperAdmin();
-  await seedDefaultPlan();
-  require('./jobs/billingCron').start();
+  if (process.env.ENABLE_STARTUP_SEEDS !== 'false') {
+    await seedSuperAdmin();
+    await seedDefaultPlan();
+  } else {
+    logger.info('[Startup] Database seeding disabled by configuration.');
+  }
+
+  if (process.env.ENABLE_BILLING_CRON !== 'false') {
+    require('./jobs/billingCron').start();
+  } else {
+    logger.info('[Startup] Billing cron disabled by configuration.');
+  }
 
   const server = app.listen(PORT, () => {
     logger.info(`🚀 POS Platform API running on port ${PORT} [${process.env.NODE_ENV || 'development'}]`);
