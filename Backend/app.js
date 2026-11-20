@@ -67,6 +67,9 @@ app.get('/api/health', (_req, res) => res.json({
   timestamp  : new Date().toISOString(),
   environment: process.env.NODE_ENV,
   uptime     : process.uptime(),
+  // Git commit the running build came from (set by the Docker build in CI),
+  // so a deploy can be checked without guessing from uptime.
+  commit     : process.env.GIT_SHA || 'unknown',
 }));
 
 // ✅ Tenant settings — auth handled inside the router via protect middleware

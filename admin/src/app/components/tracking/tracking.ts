@@ -12,6 +12,7 @@ import {
   EditForm, ManualPaymentForm, TimelineEntry, PayStatus, QuotStage,
 } from '../services/tracking';
 import { Auth } from '../services/auth';
+import { describeHttpError } from '../services/api-error';
 
 const AVATAR_PALETTE = [
   '#1d4ed8', '#0891b2', '#059669', '#7c3aed',
@@ -101,6 +102,9 @@ export class Tracking implements OnInit, OnDestroy {
   toastMsg = '';
   toastType: 'success' | 'error' = 'success';
   private toastTimer?: ReturnType<typeof setTimeout>;
+
+  /** Why the quotations list could not be loaded (null when the last load worked). */
+  loadError: string | null = null;
 
   // ── Config ────────────────────────────────────────────────────────────────
   readonly paymentStatusOptions = [
@@ -248,13 +252,19 @@ export class Tracking implements OnInit, OnDestroy {
         next: ({ records, stats }) => {
           this.allRecords = records;
           this.stats = stats;
+          this.loadError = null;
           this.isLoadingInProgress = false;
           this.rebuildAnalytics();
           this.filterTrigger$.next(); // triggers runFilter → no more loadAll() call inside
           this.isLoading = false;
           this.cdr.markForCheck();
         },
-        error: () => {
+        error: (err) => {
+          // Keep any records already on screen (a silent refresh may fail);
+          // the empty state shows the reason, and a toast reports a new failure.
+          const message = describeHttpError(err, 'Could not load quotations.');
+          if (message !== this.loadError && this.allRecords.length) this.showToastMsg(message, 'error');
+          this.loadError = message;
           this.isLoadingInProgress = false;
           this.isLoading = false;
           this.cdr.markForCheck();
@@ -284,9 +294,9 @@ export class Tracking implements OnInit, OnDestroy {
           if (synced > 0) this.loadAll(true);
           else this.cdr.markForCheck();
         },
-        error: () => {
+        error: (err) => {
           this.isSyncing = false;
-          this.showToastMsg('Razorpay sync failed', 'error');
+          this.showToastMsg(describeHttpError(err, 'Razorpay sync failed.'), 'error');
           this.cdr.markForCheck();
         },
       });

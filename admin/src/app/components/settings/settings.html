@@ -588,14 +588,15 @@
                   · auto-sync every {{ crmSync()?.intervalMinutes ?? 10 }} min
                 </span>
                 <ng-template #notSyncedYet>
-                  <span>Quotes have not been synced into the POS yet — use “Sync now”.</span>
+                  <span *ngIf="!crmSyncError(); else syncStatusUnavailable">Quotes have not been synced into the POS yet — use “Sync now”.</span>
+                  <ng-template #syncStatusUnavailable><span>Sync status unavailable — see the message below.</span></ng-template>
                 </ng-template>
               </div>
             </div>
             <div class="icc-meta">
               <div class="icc-meta-item">
                 <span class="meta-label">Provider</span>
-                <span class="meta-value">ProspectConnect</span>
+                <span class="meta-value">{{ crmProviderLabel() }}</span>
               </div>
               <div class="icc-meta-item">
                 <span class="meta-label">Sync</span>
@@ -609,6 +610,9 @@
                 <span class="meta-label">Encryption</span>
                 <span class="meta-value">AES-256</span>
               </div>
+            </div>
+            <div class="field-error-msg" *ngIf="crmSyncError() as syncLoadErr" role="alert">
+              Could not load the CRM sync status: {{ syncLoadErr }}
             </div>
             <div class="field-error-msg" *ngIf="crmSync()?.lastStatus === 'error'" role="alert">
               Last sync failed{{ crmSync()?.lastAttemptAt ? ' (' + (crmSync()?.lastAttemptAt | date:'d MMM, h:mm a') + ')' : '' }}: {{ crmSync()?.lastError }}

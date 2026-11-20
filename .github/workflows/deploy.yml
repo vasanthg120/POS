@@ -43,6 +43,8 @@ jobs:
           context: ./Backend
           file: ./Backend/Dockerfile
           push: true
+          build-args: |
+            GIT_SHA=${{ github.sha }}
           tags: |
             ghcr.io/${{ env.IMAGE_OWNER }}/pos-backend:${{ steps.meta.outputs.tag }}
             ghcr.io/${{ env.IMAGE_OWNER }}/pos-backend:latest
@@ -53,6 +55,8 @@ jobs:
           context: ./admin
           file: ./admin/Dockerfile
           push: true
+          build-args: |
+            GIT_SHA=${{ github.sha }}
           tags: |
             ghcr.io/${{ env.IMAGE_OWNER }}/pos-frontend:${{ steps.meta.outputs.tag }}
             ghcr.io/${{ env.IMAGE_OWNER }}/pos-frontend:latest

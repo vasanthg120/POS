@@ -377,10 +377,18 @@
             <path d="M22 28h10M22 32h7" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" />
           </svg>
         </div>
-        <div class="empty-title">No records found</div>
-        <div class="empty-sub">Try adjusting your filters or search query</div>
-        <button class="reset-btn" style="margin-top:12px; margin-left:auto; margin-right:auto;"
-          (click)="resetFilters()">Clear filters</button>
+        <ng-container *ngIf="loadError && !allRecords.length; else noMatches">
+          <div class="empty-title">Couldn't load quotations</div>
+          <div class="empty-sub" role="alert">{{ loadError }}</div>
+          <button class="reset-btn" style="margin-top:12px; margin-left:auto; margin-right:auto;"
+            (click)="loadAll(true)">Retry</button>
+        </ng-container>
+        <ng-template #noMatches>
+          <div class="empty-title">No records found</div>
+          <div class="empty-sub">Try adjusting your filters or search query</div>
+          <button class="reset-btn" style="margin-top:12px; margin-left:auto; margin-right:auto;"
+            (click)="resetFilters()">Clear filters</button>
+        </ng-template>
       </div>
 
       <!-- Table -->
