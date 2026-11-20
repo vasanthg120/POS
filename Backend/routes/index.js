@@ -12,7 +12,12 @@
 
 const express = require('express');
 const rateLimit = require('express-rate-limit');
-const { body, param, query, validationResult } = require('express-validator');
+const { body, param, query } = require('express-validator');
+const {
+  validate, phoneRule, personNameRule, passwordRule, confirmPasswordRule, emailRule, dateRule, reasonRule,
+} = require('../middleware/validate');
+const { GSTIN, GSTIN_MESSAGE } = require('../utils/validation');
+const settingsRules = require('./tenant.settings.rules');
 
 const authCtrl = require('../controllers/authController');
 const tenantCtrl = require('../controllers/tenantController');
@@ -30,19 +35,7 @@ const requireSuperAdmin = require('../middleware/requireSuperAdmin');
 const requireTenant = require('../middleware/requireTenant');
 const requirePermission = require('../middleware/requirePermission');
 
-// ── Shared validation runner ──────────────────────────────────────────────────
-const validate = (req, res, next) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(422).json({
-      success: false,
-      code: 'VALIDATION_ERROR',
-      message: 'Please fix the following errors.',
-      errors: errors.array().map((e) => ({ field: e.path, message: e.msg })),
-    });
-  }
-  next();
-};
+// Validation runner + shared field rules: middleware/validate.js
 
 // ── Rate limiter factory ──────────────────────────────────────────────────────
 const limiter = (max, windowMinutes = 15) =>
@@ -54,14 +47,30 @@ const limiter = (max, windowMinutes = 15) =>
     message: { success: false, message: 'Too many requests. Please try again later.' },
   });
 
-// ── Reusable password validation ──────────────────────────────────────────────
-const passwordRules = () =>
-  body('password')
-    .isLength({ min: 8 }).withMessage('Password must be at least 8 characters.')
-    .matches(/[A-Z]/).withMessage('Must contain at least one uppercase letter.')
-    .matches(/[a-z]/).withMessage('Must contain at least one lowercase letter.')
-    .matches(/\d/).withMessage('Must contain at least one number.')
-    .matches(/[@$!%*?&]/).withMessage('Must contain a special character (@$!%*?&).');
+const CURRENCIES = ['INR', 'USD', 'EUR', 'GBP', 'AED'];
+const currencyRule = () => body('currency').optional({ values: 'falsy' })
+  .isIn(CURRENCIES).withMessage(`Currency must be one of ${CURRENCIES.join(', ')}.`);
+const FOLLOW_UP_STATUSES = ['pending', 'contacted', 'promised_to_pay', 'payment_received', 'escalated', 'no_response', 'closed'];
+
+const razorpayVerifyRules = () => [
+  body('razorpay_order_id').notEmpty().withMessage('Payment verification failed: the Razorpay order ID is missing.'),
+  body('razorpay_payment_id').notEmpty().withMessage('Payment verification failed: the Razorpay payment ID is missing.'),
+  body('razorpay_signature').notEmpty().withMessage('Payment verification failed: the Razorpay signature is missing.'),
+];
+
+// Line items for a customer order. Negative quantities/prices used to pass
+// the public create-order route (two negatives make a positive total).
+const MAX_ORDER_AMOUNT = 10_000_000; // ₹1 crore per line — well above any real quote
+const orderItemRules = () => [
+  body('items').isArray({ min: 1, max: 50 }).withMessage('The order must contain between 1 and 50 items.'),
+  body('items.*.name').trim()
+    .notEmpty().withMessage('Every item needs a name.')
+    .isLength({ max: 200 }).withMessage('Item names must be at most 200 characters.'),
+  body('items.*.quantity')
+    .isInt({ min: 1, max: 100000 }).withMessage('Item quantity must be a whole number of at least 1.'),
+  body('items.*.unitPrice')
+    .isFloat({ min: 0.01, max: MAX_ORDER_AMOUNT }).withMessage(`Item price must be between ₹0.01 and ₹${MAX_ORDER_AMOUNT.toLocaleString('en-IN')}.`),
+];
 
 module.exports = (app) => {
 
@@ -71,29 +80,28 @@ module.exports = (app) => {
   const auth = express.Router();
 
   auth.post('/login', limiter(10, 15), [
-    body('email').isEmail().withMessage('Valid email is required.').normalizeEmail(),
+    emailRule('email'),
+    // Sign-in only checks presence — the strength policy applies when a
+    // password is set, not when an existing one is entered.
     body('password').notEmpty().withMessage('Password is required.'),
   ], validate, authCtrl.login);
 
   auth.post('/forgot-password', limiter(5, 60), [
-    body('email').isEmail().normalizeEmail(),
+    emailRule('email'),
   ], validate, authCtrl.forgotPassword);
 
   auth.post('/reset-password', limiter(10, 60), [
-    body('token').notEmpty(),
-    passwordRules(),
-    body('confirmPassword').custom((v, { req }) => {
-      if (v !== req.body.password) throw new Error('Passwords do not match.');
-      return true;
-    }),
+    body('token').notEmpty().withMessage('This reset link is invalid. Please request a new one.'),
+    passwordRule('password', 'Password'),
+    confirmPasswordRule('confirmPassword', 'password'),
   ], validate, authCtrl.resetPassword);
 
   auth.get('/verify-email', [
-    query('token').notEmpty().withMessage('Token is required.'),
+    query('token').notEmpty().withMessage('Verification token is required.'),
   ], validate, authCtrl.verifyEmail);
 
   auth.post('/resend-verification', limiter(5, 60), [
-    body('email').isEmail().normalizeEmail(),
+    emailRule('email'),
   ], validate, authCtrl.resendVerification);
 
   auth.post('/refresh', authCtrl.refresh);
@@ -113,13 +121,16 @@ module.exports = (app) => {
   // Provision a new tenant (generates credentials, sends welcome email)
   // ── POST /api/admin/tenants
   admin.post('/tenants', [
-    body('firstName').trim().notEmpty().withMessage('First name is required.').isLength({ max: 50 }),
-    body('lastName').trim().notEmpty().withMessage('Last name is required.').isLength({ max: 50 }),
-    body('email').isEmail().withMessage('Valid email is required.').normalizeEmail(),
-    body('phone').optional().matches(/^[+]?[\d\s\-()]{7,20}$/).withMessage('Invalid phone number.'),
-    body('businessName').optional().trim().isLength({ max: 100 }),
-    body('city').optional().trim().isLength({ max: 50 }),
-    body('currency').optional().isIn(['INR', 'USD', 'EUR', 'GBP', 'AED']).withMessage('Unsupported currency.'),
+    personNameRule('firstName', 'First name'),
+    personNameRule('lastName', 'Last name'),
+    emailRule('email'),
+    // The tenant form requires a phone; enforce the same here.
+    phoneRule('phone', { required: true }),
+    body('businessName').optional({ values: 'falsy' }).trim()
+      .isLength({ max: 100 }).withMessage('Business name must be at most 100 characters.'),
+    body('city').optional({ values: 'falsy' }).trim()
+      .isLength({ max: 50 }).withMessage('City must be at most 50 characters.'),
+    currencyRule(),
   ], validate, adminCtrl.createTenant);
 
   admin.get('/tenants', adminCtrl.listTenants);
@@ -162,13 +173,21 @@ module.exports = (app) => {
   // controller).
   admin.patch('/tenants/:tenantId', [
     param('tenantId').notEmpty(),
-    body('firstName').optional().trim().notEmpty().isLength({ max: 50 }),
-    body('lastName').optional().trim().notEmpty().isLength({ max: 50 }),
-    body('email').optional().isEmail().withMessage('Valid email is required.').normalizeEmail(),
-    body('phone').optional().matches(/^[+]?[\d\s\-()]{7,20}$/).withMessage('Invalid phone number.'),
-    body('businessName').optional().trim().isLength({ max: 100 }),
-    body('city').optional().trim().isLength({ max: 50 }),
-    body('currency').optional().isIn(['INR', 'USD', 'EUR', 'GBP', 'AED']).withMessage('Unsupported currency.'),
+    // Each field is optional on edit, but if sent it must be valid (an empty
+    // first/last name is rejected rather than silently blanking the name).
+    body('firstName').if(body('firstName').exists()).trim()
+      .notEmpty().withMessage('First name is required.'),
+    personNameRule('firstName', 'First name', { required: false }),
+    body('lastName').if(body('lastName').exists()).trim()
+      .notEmpty().withMessage('Last name is required.'),
+    personNameRule('lastName', 'Last name', { required: false }),
+    emailRule('email', { required: false }),
+    phoneRule('phone'),
+    body('businessName').optional({ values: 'falsy' }).trim()
+      .isLength({ max: 100 }).withMessage('Business name must be at most 100 characters.'),
+    body('city').optional({ values: 'falsy' }).trim()
+      .isLength({ max: 50 }).withMessage('City must be at most 50 characters.'),
+    currencyRule(),
   ], validate, adminCtrl.updateTenant);
 
   admin.delete('/tenants/:tenantId', [
@@ -183,24 +202,38 @@ module.exports = (app) => {
 
   // Subscription plan catalog
   admin.get('/billing/plans', subscriptionPlanCtrl.listPlans);
-  admin.post('/billing/plans', [
-    body('name').trim().notEmpty().withMessage('Plan name is required.').isLength({ max: 60 }),
-    body('monthlyPrice').isFloat({ min: 0 }).withMessage('Monthly price must be 0 or more.'),
-    body('gstPercent').optional().isFloat({ min: 0, max: 100 }),
-    body('trialDays').optional().isInt({ min: 0 }),
-    body('gracePeriodDays').optional({ nullable: true }).isInt({ min: 0 }),
-  ], validate, subscriptionPlanCtrl.createPlan);
+  // Same rules for create and edit; on edit every field is optional.
+  const planRules = ({ partial }) => {
+    const opt = (f) => (partial ? body(f).optional({ values: 'null' }) : body(f));
+    return [
+      (partial ? body('name').optional() : body('name')).trim()
+        .notEmpty().withMessage('Plan name is required.')
+        .isLength({ max: 60 }).withMessage('Plan name must be at most 60 characters.'),
+      body('description').optional({ values: 'falsy' }).isString().trim()
+        .isLength({ max: 500 }).withMessage('Description must be at most 500 characters.'),
+      opt('monthlyPrice')
+        .notEmpty().withMessage('Monthly price is required.')
+        .isFloat({ min: 0 }).withMessage('Monthly price must be a number, 0 or more.'),
+      body('gstPercent').optional({ values: 'null' })
+        .isFloat({ min: 0, max: 100 }).withMessage('GST % must be between 0 and 100.'),
+      body('trialDays').optional({ values: 'null' })
+        .isInt({ min: 0, max: 365 }).withMessage('Trial days must be a whole number from 0 to 365.'),
+      body('gracePeriodDays').optional({ values: 'null' })
+        .isInt({ min: 0, max: 365 }).withMessage('Grace period must be a whole number of days from 0 to 365.'),
+      body('features').optional().isArray({ max: 30 }).withMessage('A plan can list at most 30 features.'),
+      body('features.*').isString().trim()
+        .isLength({ max: 120 }).withMessage('Each feature must be at most 120 characters.'),
+    ];
+  };
+
+  admin.post('/billing/plans', planRules({ partial: false }), validate, subscriptionPlanCtrl.createPlan);
   admin.patch('/billing/plans/:planId', [
-    param('planId').isMongoId(),
-    body('name').optional().trim().notEmpty().isLength({ max: 60 }),
-    body('monthlyPrice').optional().isFloat({ min: 0 }),
-    body('gstPercent').optional().isFloat({ min: 0, max: 100 }),
-    body('trialDays').optional().isInt({ min: 0 }),
-    body('gracePeriodDays').optional({ nullable: true }).isInt({ min: 0 }),
+    param('planId').isMongoId().withMessage('Invalid plan ID.'),
+    ...planRules({ partial: true }),
   ], validate, subscriptionPlanCtrl.updatePlan);
   admin.patch('/billing/plans/:planId/status', [
-    param('planId').isMongoId(),
-    body('isActive').isBoolean(),
+    param('planId').isMongoId().withMessage('Invalid plan ID.'),
+    body('isActive').isBoolean().withMessage('isActive must be true or false.'),
   ], validate, subscriptionPlanCtrl.setPlanStatus);
 
   // Cross-tenant billing views — registered BEFORE '/billing/tenants/:tenantId'
@@ -213,17 +246,29 @@ module.exports = (app) => {
   // invoice company details) — superadmin only, same as everything else here.
   admin.get('/billing/settings', billingCtrl.getSettings);
   admin.patch('/billing/settings', [
-    body('defaultGstPercent').optional().isFloat({ min: 0, max: 100 }),
-    body('defaultGracePeriodDays').optional().isInt({ min: 0 }),
-    body('reminderDaysBeforeDue').optional().isArray(),
-    body('reminderDaysBeforeDue.*').optional().isInt({ min: 0 }),
-    body('reminderDaysOverdue').optional().isArray(),
-    body('reminderDaysOverdue.*').optional().isInt({ min: 0 }),
-    body('invoiceNumberPrefix').optional().isString().trim().isLength({ max: 10 }),
-    body('companyLegalName').optional().isString().trim().isLength({ max: 120 }),
-    body('companyGSTIN').optional().isString().trim().isLength({ max: 20 }),
-    body('companyAddress').optional().isString().trim().isLength({ max: 300 }),
-    body('companyLogoUrl').optional().isString().trim(),
+    body('defaultGstPercent').optional({ values: 'null' })
+      .isFloat({ min: 0, max: 100 }).withMessage('Default GST % must be between 0 and 100.'),
+    body('defaultGracePeriodDays').optional({ values: 'null' })
+      .isInt({ min: 0, max: 365 }).withMessage('Default grace period must be a whole number of days from 0 to 365.'),
+    body('reminderDaysBeforeDue').optional()
+      .isArray({ max: 10 }).withMessage('Reminder days before due date must be a list of at most 10 numbers.'),
+    body('reminderDaysBeforeDue.*')
+      .isInt({ min: 0, max: 90 }).withMessage('Reminder days before due date must be whole numbers from 0 to 90.'),
+    body('reminderDaysOverdue').optional()
+      .isArray({ max: 10 }).withMessage('Reminder days after due date must be a list of at most 10 numbers.'),
+    body('reminderDaysOverdue.*')
+      .isInt({ min: 0, max: 365 }).withMessage('Reminder days after due date must be whole numbers from 0 to 365.'),
+    body('invoiceNumberPrefix').optional({ values: 'falsy' }).isString().trim()
+      .isLength({ max: 10 }).withMessage('Invoice number prefix must be at most 10 characters.')
+      .matches(/^[A-Za-z0-9\-/]+$/).withMessage('Invoice number prefix can contain only letters, numbers, "-" and "/".'),
+    body('companyLegalName').optional({ values: 'falsy' }).isString().trim()
+      .isLength({ max: 120 }).withMessage('Company legal name must be at most 120 characters.'),
+    body('companyGSTIN').optional({ values: 'falsy' }).isString().trim().toUpperCase()
+      .matches(GSTIN).withMessage(GSTIN_MESSAGE),
+    body('companyAddress').optional({ values: 'falsy' }).isString().trim()
+      .isLength({ max: 300 }).withMessage('Company address must be at most 300 characters.'),
+    body('companyLogoUrl').optional({ values: 'falsy' }).isString().trim()
+      .isURL({ protocols: ['http', 'https'], require_protocol: true }).withMessage('Company logo URL must be a full http(s):// link.'),
   ], validate, billingCtrl.updateSettings);
 
   admin.get('/billing/tenants', billingCtrl.getBillingOverview);
@@ -238,14 +283,26 @@ module.exports = (app) => {
 
   admin.patch('/billing/tenants/:tenantId/config', [
     param('tenantId').notEmpty(),
-    body('isEnrolled').optional().isBoolean(),
-    body('monthlyFee').optional().isFloat({ min: 0 }).withMessage('Monthly fee must be 0 or more.'),
-    body('gstPercent').optional().isFloat({ min: 0, max: 100 }).withMessage('GST must be between 0 and 100.'),
-    body('discountType').optional().isIn(['percent', 'flat']),
-    body('discountValue').optional().isFloat({ min: 0 }),
-    body('billingDay').optional().isInt({ min: 1, max: 28 }).withMessage('Billing day must be between 1 and 28.'),
-    body('gracePeriodDays').optional({ nullable: true }).isInt({ min: 0 }).withMessage('Grace period must be 0 or more days.'),
-    body('trialDays').optional().isInt({ min: 0 }),
+    body('isEnrolled').optional().isBoolean().withMessage('Enrolment must be true or false.'),
+    body('monthlyFee').optional({ values: 'null' })
+      .isFloat({ min: 0 }).withMessage('Monthly fee must be a number, 0 or more.'),
+    body('gstPercent').optional({ values: 'null' })
+      .isFloat({ min: 0, max: 100 }).withMessage('GST % must be between 0 and 100.'),
+    body('discountType').optional({ values: 'null' })
+      .isIn(['percent', 'flat']).withMessage('Discount type must be "percent" or "flat".'),
+    body('discountValue').optional({ values: 'null' })
+      .isFloat({ min: 0 }).withMessage('Discount must be a number, 0 or more.')
+      // A percentage discount above 100% produced negative invoices.
+      .custom((v, { req }) => {
+        if (req.body.discountType === 'percent' && Number(v) > 100) throw new Error('A percentage discount cannot exceed 100%.');
+        return true;
+      }),
+    body('billingDay').optional({ values: 'null' })
+      .isInt({ min: 1, max: 28 }).withMessage('Billing day must be a whole number from 1 to 28.'),
+    body('gracePeriodDays').optional({ values: 'null' })
+      .isInt({ min: 0, max: 365 }).withMessage('Grace period must be a whole number of days from 0 to 365.'),
+    body('trialDays').optional({ values: 'null' })
+      .isInt({ min: 0, max: 365 }).withMessage('Trial days must be a whole number from 0 to 365.'),
   ], validate, billingCtrl.updateConfig);
 
   admin.post('/billing/tenants/:tenantId/change-plan', [
@@ -255,48 +312,56 @@ module.exports = (app) => {
 
   admin.post('/billing/tenants/:tenantId/cancel', [
     param('tenantId').notEmpty(),
-    body('reason').optional().isString().trim().isLength({ max: 300 }),
+    reasonRule(),
   ], validate, billingCtrl.cancelSubscription);
 
   admin.post('/billing/tenants/:tenantId/invoices/:invoiceId/payment', [
     param('tenantId').notEmpty(),
     param('invoiceId').notEmpty(),
     body('amount').isFloat({ min: 0.01 }).withMessage('Amount must be greater than 0.'),
-    body('method').optional().isString().trim().isLength({ max: 50 }),
-    body('referenceNumber').optional().isString().trim().isLength({ max: 100 }),
-    body('notes').optional().isString().trim().isLength({ max: 500 }),
-    body('paidAt').optional().isISO8601().withMessage('Invalid payment date.'),
+    body('method').optional({ values: 'falsy' }).isString().trim()
+      .isLength({ max: 50 }).withMessage('Payment method must be at most 50 characters.'),
+    body('referenceNumber').optional({ values: 'falsy' }).isString().trim()
+      .isLength({ max: 100 }).withMessage('Reference number must be at most 100 characters.'),
+    body('notes').optional({ values: 'falsy' }).isString().trim()
+      .isLength({ max: 500 }).withMessage('Notes must be at most 500 characters.'),
+    dateRule('paidAt', 'Payment date', { notFuture: true }),
   ], validate, billingCtrl.recordPayment);
 
   admin.post('/billing/tenants/:tenantId/invoices/:invoiceId/fail', [
     param('tenantId').notEmpty(),
     param('invoiceId').notEmpty(),
-    body('reason').optional().isString().trim().isLength({ max: 300 }),
+    reasonRule(),
   ], validate, billingCtrl.markPaymentFailed);
 
   admin.post('/billing/tenants/:tenantId/invoices/:invoiceId/refund', [
     param('tenantId').notEmpty(),
     param('invoiceId').notEmpty(),
     body('amount').isFloat({ min: 0.01 }).withMessage('Refund amount must be greater than 0.'),
-    body('reason').optional().isString().trim().isLength({ max: 300 }),
+    reasonRule(),
   ], validate, billingCtrl.issueRefund);
 
   admin.post('/billing/tenants/:tenantId/invoices/:invoiceId/followup', [
     param('tenantId').notEmpty(),
     param('invoiceId').notEmpty(),
-    body('note').trim().notEmpty().withMessage('Follow-up note is required.').isLength({ max: 500 }),
-    body('type').optional().isIn(['call', 'email', 'whatsapp', 'sms', 'in_person', 'other']),
-    body('contactMethod').optional().isString().trim().isLength({ max: 120 }),
-    body('assignedStaffName').optional().isString().trim().isLength({ max: 100 }),
-    body('followUpStatus').optional().isIn(['pending', 'contacted', 'promised_to_pay', 'payment_received', 'escalated', 'no_response', 'closed']),
-    body('nextFollowUpDate').optional({ nullable: true }).isISO8601().withMessage('Invalid follow-up date.'),
+    body('note').trim().notEmpty().withMessage('Follow-up note is required.')
+      .isLength({ max: 500 }).withMessage('Follow-up note must be at most 500 characters.'),
+    body('type').optional({ values: 'falsy' })
+      .isIn(['call', 'email', 'whatsapp', 'sms', 'in_person', 'other']).withMessage('Choose a valid follow-up type.'),
+    body('contactMethod').optional({ values: 'falsy' }).isString().trim()
+      .isLength({ max: 120 }).withMessage('Contact method must be at most 120 characters.'),
+    body('assignedStaffName').optional({ values: 'falsy' }).isString().trim()
+      .isLength({ max: 100 }).withMessage('Assigned staff name must be at most 100 characters.'),
+    body('followUpStatus').optional({ values: 'falsy' })
+      .isIn(FOLLOW_UP_STATUSES).withMessage('Choose a valid follow-up status.'),
+    dateRule('nextFollowUpDate', 'Next follow-up date', { notPast: true }),
   ], validate, billingCtrl.addFollowUp);
 
   admin.patch('/billing/tenants/:tenantId/invoices/:invoiceId/followup/:followUpId', [
     param('tenantId').notEmpty(),
     param('invoiceId').notEmpty(),
     param('followUpId').notEmpty(),
-    body('followUpStatus').isIn(['pending', 'contacted', 'promised_to_pay', 'payment_received', 'escalated', 'no_response', 'closed']),
+    body('followUpStatus').isIn(FOLLOW_UP_STATUSES).withMessage('Choose a valid follow-up status.'),
   ], validate, billingCtrl.updateFollowUpStatus);
 
   admin.post('/billing/tenants/:tenantId/invoices/:invoiceId/waive', [
@@ -315,7 +380,7 @@ module.exports = (app) => {
 
   admin.post('/billing/tenants/:tenantId/suspend', [
     param('tenantId').notEmpty(),
-    body('reason').optional().isString().trim().isLength({ max: 300 }),
+    reasonRule(),
   ], validate, billingCtrl.suspend);
 
   admin.post('/billing/tenants/:tenantId/invoices/:invoiceId/remind', [
@@ -328,7 +393,7 @@ module.exports = (app) => {
     param('invoiceId').notEmpty(),
     body('amount').isFloat({ min: 0.01 }).withMessage('Amount must be greater than 0.'),
     body('type').isIn(['credit', 'debit']).withMessage('Type must be "credit" or "debit".'),
-    body('reason').optional().isString().trim().isLength({ max: 300 }),
+    reasonRule(),
   ], validate, billingCtrl.applyAdjustment);
 
   app.use('/api/admin', admin);
@@ -343,42 +408,23 @@ module.exports = (app) => {
 
   tenant.get('/settings', requirePermission('settings', 'view'), tenantCtrl.getSettings);
 
-  tenant.patch('/settings/business', requirePermission('settings', 'edit'), [
-    body('businessName').optional().trim().isLength({ max: 100 }),
-    body('city').optional().trim().isLength({ max: 50 }),
-    body('currency').optional().isIn(['INR', 'USD', 'EUR', 'GBP', 'AED']),
-    body('phone').optional().matches(/^[+]?[\d\s\-()]{7,20}$/).withMessage('Invalid phone.'),
-  ], validate, tenantCtrl.updateBusiness);
+  tenant.patch('/settings/business', requirePermission('settings', 'edit'),
+    settingsRules.businessRules, validate, tenantCtrl.updateBusiness);
 
-  tenant.post('/settings/razorpay', requirePermission('settings', 'edit'), [
-    body('keyId').notEmpty().withMessage('Key ID is required.').matches(/^rzp_/).withMessage('Invalid Razorpay Key ID.'),
-    body('keySecret').notEmpty().withMessage('Key Secret is required.').isLength({ min: 20 }),
-    body('webhookSecret').optional().isString(),
-  ], validate, tenantCtrl.saveRazorpay);
+  tenant.post('/settings/razorpay', requirePermission('settings', 'edit'),
+    settingsRules.razorpayRules, validate, tenantCtrl.saveRazorpay);
 
   tenant.delete('/settings/razorpay', requirePermission('settings', 'edit'), tenantCtrl.removeRazorpay);
 
-  tenant.post('/settings/crm', requirePermission('settings', 'edit'), [
-    body('apiKey').notEmpty().withMessage('API key is required.'),
-    body('apiUrl').notEmpty().withMessage('API URL is required.'),
-    body('provider').optional().isString(),
-  ], validate, tenantCtrl.saveCRM);
+  tenant.post('/settings/crm', requirePermission('settings', 'edit'),
+    settingsRules.crmRules, validate, tenantCtrl.saveCRM);
 
   tenant.delete('/settings/crm', requirePermission('settings', 'edit'), tenantCtrl.removeCRM);
   tenant.post('/settings/crm/test', requirePermission('settings', 'view'), tenantCtrl.testCRM);
 
-  tenant.patch('/settings/password', [
-    body('currentPassword').notEmpty().withMessage('Current password is required.'),
-    body('newPassword')
-      .isLength({ min: 8 }).withMessage('New password must be at least 8 characters.')
-      .matches(/[A-Z]/).withMessage('Must contain uppercase.')
-      .matches(/[a-z]/).withMessage('Must contain lowercase.')
-      .matches(/\d/).withMessage('Must contain a number.'),
-    body('confirmPassword').custom((v, { req }) => {
-      if (v !== req.body.newPassword) throw new Error('Passwords do not match.');
-      return true;
-    }),
-  ], validate, tenantCtrl.changePassword);
+  // Same password policy as reset-password (special character was not
+  // required here before, so the two flows disagreed).
+  tenant.patch('/settings/password', settingsRules.changePasswordRules, validate, tenantCtrl.changePassword);
 
   tenant.get('/quotes', requirePermission('quotations', 'view'), quotesCtrl.getQuotes);
   tenant.get('/quotes/:quoteId', requirePermission('quotations', 'view'), [
@@ -401,9 +447,7 @@ module.exports = (app) => {
 
   tenant.post('/billing/invoices/:invoiceId/verify', requirePermission('billing', 'view'), limiter(20, 15), [
     param('invoiceId').notEmpty(),
-    body('razorpay_order_id').notEmpty(),
-    body('razorpay_payment_id').notEmpty(),
-    body('razorpay_signature').notEmpty(),
+    ...razorpayVerifyRules(),
   ], validate, tenantBillingCtrl.verifyPayment);
 
   app.use('/api/tenant', tenant);
@@ -419,42 +463,41 @@ module.exports = (app) => {
 
   // Public: create a new order
   payments.post('/create-order', limiter(30, 15), [
-    body('items').isArray({ min: 1 }).withMessage('Items are required.'),
-    body('items.*.name').notEmpty().trim(),
-    body('items.*.quantity').isInt({ min: 1 }),
-    body('items.*.unitPrice').isFloat({ min: 0.01 }),
-    body('customerInfo.name').notEmpty().trim().withMessage('Customer name is required.'),
-    body('customerInfo.email').isEmail().normalizeEmail().withMessage('Valid email is required.'),
-    body('customerInfo.phone').optional().matches(/^\+?[\d\s\-().]{7,20}$/),
-    body('tenantId').notEmpty().withMessage('Tenant ID is required.'),
+    ...orderItemRules(),
+    body('customerInfo.name').trim()
+      .notEmpty().withMessage('Customer name is required.')
+      .isLength({ max: 100 }).withMessage('Customer name must be at most 100 characters.'),
+    emailRule('customerInfo.email', { label: 'Customer email' }),
+    phoneRule('customerInfo.phone'),
+    body('tenantId').notEmpty().withMessage('This payment link is incomplete. Please use the link the business sent you.'),
   ], validate, paymentsCtrl.createOrder);
 
   // Public: create Razorpay order
   payments.post('/razorpay/create-order', limiter(30, 15), [
-    body('orderId').isMongoId().withMessage('Valid order ID is required.'),
-    body('tenantId').notEmpty().withMessage('Tenant ID is required.'),
+    body('orderId').isMongoId().withMessage('This order reference is invalid. Please start the payment again.'),
+    body('tenantId').notEmpty().withMessage('This payment link is incomplete. Please use the link the business sent you.'),
   ], validate, paymentsCtrl.createRazorpayOrder);
 
   // Public: verify Razorpay payment
   payments.post('/razorpay/verify', limiter(20, 15), [
-    body('razorpay_order_id').notEmpty(),
-    body('razorpay_payment_id').notEmpty(),
-    body('razorpay_signature').notEmpty(),
-    body('orderId').isMongoId(),
-    body('paymentId').isMongoId(),
-    body('tenantId').notEmpty(),
+    ...razorpayVerifyRules(),
+    body('orderId').isMongoId().withMessage('This order reference is invalid.'),
+    body('paymentId').isMongoId().withMessage('This payment reference is invalid.'),
+    body('tenantId').notEmpty().withMessage('This payment link is incomplete.'),
   ], validate, paymentsCtrl.verifyRazorpay);
 
   // Protected: refund (tenant or superadmin)
   payments.post('/refund', protect, requirePermission('payments', 'edit'), [
-    body('paymentId').isMongoId(),
-    body('amount').optional().isFloat({ min: 0.01 }),
-    body('reason').optional().isString(),
+    body('paymentId').isMongoId().withMessage('Invalid payment ID.'),
+    body('amount').optional({ values: 'falsy' })
+      .isFloat({ min: 0.01 }).withMessage('Refund amount must be greater than 0.'),
+    reasonRule('reason', { label: 'Refund reason' }),
   ], validate, paymentsCtrl.refund);
 
   // Protected: search
   payments.get('/search', protect, requirePermission('payments', 'view'), [
-    query('q').notEmpty().withMessage('Search query is required.'),
+    query('q').trim().notEmpty().withMessage('Enter something to search for.')
+      .isLength({ max: 100 }).withMessage('Search text must be at most 100 characters.'),
   ], validate, paymentsCtrl.search);
 
   app.use('/api/payments', payments);
@@ -465,7 +508,8 @@ module.exports = (app) => {
   // ══════════════════════════════════════════════════════════════════════════
   const quotesRouter = express.Router();
   quotesRouter.get('/search', protect, requireTenant, requirePermission('quotations', 'view'), [
-    query('q').notEmpty().withMessage('Search query is required.'),
+    query('q').trim().notEmpty().withMessage('Enter something to search for.')
+      .isLength({ max: 100 }).withMessage('Search text must be at most 100 characters.'),
   ], validate, quotesCtrl.search);
   app.use('/api/quotes', quotesRouter);
 };
