@@ -9,6 +9,7 @@ const {
   sendMemberAssignedEmail,
 } = require('../utils/email');
 const logger   = require('../utils/logger');
+const { escapeRegex } = require('../utils/validation');
 
 // ── Temp password generator (Node 14+ compatible) ─────────────────────────────
 const randomChar = (str) => str[crypto.randomBytes(1)[0] % str.length];
@@ -81,7 +82,7 @@ exports.listMembers = async (req, res, next) => {
     if (req.query.roleId) filter.rbacRoleId    = req.query.roleId;
     if (req.query.status) filter.subUserStatus = req.query.status;
     if (req.query.q?.trim()) {
-      const re = new RegExp(req.query.q.trim(), 'i');
+      const re = new RegExp(escapeRegex(req.query.q.trim()), 'i');
       filter.$or = [{ firstName: re }, { lastName: re }, { email: re }];
     }
 

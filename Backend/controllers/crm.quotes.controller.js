@@ -40,6 +40,46 @@ const asyncHandler = (fn) => (req, res, next) =>
     return next(err);
   });
 
+/* ── Tracking input validation ───────────────────────────────────────────── */
+
+const PAYMENT_STATUSES = ['pending', 'paid', 'failed', 'partially_paid', 'refunded'];
+const QUOTATION_STAGES = ['Created', 'In Progress', 'Processing', 'Awaiting Payment',
+  'Payment Completed', 'Delivered', 'Closed', 'Cancelled'];
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+/** null if OK. A date-only value chosen as "today" passes in any timezone. */
+const paymentDateProblem = (value) => {
+  if (value === undefined || value === null || value === '') return null;
+  const t = new Date(value).getTime();
+  if (Number.isNaN(t)) return 'Payment date is not a valid date.';
+  if (t > Date.now() + DAY_MS) return 'Payment date cannot be in the future.';
+  return null;
+};
+
+/** First problem with a PATCH /:quoteId/track body, or null. */
+const trackingProblem = (b) => {
+  if (b.paymentStatus !== undefined && !PAYMENT_STATUSES.includes(b.paymentStatus)) {
+    return 'Choose a valid payment status.';
+  }
+  if (b.quotationStatus !== undefined && !QUOTATION_STAGES.includes(b.quotationStatus)) {
+    return 'Choose a valid quotation stage.';
+  }
+  if (b.paidAmount !== undefined && b.paidAmount !== null) {
+    const n = Number(b.paidAmount);
+    if (!Number.isFinite(n) || n < 0) return 'Paid amount must be a number, 0 or more.';
+    if (b.paymentStatus === 'partially_paid' && n <= 0) {
+      return 'Enter the amount paid so far for a partially paid quotation.';
+    }
+  }
+  const dp = b.paidAt ? paymentDateProblem(b.paidAt) : null;
+  if (dp) return dp;
+  if (b.paymentMethod && String(b.paymentMethod).length > 50) return 'Payment method must be at most 50 characters.';
+  if (b.bankTransferRef && String(b.bankTransferRef).length > 100) return 'Transfer reference must be at most 100 characters.';
+  if (b.bankTransferNotes && String(b.bankTransferNotes).length > 500) return 'Transfer notes must be at most 500 characters.';
+  if (b.notes && String(b.notes).length > 2000) return 'Notes must be at most 2000 characters.';
+  return null;
+};
+
 // Adapts the service's { tenant, apiKey } | { error, status } shape onto the
 // existing res.json(...)-on-failure calling convention this controller used.
 const loadTenant = async (userId, res) => {
@@ -438,6 +478,11 @@ exports.updateTracking = asyncHandler(async (req, res) => {
     'notes', 'paidAt',
   ];
 
+  // Bad values used to reach Mongoose (runValidators) and come back as a
+  // generic 500 "Something went wrong."; check them here with real messages.
+  const problem = trackingProblem(req.body);
+  if (problem) return fail(res, problem, 422);
+
   const setPayload = {};
   for (const key of ALLOWED) {
     if (req.body[key] !== undefined) setPayload[key] = req.body[key];
@@ -502,14 +547,30 @@ exports.recordManualPayment = asyncHandler(async (req, res) => {
     totalAmount,      // quote total (passed from frontend to avoid re-fetch)
   } = req.body;
 
-  if (!amount || amount <= 0)  return fail(res, 'Amount must be greater than 0');
-  if (!method)                 return fail(res, 'Payment method is required');
+  // `!amount || amount <= 0` let non-numeric input ("abc") through as NaN.
+  const amt = Number(amount);
+  if (!Number.isFinite(amt) || amt <= 0) return fail(res, 'Enter a payment amount greater than 0.', 422);
+  if (typeof method !== 'string' || !method.trim()) return fail(res, 'Select a payment method.', 422);
+  if (method.length > 50) return fail(res, 'Payment method must be at most 50 characters.', 422);
+  if (referenceNumber && String(referenceNumber).length > 100) return fail(res, 'Reference number must be at most 100 characters.', 422);
+  if (notes && String(notes).length > 500) return fail(res, 'Notes must be at most 500 characters.', 422);
+  const dateProblem = paymentDateProblem(paymentDate);
+  if (dateProblem) return fail(res, dateProblem, 422);
 
   // Load existing tracking to calculate running paidAmount
-  const existing = await QuoteTracking.findOne({ tenantId: tenant._id, quoteId }).lean();
+  const [existing, storedQuote] = await Promise.all([
+    QuoteTracking.findOne({ tenantId: tenant._id, quoteId }).lean(),
+    findSyncedQuote(tenant._id, quoteId),
+  ]);
   const prevPaid = existing?.paidAmount ?? 0;
-  const newPaid  = prevPaid + Number(amount);
-  const total    = Number(totalAmount ?? 0);
+  const newPaid  = round2(prevPaid + amt);
+  // Prefer the quote total from the synced CRM copy over the one the browser sends.
+  const total    = Number(storedQuote?.quote_amount ?? totalAmount ?? 0) || 0;
+
+  if (total > 0 && newPaid > total + 0.01) {
+    const due = Math.max(0, round2(total - prevPaid));
+    return fail(res, `Amount exceeds the balance due (₹${due.toLocaleString('en-IN')}).`, 422);
+  }
 
   const paymentStatus = total > 0 && newPaid >= total
     ? 'paid'
@@ -521,7 +582,7 @@ exports.recordManualPayment = asyncHandler(async (req, res) => {
   const dateStr = paidAt.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
 
   const timelineEvent = [
-    `Manual payment: ₹${Number(amount).toLocaleString('en-IN')} via ${method}`,
+    `Manual payment: ₹${amt.toLocaleString('en-IN')} via ${method}`,
     referenceNumber ? `Ref: ${referenceNumber}` : '',
     notes ? `(${notes})` : '',
   ].filter(Boolean).join(' · ');
@@ -549,7 +610,7 @@ exports.recordManualPayment = asyncHandler(async (req, res) => {
       // only the running total. Purely additive: existing fields/behavior
       // above are unchanged.
       manualPayments: {
-        amount: Number(amount),
+        amount: amt,
         method,
         referenceNumber: referenceNumber ?? '',
         paymentDate: paidAt,
