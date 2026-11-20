@@ -4,6 +4,7 @@ const Tenant = require('../models/tenant');
 const crypto = require('crypto');
 const logger = require('../utils/logger');
 const { fetchPageWithMeta } = require('../services/quoteTracking.service');
+const { passwordProblem } = require('../utils/validation');
 const { syncTenant, purgeTenantCrmData } = require('../services/crmSync.service');
 
 /**
@@ -274,12 +275,12 @@ exports.removeCRM = asyncHandler(async (req, res) => {
 exports.changePassword = asyncHandler(async (req, res) => {
   const { currentPassword, newPassword } = req.body;
 
-  if (!currentPassword) return fail(res, 'Current password is required');
-  if (!newPassword || newPassword.length < 8) {
-    return fail(res, 'New password must be at least 8 characters');
-  }
+  // Routes validate this too; kept here so the controller is safe on its own.
+  if (!currentPassword) return fail(res, 'Current password is required.');
+  const problem = passwordProblem(newPassword, 'New password');
+  if (problem) return fail(res, problem);
   if (currentPassword === newPassword) {
-    return fail(res, 'New password must be different from your current password');
+    return fail(res, 'New password must be different from your current password.');
   }
 
   // ✅ Use sub (caller's own _id), NOT req.user.id (which points to parent for sub-users)
@@ -287,7 +288,9 @@ exports.changePassword = asyncHandler(async (req, res) => {
   if (!tenant) return fail(res, 'Tenant not found', 404);
 
   const valid = await tenant.comparePassword(currentPassword);
-  if (!valid) return fail(res, 'Current password is incorrect', 401);
+  // 400, not 401: the session is fine, the field is wrong. A 401 reads as
+  // "signed out" to the client's session handling.
+  if (!valid) return fail(res, 'Current password is incorrect.', 400);
 
   tenant.password = newPassword;
 
