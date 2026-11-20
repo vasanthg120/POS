@@ -3,6 +3,26 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Environment } from '../environment/environment';
 
+/** CRM → POS database sync health, as returned by the backend. */
+export interface CrmSyncStatus {
+  status             : 'never' | 'running' | 'success' | 'partial' | 'error';
+  running            : boolean;
+  lastStatus         : 'success' | 'partial' | 'error' | null;
+  lastTrigger        : string | null;
+  lastAttemptAt      : string | null;
+  lastSuccessAt      : string | null;
+  lastDurationMs     : number | null;
+  lastError          : string | null;
+  lastIssues         : string[];
+  lastStats          : {
+    fetched: number; crmReportedCount: number | null; inserted: number; updated: number;
+    unchanged: number; restored: number; skipped: number; failed: number; markedDeleted: number;
+  } | null;
+  consecutiveFailures: number;
+  storedQuotes?      : number;
+  intervalMinutes?   : number;
+}
+
 export interface QuotesApiResponse {
   success   : boolean;
   message   : string;
@@ -12,6 +32,7 @@ export interface QuotesApiResponse {
     startAfter: number;
     limit     : number;
     search    : string;
+    sync?     : CrmSyncStatus | null;
   };
 }
 
@@ -50,5 +71,16 @@ export class Crm {
    */
   searchQuotes(body: QuoteSearchBody): Observable<QuotesApiResponse> {
     return this.http.post<QuotesApiResponse>(`${this.base}/tenant/quotes/search`, body);
+  }
+
+  /** GET /tenant/quotes/sync-status — last sync result, counts and errors. */
+  getSyncStatus(): Observable<{ success: boolean; data: CrmSyncStatus }> {
+    return this.http.get<{ success: boolean; data: CrmSyncStatus }>(`${this.base}/tenant/quotes/sync-status`);
+  }
+
+  /** POST /tenant/quotes/sync — pull every quote from the CRM into the POS now. */
+  syncNow(): Observable<{ success: boolean; message: string; data: { status: CrmSyncStatus } }> {
+    return this.http.post<{ success: boolean; message: string; data: { status: CrmSyncStatus } }>(
+      `${this.base}/tenant/quotes/sync`, {});
   }
 }

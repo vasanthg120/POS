@@ -30,6 +30,7 @@ export class SuperAdminDashboard implements OnInit, OnDestroy {
 
   // ── UI state ──────────────────────────────────────────────────────────────
   isLoading = true;
+  loadError: string | null = null;
   skeletonRows = Array(8);
   filtersCollapsed = true;
 
@@ -92,10 +93,16 @@ export class SuperAdminDashboard implements OnInit, OnDestroy {
       .subscribe({
         next: (res) => {
           this.tenants = res.data.tenants;
+          this.loadError = null;
           this.isLoading = false;
           this.applyFilters();
         },
-        error: () => { this.isLoading = false; this.cdr.markForCheck(); },
+        // Was silently swallowed, leaving "No tenants onboarded yet" on screen.
+        error: (err) => {
+          this.loadError = err?.error?.message || err?.message || 'Could not load the dashboard.';
+          this.isLoading = false;
+          this.cdr.markForCheck();
+        },
       });
   }
 

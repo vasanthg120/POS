@@ -92,6 +92,16 @@ export class DashboardService {
   momGrowth         = signal<number | null>(null);
   totalTenants      = signal(0);
   activeTenants     = signal(0);
+  approvedQuotes    = signal(0);   // client-approved in the CRM
+
+  // ── CRM sync health (from /tenant/quotes `sync`) ─────────────────────────────
+  crmSync = signal<any>(null);
+  crmSyncWarning = computed(() => {
+    const s = this.crmSync();
+    if (!s || s.lastStatus !== 'error') return null;
+    const when = s.lastSuccessAt ? new Date(s.lastSuccessAt).toLocaleString() : 'never';
+    return `Latest CRM sync failed: ${s.lastError ?? 'unknown error'} — showing data last synced ${when}.`;
+  });
 
   // ── Chart data ───────────────────────────────────────────────────────────────
   dailyTrendBars    = signal<ChartBar[]>([]);
@@ -171,7 +181,7 @@ export class DashboardService {
       id:      'quotes',
       label:   'Quotations',
       value:   String(this.totalQuotes()),
-      sub:     `${this.conversionRate()}% conversion rate`,
+      sub:     `${this.approvedQuotes()} approved · ${this.conversionRate()}% converted`,
       trend:   null,
       icon:    'doc',
       color:   'indigo',
@@ -238,6 +248,8 @@ export class DashboardService {
             quotes?.quotes       ??
             (Array.isArray(quotes?.data) ? quotes.data : []);
 
+          this.crmSync.set(quotes?.data?.sync ?? stats?.data?.sync ?? null);
+
           // ── 2. Ingest pre-aggregated stats (amounts already in rupees) ────────
           this.ingestStats(stats?.data ?? null, quotesArr);
 
@@ -268,8 +280,17 @@ export class DashboardService {
   }
 
   // ── Error handler ────────────────────────────────────────────────────────────
+  // Every non-auth failure (CRM not configured, CRM rejected the key, CRM
+  // down, missing permission) used to be swallowed here, so the dashboard
+  // silently showed zeros. Show the server's message instead.
   private onError(err: HttpErrorResponse | any) {
-    if (err?.status === 401 || err?.status === 0) this.sessionError.set(true);
+    if (err?.status === 401) {
+      this.sessionError.set(true);
+    } else if (err?.status === 0) {
+      this.error.set('Cannot reach the POS server. Check your connection and try again.');
+    } else {
+      this.error.set(err?.error?.message || `Could not load CRM data (HTTP ${err?.status ?? 'error'}).`);
+    }
     return of(null);
   }
 
@@ -283,8 +304,13 @@ export class DashboardService {
       this.pendingPayments.set(stats.pendingCount ?? 0);
       // Store as rupees * 100 so the template's /100 division yields correct rupees
       this.totalRevPaise.set((stats.totalRevenue   ?? 0) * 100);
-      this.monthRevPaise.set((stats.totalRevenue   ?? 0) * 100); // server doesn't break down by month yet
-      this.todayRevPaise.set(0);
+      // "This Month" used to show all-time revenue here. The server now
+      // returns month/today revenue by payment date; fall back to the
+      // client-side figures if talking to an older backend.
+      const local = this.periodRevenueFromQuotes(quotes);
+      this.monthRevPaise.set(Math.round((stats.monthRevenue ?? local.month) * 100));
+      this.todayRevPaise.set(Math.round((stats.todayRevenue ?? local.today) * 100));
+      this.approvedQuotes.set(stats.approvedCount ?? quotes.filter((q: any) => q.approvalStatus === 'approved').length);
       this.totalRefundsPaise.set(0);
       this.avgTicketPaise.set((stats.avgDealSize   ?? 0) * 100);
       this.totalPayments.set(
@@ -354,6 +380,25 @@ export class DashboardService {
     this.avgTicketPaise.set(Math.round(avgDeal   * 100));
     this.totalRefundsPaise.set(0);
     this.momGrowth.set(null);
+    this.approvedQuotes.set(quotes.filter((q: any) => q.approvalStatus === 'approved').length);
+  }
+
+  /** Month-to-date and today's collected revenue (rupees), by payment date. */
+  private periodRevenueFromQuotes(quotes: any[]): { month: number; today: number } {
+    const now = new Date();
+    const today = now.toISOString().slice(0, 10);
+    let month = 0;
+    let todayRev = 0;
+    for (const q of quotes ?? []) {
+      if (q.paymentStatus !== 'paid' && q.paymentStatus !== 'partially_paid') continue;
+      const amt = q.paymentStatus === 'paid' ? (q.paidAmount || q.amount || 0) : (q.paidAmount || 0);
+      const paidAt = q.paidAt ?? '';
+      const d = new Date(paidAt);
+      if (!paidAt || isNaN(d.getTime())) continue;
+      if (d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth()) month += amt;
+      if (String(paidAt).slice(0, 10) === today) todayRev += amt;
+    }
+    return { month, today: todayRev };
   }
 
   // ── Ingest quotes → charts ───────────────────────────────────────────────────

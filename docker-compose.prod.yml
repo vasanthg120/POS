@@ -8,6 +8,7 @@ services:
       PORT: "3000"
       ENABLE_STARTUP_SEEDS: "false"
       ENABLE_BILLING_CRON: "true"
+      ENABLE_CRM_SYNC_CRON: "true"
     volumes:
       - /var/www/html/Backend/.env.production:/app/.env.production:ro
       - /var/www/html/Backend/logs:/app/logs

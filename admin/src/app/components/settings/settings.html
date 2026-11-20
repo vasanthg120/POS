@@ -582,24 +582,47 @@
               </div>
               <div class="icc-info">
                 <strong>CRM connected</strong>
-                <span>Quotes and payments syncing automatically</span>
+                <span *ngIf="crmSync()?.lastSuccessAt; else notSyncedYet">
+                  {{ crmSync()?.storedQuotes ?? 0 }} quotes in POS · last synced
+                  {{ crmSync()?.lastSuccessAt | date:'d MMM y, h:mm a' }}
+                  · auto-sync every {{ crmSync()?.intervalMinutes ?? 10 }} min
+                </span>
+                <ng-template #notSyncedYet>
+                  <span>Quotes have not been synced into the POS yet — use “Sync now”.</span>
+                </ng-template>
               </div>
             </div>
             <div class="icc-meta">
               <div class="icc-meta-item">
                 <span class="meta-label">Provider</span>
-                <span class="meta-value">CRM</span>
+                <span class="meta-value">ProspectConnect</span>
               </div>
               <div class="icc-meta-item">
                 <span class="meta-label">Sync</span>
-                <span class="meta-value live">● Active</span>
+                <span class="meta-value" [class.live]="crmSync()?.status === 'success' || crmSync()?.status === 'running'">{{ crmSyncLabel() }}</span>
+              </div>
+              <div class="icc-meta-item" *ngIf="crmSync()?.lastStats as st">
+                <span class="meta-label">Last run</span>
+                <span class="meta-value">{{ st.fetched }} fetched · {{ st.inserted }} new · {{ st.updated + st.restored }} updated{{ st.markedDeleted ? ' · ' + st.markedDeleted + ' removed' : '' }}{{ st.failed ? ' · ' + st.failed + ' failed' : '' }}</span>
               </div>
               <div class="icc-meta-item">
                 <span class="meta-label">Encryption</span>
                 <span class="meta-value">AES-256</span>
               </div>
             </div>
+            <div class="field-error-msg" *ngIf="crmSync()?.lastStatus === 'error'" role="alert">
+              Last sync failed{{ crmSync()?.lastAttemptAt ? ' (' + (crmSync()?.lastAttemptAt | date:'d MMM, h:mm a') + ')' : '' }}: {{ crmSync()?.lastError }}
+            </div>
+            <div class="field-error-msg" *ngIf="crmSync()?.lastStatus === 'partial' && crmSync()?.lastIssues?.length" role="status">
+              Last sync completed with warnings: {{ crmSync()?.lastIssues?.[0] }}
+            </div>
             <div class="icc-actions">
+              <button class="btn-test-sm" (click)="syncCRMNow()" [disabled]="syncingCRM()" type="button">
+                <svg viewBox="0 0 24 24">
+                  <path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
+                </svg>
+                {{ syncingCRM() ? 'Syncing…' : 'Sync now' }}
+              </button>
               <button class="btn-test-sm" (click)="testCRM()" [disabled]="testingCRM()" type="button">
                 <svg viewBox="0 0 24 24">
                   <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />

@@ -3,6 +3,32 @@
 const Tenant = require('../models/tenant');
 const crypto = require('crypto');
 const logger = require('../utils/logger');
+const { fetchPageWithMeta } = require('../services/quoteTracking.service');
+const { syncTenant, purgeTenantCrmData } = require('../services/crmSync.service');
+
+/**
+ * Asks ProspectConnect for one page of quotes with the given key and checks
+ * the answer is real quote data. Returns { ok: true, count } or
+ * { ok: false, reason, transient }.
+ *
+ * Previously only 401/403/5xx counted as failure, so any other answer (an
+ * HTML error page, a 404, a JSON error body) left the CRM marked "Connected"
+ * while no data could ever be read.
+ */
+const verifyCrmKey = async (apiKey) => {
+  try {
+    const { quotes, count } = await fetchPageWithMeta(apiKey, { limit: 1, search: '', startAfter: 0 });
+    return { ok: true, count: count ?? quotes.length };
+  } catch (err) {
+    const status = err.upstreamStatus;
+    if (status === 401 || status === 403) {
+      return { ok: false, reason: 'CRM rejected the API key. Please double-check your credentials.' };
+    }
+    // Rate limiting or a network blip says nothing about the key itself.
+    const transient = status === 429 || err.status === 504;
+    return { ok: false, transient, reason: err.message };
+  }
+};
 
 const asyncHandler = (fn) => (req, res, next) =>
   Promise.resolve(fn(req, res, next)).catch(next);
@@ -177,28 +203,12 @@ exports.saveCRM = asyncHandler(async (req, res) => {
     return fail(res, 'API URL must start with http:// or https://');
   }
 
-  const pingUrl    = 'https://api.prospectconnect.ai/quotes/getQuotes';
-  const pingBody   = JSON.stringify({ limit: 1, search: '', startAfter: 0 });
-
-  try {
-    const pingRes = await fetch(pingUrl, {
-      method : 'POST',
-      headers: { Authorization: apiKey, 'Content-Type': 'application/json' },
-      body   : pingBody,
-      signal : AbortSignal.timeout(8000),
-    });
-
-    if (pingRes.status === 401 || pingRes.status === 403) {
-      return fail(res, 'CRM rejected the API key. Please double-check your credentials.');
-    }
-    if (pingRes.status >= 500) {
-      return fail(res, `CRM server returned ${pingRes.status}. Try again later.`);
-    }
-  } catch (err) {
-    if (err.name === 'TimeoutError' || err.name === 'AbortError') {
-      return fail(res, 'CRM did not respond within 8 seconds. Please verify the URL.');
-    }
-    logger.warn(`[CRM verify] Network error — saving anyway: ${err.name} ${err.message}`);
+  const check = await verifyCrmKey(apiKey);
+  if (!check.ok && !check.transient) return fail(res, check.reason);
+  if (!check.ok) {
+    // Same as before for a network blip: save anyway. The first sync below
+    // will retry, and its outcome is visible in Settings → CRM.
+    logger.warn(`[CRM verify] Transient error — saving anyway: ${check.reason}`);
   }
 
   const tenant = await resolveBusinessTenant(req);
@@ -210,7 +220,13 @@ exports.saveCRM = asyncHandler(async (req, res) => {
   maybeCompleteSetup(tenant);
   await tenant.save();
 
-  return ok(res, buildSettingsPayload(tenant), 'CRM integration connected successfully.');
+  // Start the first import now so data is already there when the user opens
+  // a page. Runs in the background; progress/result via /tenant/quotes/sync-status.
+  syncTenant(tenant, { trigger: 'connect', apiKey })
+    .catch(err => logger.error(`[CRM Sync] initial import after connect crashed: ${err.message}`));
+
+  const found = check.ok ? ` ${check.count} quote${check.count === 1 ? '' : 's'} found — importing now.` : '';
+  return ok(res, buildSettingsPayload(tenant), `CRM integration connected successfully.${found}`);
 });
 
 // ── POST /tenant/settings/crm/test ───────────────────────────────────────────
@@ -221,29 +237,18 @@ exports.testCRM = asyncHandler(async (req, res) => {
 
   // Re-fetch with encrypted key selected
   const tenantWithKey = await Tenant.findById(tenant._id).select('+crm.apiKey');
+  const apiKey = tenantWithKey.getCRMKey();
+  if (!apiKey) return fail(res, 'The stored CRM API key could not be decrypted. Please re-configure the CRM.');
 
-  try {
-    const pingRes = await fetch('https://api.prospectconnect.ai/quotes/getQuotes', {
-      method : 'POST',
-      headers: { Authorization: tenantWithKey.getCRMKey(), 'Content-Type': 'application/json' },
-      body   : JSON.stringify({ limit: 1, search: '', startAfter: 0 }),
-      signal : AbortSignal.timeout(8000),
-    });
-
-    if (pingRes.status === 401 || pingRes.status === 403) {
-      return fail(res, 'CRM rejected the stored API key. Please re-configure.');
-    }
-    if (pingRes.status >= 500) {
-      return fail(res, `CRM server returned ${pingRes.status}.`);
-    }
-  } catch (err) {
-    if (err.name === 'TimeoutError' || err.name === 'AbortError') {
-      return fail(res, 'CRM did not respond within 8 seconds.');
-    }
-    return fail(res, 'Could not reach the CRM server.');
+  const check = await verifyCrmKey(apiKey);
+  if (!check.ok) {
+    return fail(res, /rejected the API key/.test(check.reason)
+      ? 'CRM rejected the stored API key. Please re-configure.'
+      : check.reason);
   }
 
-  return ok(res, {}, 'CRM connection test successful.');
+  return ok(res, { quotesAvailable: check.count },
+    `CRM connection test successful — ${check.count} quote${check.count === 1 ? '' : 's'} available.`);
 });
 
 // ── DELETE /tenant/settings/crm ──────────────────────────────────────────────
@@ -254,6 +259,11 @@ exports.removeCRM = asyncHandler(async (req, res) => {
   tenant.crm = { isConfigured: false };
   if (tenant.setupStep === 'complete') tenant.setupStep = 'crm';
   await tenant.save();
+
+  // Drop the mirrored CRM quotes so a later reconnect (possibly to another
+  // CRM account) can't mix old and new data. Payment tracking is kept.
+  const { deletedQuotes } = await purgeTenantCrmData(tenant._id);
+  logger.info(`[CRM] tenant=${tenant.tenantId} disconnected CRM; removed ${deletedQuotes} synced quotes`);
 
   return ok(res, buildSettingsPayload(tenant), 'CRM integration removed.');
 });

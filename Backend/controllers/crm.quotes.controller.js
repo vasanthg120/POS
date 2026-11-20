@@ -1,28 +1,44 @@
 'use strict';
 
 const QuoteTracking = require('../models/quote.tracking');
+const logger = require('../utils/logger');
 const {
   dateLabel,
   fetchPage,
-  fetchAllQuotes,
   fetchRazorpayPaymentMap,
   loadTenant: loadTenantRaw,
   normalise,
   autoDetectFromRazorpay,
   mergeTracking,
-  resolvePayStatus,
+  eligiblePayments,
+  round2,
 } = require('../services/quoteTracking.service');
+const {
+  getSyncedQuotes,
+  getSyncStatus: getCrmSyncStatus,
+  findSyncedQuote,
+  syncTenant,
+} = require('../services/crmSync.service');
 
 /* ── Tiny helpers ────────────────────────────────────────────────────────── */
-
-const asyncHandler = (fn) => (req, res, next) =>
-  Promise.resolve(fn(req, res, next)).catch(next);
 
 const ok = (res, data = {}, message = 'Success') =>
   res.json({ success: true, message, data });
 
 const fail = (res, message = 'Something went wrong', status = 400) =>
   res.status(status).json({ success: false, message });
+
+// CRM failures carry a specific, safe message (status code + CRM response
+// excerpt, never credentials). Send it to the client instead of letting the
+// global handler turn it into a generic 500 the dashboard can't explain.
+const asyncHandler = (fn) => (req, res, next) =>
+  Promise.resolve(fn(req, res, next)).catch((err) => {
+    if (err?.isCrmError && !res.headersSent) {
+      logger.warn(`[CRM] ${req.method} ${req.baseUrl}${req.path} → ${err.message}`);
+      return fail(res, err.message, err.status && err.status < 500 ? err.status : 502);
+    }
+    return next(err);
+  });
 
 // Adapts the service's { tenant, apiKey } | { error, status } shape onto the
 // existing res.json(...)-on-failure calling convention this controller used.
@@ -44,9 +60,11 @@ exports.getQuotes = asyncHandler(async (req, res) => {
   const limit      = Math.min(200, parseInt(req.query.limit)      || 25);
   const startAfter = Math.max(0,   parseInt(req.query.startAfter) || 0);
 
-  // Fetch CRM quotes + Razorpay payments in parallel
-  const [raw, rzpMap] = await Promise.all([
-    search ? fetchPage(apiKey, { search, limit, startAfter }) : fetchAllQuotes(apiKey),
+  // Full list: the locally synced copy. Search: the CRM's own search, live.
+  const [{ quotes: raw, sync }, rzpMap] = await Promise.all([
+    search
+      ? fetchPage(apiKey, { search, limit, startAfter }).then(quotes => ({ quotes, sync: null }))
+      : getSyncedQuotes(tenant, apiKey),
     fetchRazorpayPaymentMap(tenant),
   ]);
 
@@ -114,6 +132,7 @@ exports.getQuotes = asyncHandler(async (req, res) => {
     limit,
     startAfter,
     search,
+    sync,
   });
 });
 
@@ -126,13 +145,22 @@ exports.getQuoteStats = asyncHandler(async (req, res) => {
 
   const { tenant, apiKey } = loaded;
 
-  const [raw, trackingRecords] = await Promise.all([
-    fetchAllQuotes(apiKey),
+  // Same merged view the quotes list returns (synced CRM data + tracking +
+  // Razorpay auto-detect), so the dashboard's numbers always match the
+  // Tracking/Quotations pages. This used to merge tracking only, so a
+  // Razorpay-paid quote showed as paid in the list but pending in the stats.
+  const [{ quotes: raw, sync }, trackingRecords, rzpMap] = await Promise.all([
+    getSyncedQuotes(tenant, apiKey),
     QuoteTracking.find({ tenantId: tenant._id }).lean(),
+    fetchRazorpayPaymentMap(tenant),
   ]);
 
-  const quotes       = raw.map(normalise);
-  const trackingMap  = new Map(trackingRecords.map(t => [String(t.quoteId), t]));
+  const trackingMap = new Map(trackingRecords.map(t => [String(t.quoteId), t]));
+  const quotes = raw.map(normalise).map((q) => {
+    const rzpPayment = rzpMap?.byQuotationNo?.get(q.quoteNumber)
+                    ?? rzpMap?.byQuotationNo?.get(String(q.quoteId));
+    return mergeTracking(q, trackingMap.get(String(q.quoteId)), rzpPayment);
+  });
 
   let totalRevenue    = 0;
   let pendingRevenue  = 0;
@@ -142,22 +170,28 @@ exports.getQuoteStats = asyncHandler(async (req, res) => {
   let failedCount     = 0;
   let partialCount    = 0;
   let overdueCount    = 0;
+  let monthRevenue    = 0;
+  let todayRevenue    = 0;
+  const approval = { approved: 0, rejected: 0, pending: 0, draft: 0 };
+  let expiredCount = 0;
+  const customers = new Set();
 
   const now = new Date();
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  const dayStart   = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
   for (const q of quotes) {
-    const t   = trackingMap.get(String(q.quoteId));
-    const pay = t?.paymentStatus ?? resolvePayStatus(q);
-    const exp = q.expiryDate ?? '';
-    const isOverdue = exp && new Date(exp) < now && !['paid', 'partially_paid'].includes(pay);
+    const pay  = q.paymentStatus;
+    const paid = q.paidAmount ?? 0;
+    const isOverdue = q.isExpired && !['paid', 'partially_paid'].includes(pay);
 
     if (pay === 'paid') {
       paidCount++;
-      totalRevenue += t?.paidAmount ?? q.amount;
+      totalRevenue += paid || q.amount;
     } else if (pay === 'partially_paid') {
       partialCount++;
-      totalRevenue    += t?.paidAmount ?? 0;
-      pendingRevenue  += q.amount - (t?.paidAmount ?? 0);
+      totalRevenue   += paid;
+      pendingRevenue += q.amount - paid;
     } else if (pay === 'failed') {
       failedCount++;
     } else {
@@ -167,15 +201,31 @@ exports.getQuoteStats = asyncHandler(async (req, res) => {
 
     if (isOverdue) {
       overdueCount++;
-      overdueRevenue += q.amount - (t?.paidAmount ?? 0);
+      overdueRevenue += q.amount - paid;
     }
+
+    // Period revenue by each payment's own date — the rule Royalty and the
+    // Super Admin dashboard already use.
+    if (pay === 'paid' || pay === 'partially_paid') {
+      for (const p of eligiblePayments(q)) {
+        const d = p.date ? new Date(p.date) : null;
+        if (!d || !(p.amount > 0)) continue;
+        if (d >= monthStart) monthRevenue += p.amount;
+        if (d >= dayStart)   todayRevenue += p.amount;
+      }
+    }
+
+    approval[q.approvalStatus] = (approval[q.approvalStatus] ?? 0) + 1;
+    if (q.isExpired) expiredCount++;
+    const customerKey = q.customerId || q.email;
+    if (customerKey) customers.add(customerKey);
   }
 
   return ok(res, {
     total:          quotes.length,
-    totalRevenue,
-    pendingRevenue,
-    overdueRevenue,
+    totalRevenue:   round2(totalRevenue),
+    pendingRevenue: round2(pendingRevenue),
+    overdueRevenue: round2(overdueRevenue),
     paidCount,
     pendingCount,
     failedCount,
@@ -183,6 +233,18 @@ exports.getQuoteStats = asyncHandler(async (req, res) => {
     overdueCount,
     conversionRate: quotes.length ? Math.round((paidCount / quotes.length) * 100) : 0,
     avgDealSize:    quotes.length ? Math.round(quotes.reduce((s, q) => s + q.amount, 0) / quotes.length) : 0,
+    // Added fields (existing consumers ignore them)
+    monthRevenue:   round2(monthRevenue),
+    todayRevenue:   round2(todayRevenue),
+    convertedCount: paidCount + partialCount,
+    approvedCount:  approval.approved,
+    rejectedCount:  approval.rejected,
+    awaitingApprovalCount: approval.pending,
+    draftCount:     approval.draft,
+    expiredCount,
+    customerCount:  customers.size,
+    pipelineValue:  round2(quotes.reduce((s, q) => s + (q.amount || 0), 0)),
+    sync,
   });
 });
 
@@ -196,17 +258,23 @@ exports.getQuoteById = asyncHandler(async (req, res) => {
   const { tenant, apiKey } = loaded;
   const { quoteId }        = req.params;
 
-  const [raw, tracking, rzpMap] = await Promise.all([
-    fetchPage(apiKey, { search: quoteId, limit: 25, startAfter: 0 }),
+  // Synced copy first (works even when the CRM is slow or down); fall back to
+  // the CRM's live search for a quote created since the last sync.
+  const findLive = async () => {
+    const raw = await fetchPage(apiKey, { search: quoteId, limit: 25, startAfter: 0 });
+    return raw.find(q =>
+      q._id               === quoteId ||
+      q.id                === quoteId ||
+      String(q.ticket_number) === quoteId,
+    ) ?? null;
+  };
+
+  const [stored, tracking, rzpMap] = await Promise.all([
+    findSyncedQuote(tenant._id, quoteId),
     QuoteTracking.findOne({ tenantId: tenant._id, quoteId }).lean(),
     fetchRazorpayPaymentMap(tenant),
   ]);
-
-  const found = raw.find(q =>
-    q._id               === quoteId ||
-    q.id                === quoteId ||
-    String(q.ticket_number) === quoteId,
-  );
+  const found = stored ?? await findLive();
 
   if (!found) return fail(res, `Quote "${quoteId}" not found.`, 404);
 
@@ -255,8 +323,8 @@ exports.syncAllRazorpay = asyncHandler(async (req, res) => {
 
   const { tenant, apiKey } = loaded;
 
-  const [raw, rzpMap] = await Promise.all([
-    fetchAllQuotes(apiKey),
+  const [{ quotes: raw }, rzpMap] = await Promise.all([
+    getSyncedQuotes(tenant, apiKey),
     fetchRazorpayPaymentMap(tenant),
   ]);
 
@@ -314,6 +382,42 @@ exports.syncAllRazorpay = asyncHandler(async (req, res) => {
 
   await Promise.allSettled(ops);
   return ok(res, { synced }, `${synced} payment${synced !== 1 ? 's' : ''} synced from Razorpay`);
+});
+
+/* ══════════════════════════════════════════════════════════════════════════
+   POST /tenant/quotes/sync
+   "Sync now": pulls every quote from the CRM into the POS database right
+   away and returns what the run did.
+   ══════════════════════════════════════════════════════════════════════════ */
+exports.syncNow = asyncHandler(async (req, res) => {
+  const loaded = await loadTenant(req.user.id, res);
+  if (!loaded) return;
+
+  const { tenant, apiKey } = loaded;
+  const result = await syncTenant(tenant, { trigger: 'manual', apiKey });
+  const status = await getCrmSyncStatus(tenant._id);
+
+  if (result.status === 'skipped') {
+    return res.status(409).json({ success: false, message: result.reason, data: { result, status } });
+  }
+  if (result.status === 'error') {
+    return res.status(502).json({ success: false, message: `CRM sync failed: ${result.error}`, data: { result, status } });
+  }
+
+  const s = result.stats;
+  const message = `Synced ${s.fetched} quote${s.fetched === 1 ? '' : 's'} from CRM`
+    + ` (${s.inserted} new, ${s.updated + s.restored} updated, ${s.unchanged} unchanged`
+    + `${s.markedDeleted ? `, ${s.markedDeleted} removed` : ''}${s.failed ? `, ${s.failed} failed` : ''}).`;
+  return ok(res, { result, status }, message);
+});
+
+/* ══════════════════════════════════════════════════════════════════════════
+   GET /tenant/quotes/sync-status
+   ══════════════════════════════════════════════════════════════════════════ */
+exports.getSyncStatus = asyncHandler(async (req, res) => {
+  const loaded = await loadTenant(req.user.id, res);
+  if (!loaded) return;
+  return ok(res, await getCrmSyncStatus(loaded.tenant._id, { includeRuns: true }));
 });
 
 /* ══════════════════════════════════════════════════════════════════════════
