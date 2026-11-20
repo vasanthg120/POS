@@ -1,6 +1,8 @@
+// Production values. `ng serve` / development builds swap this file for
+// environment.development.ts (see fileReplacements in angular.json).
 export enum Environment {
-  production = 'false',
-  API_URL    = 'http://localhost:3000', // API URL
-  appDomain  = 'localhost:4200', // App Domain
-  payDomain  = 'localhost:4200', // Payment Domain
+  production = 'true',
+  API_URL    = 'https://pos.pantheras.io', // API URL
+  appDomain  = 'pos.pantheras.io', // App Domain
+  payDomain  = 'pos.pantheras.io', // Payment Domain
 }

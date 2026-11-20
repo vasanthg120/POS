@@ -89,7 +89,7 @@ export class PaymentPage implements OnInit, OnDestroy {
   detailsForm!: FormGroup;
 
   private destroy$ = new Subject<void>();
-  private readonly api = Environment.API_URL;   // e.g. https://payment.pantheras.io/api
+  private readonly api = Environment.API_URL;   // e.g. https://pos.pantheras.io
 
   // Incremented on every lookup request; a response is only applied if it
   // still matches the latest sequence number, so a slow/older request can

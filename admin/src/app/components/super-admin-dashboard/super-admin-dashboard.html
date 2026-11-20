@@ -292,7 +292,13 @@
 
       <div class="load-bar" *ngIf="isLoading"><div class="load-bar-fill"></div></div>
 
-      <div class="empty-state" *ngIf="!isLoading && filtered.length === 0">
+      <div class="empty-state" *ngIf="!isLoading && loadError" role="alert">
+        <div class="empty-title sync-err">Couldn’t load tenant data</div>
+        <div class="empty-sub">{{ loadError }}</div>
+        <button class="reset-btn" (click)="load()">Retry</button>
+      </div>
+
+      <div class="empty-state" *ngIf="!isLoading && !loadError && filtered.length === 0">
         <div class="empty-icon-wrap">
           <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4">
             <path d="M3 21h18M5 21V7l7-4 7 4v14" stroke-linecap="round" stroke-linejoin="round" />

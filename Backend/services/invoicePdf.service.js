@@ -5,6 +5,9 @@
 // written to disk.
 
 const PDFDocument = require('pdfkit');
+const path = require('path');
+
+const LOGO_PATH = path.join(__dirname, '..', 'assets', 'images', 'fp.png');
 
 const INR = (n) => `Rs. ${(Number(n) || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 const fmtDate = (d) => d ? new Date(d).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '—';
@@ -19,10 +22,12 @@ const invoicePdfFilename = (invoice, mode) => `${mode === 'receipt' ? 'receipt' 
 /** Draws the full invoice/receipt layout onto an already-constructed PDFDocument. Caller owns pipe/end. */
 const renderInvoicePdf = (doc, { tenant, invoice, mode = 'invoice', settings = null }) => {
   // ── Header ──────────────────────────────────────────────────────────────
-  doc.fontSize(20).fillColor('#0f172a').font('Helvetica-Bold')
-    .text(settings?.companyLegalName || process.env.COMPANY_NAME || 'Fully Promoted India', 50, 50);
-  doc.fontSize(10).fillColor('#64748b').font('Helvetica')
-    .text('Platform Subscription Billing', 50, 74);
+  try {
+    doc.image(LOGO_PATH, 50, 34, { height: 70 });
+  } catch {
+    doc.fontSize(20).fillColor('#0f172a').font('Helvetica-Bold')
+      .text(settings?.companyLegalName || process.env.COMPANY_NAME || 'Fully Promoted India', 50, 50);
+  }
 
   doc.fontSize(16).fillColor('#0f172a').font('Helvetica-Bold')
     .text(mode === 'receipt' ? 'PAYMENT RECEIPT' : 'INVOICE', 350, 50, { width: 200, align: 'right' });
@@ -31,7 +36,7 @@ const renderInvoicePdf = (doc, { tenant, invoice, mode = 'invoice', settings = n
 
   // Company GSTIN/address — only rendered once the superadmin has actually
   // filled them in via Billing → Settings, so PDFs look unchanged until then.
-  let headerY = 88;
+  let headerY = 112;
   if (settings?.companyAddress) {
     doc.fontSize(8.5).fillColor('#94a3b8').font('Helvetica').text(settings.companyAddress, 50, headerY, { width: 280 });
     headerY += 12;
@@ -40,29 +45,29 @@ const renderInvoicePdf = (doc, { tenant, invoice, mode = 'invoice', settings = n
     doc.fontSize(8.5).fillColor('#94a3b8').font('Helvetica').text(`GSTIN: ${settings.companyGSTIN}`, 50, headerY, { width: 280 });
   }
 
-  doc.moveTo(50, 100).lineTo(545, 100).strokeColor('#e2e8f0').stroke();
+  doc.moveTo(50, 124).lineTo(545, 124).strokeColor('#e2e8f0').stroke();
 
   // ── Bill-to / meta ──────────────────────────────────────────────────────
-  doc.fontSize(9).fillColor('#94a3b8').font('Helvetica-Bold').text('BILLED TO', 50, 118);
+  doc.fontSize(9).fillColor('#94a3b8').font('Helvetica-Bold').text('BILLED TO', 50, 148);
   doc.fontSize(11).fillColor('#0f172a').font('Helvetica-Bold')
-    .text(tenant.businessName || `${tenant.firstName} ${tenant.lastName}`, 50, 132);
+    .text(tenant.businessName || `${tenant.firstName} ${tenant.lastName}`, 50, 162);
   doc.fontSize(10).fillColor('#334155').font('Helvetica')
-    .text(tenant.email, 50, 148)
-    .text(`Tenant ID: ${tenant.tenantId}`, 50, 162);
+    .text(tenant.email, 50, 178)
+    .text(`Tenant ID: ${tenant.tenantId}`, 50, 192);
 
   const metaX = 350;
-  doc.fontSize(9).fillColor('#94a3b8').font('Helvetica-Bold').text('BILLING PERIOD', metaX, 118, { width: 195, align: 'right' });
+  doc.fontSize(9).fillColor('#94a3b8').font('Helvetica-Bold').text('BILLING PERIOD', metaX, 148, { width: 195, align: 'right' });
   doc.fontSize(10).fillColor('#0f172a').font('Helvetica')
-    .text(`${invoice.periodMonth}/${invoice.periodYear}`, metaX, 132, { width: 195, align: 'right' });
-  doc.fontSize(9).fillColor('#94a3b8').font('Helvetica-Bold').text('DUE DATE', metaX, 148, { width: 195, align: 'right' });
+    .text(`${invoice.periodMonth}/${invoice.periodYear}`, metaX, 162, { width: 195, align: 'right' });
+  doc.fontSize(9).fillColor('#94a3b8').font('Helvetica-Bold').text('DUE DATE', metaX, 178, { width: 195, align: 'right' });
   doc.fontSize(10).fillColor('#0f172a').font('Helvetica')
-    .text(fmtDate(invoice.dueDate), metaX, 162, { width: 195, align: 'right' });
-  doc.fontSize(9).fillColor('#94a3b8').font('Helvetica-Bold').text('STATUS', metaX, 178, { width: 195, align: 'right' });
+    .text(fmtDate(invoice.dueDate), metaX, 192, { width: 195, align: 'right' });
+  doc.fontSize(9).fillColor('#94a3b8').font('Helvetica-Bold').text('STATUS', metaX, 208, { width: 195, align: 'right' });
   doc.fontSize(10).fillColor('#0f172a').font('Helvetica-Bold')
-    .text(STATUS_LABEL[invoice.status] || invoice.status, metaX, 192, { width: 195, align: 'right' });
+    .text(STATUS_LABEL[invoice.status] || invoice.status, metaX, 222, { width: 195, align: 'right' });
 
   // ── Line items ──────────────────────────────────────────────────────────
-  let y = 230;
+  let y = 260;
   doc.rect(50, y, 495, 24).fill('#f1f5f9');
   doc.fontSize(9).fillColor('#475569').font('Helvetica-Bold');
   doc.text('DESCRIPTION', 60, y + 7);
