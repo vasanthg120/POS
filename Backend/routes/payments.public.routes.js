@@ -19,6 +19,7 @@ const express  = require('express');
 const router   = express.Router();
 const Razorpay = require('razorpay');
 const crypto   = require('crypto');
+const { escapeRegex, isValidPhone } = require('../utils/validation');
 
 // ── Lazy-load models ───────────────────────────────────────────────────────────
 const getTenant = () => require('../models/tenant');
@@ -48,21 +49,47 @@ router.post('/create-order', asyncHandler(async (req, res) => {
     quotationNo  = '',
   } = req.body;
 
-  if (!slug)
-    return res.status(400).json({ success: false, message: 'slug is required.' });
+  // Customer-facing messages — these used to read like API docs
+  // ("customerInfo.name and email are required.").
+  const bad = (message) => res.status(400).json({ success: false, code: 'VALIDATION_ERROR', message });
 
-  if (!items.length)
-    return res.status(400).json({ success: false, message: 'At least one item is required.' });
+  if (!slug || typeof slug !== 'string' || slug.length > 100)
+    return bad('This payment link is incomplete. Please use the link the business sent you.');
 
-  if (!customerInfo.name || !customerInfo.email)
-    return res.status(400).json({ success: false, message: 'customerInfo.name and email are required.' });
+  if (!Array.isArray(items) || !items.length || items.length > 50)
+    return bad('There is nothing to pay for in this order. Please look up your quotation again.');
+
+  for (const i of items) {
+    const qty = Number(i?.quantity ?? 1);
+    const price = Number(i?.unitPrice);
+    if (!Number.isInteger(qty) || qty < 1 || qty > 100000)
+      return bad('Item quantity must be a whole number of at least 1.');
+    if (!Number.isFinite(price) || price <= 0 || price > 10_000_000)
+      return bad('Enter a valid amount to pay.');
+  }
+
+  const custName = String(customerInfo?.name ?? '').trim();
+  const custEmail = String(customerInfo?.email ?? '').trim();
+  const custPhone = String(customerInfo?.phone ?? '').trim();
+  if (!custName || !custEmail)
+    return bad('This quotation has no customer name or email on file, so it can’t be paid online yet. Please ask the business to update the quotation.');
+  if (custName.length > 100)
+    return bad('Customer name must be at most 100 characters.');
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(custEmail) || custEmail.length > 100)
+    return bad('The email address on this quotation is not valid. Please ask the business to correct it.');
+  if (custPhone && !isValidPhone(custPhone))
+    return bad('The phone number on this quotation is not valid. Please ask the business to correct it.');
+  if (String(notes ?? '').length > 1000 || String(quotationNo ?? '').length > 50)
+    return bad('The quotation details are too long. Please contact the business.');
+  if (!['INR', 'USD', 'EUR', 'GBP', 'AED'].includes(currency))
+    return bad('This currency is not supported for online payment.');
 
   // Resolve tenant — only need _id + isConfigured flag here, no keys yet
   const Tenant = getTenant();
   const tenant = await Tenant.findOne({
     $or: [
       { paymentPageSlug: slug },
-      { city: { $regex: new RegExp(`^${slug}$`, 'i') } },
+      { city: { $regex: new RegExp(`^${escapeRegex(slug)}$`, 'i') } },
     ],
   }).lean();
 

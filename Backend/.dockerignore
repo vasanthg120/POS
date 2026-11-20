@@ -4,6 +4,7 @@ node_modules
 logs
 admin
 coverage
+tests
 .git
 .gitignore
 Dockerfile*

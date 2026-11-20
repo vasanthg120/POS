@@ -105,6 +105,12 @@ app.use((_req, res) => res.status(404).json({ success: false, message: 'Route no
 
 // Global error handler
 app.use((err, _req, res, _next) => {
+  // CRM/sync failures carry a specific, credential-free message — show it
+  // (e.g. on Royalty) rather than a generic "Something went wrong."
+  if (err?.isCrmError && !res.headersSent) {
+    logger.warn(`[CRM] ${err.message}`);
+    return res.status(502).json({ success: false, code: 'CRM_ERROR', message: err.message });
+  }
   logger.error(`[Unhandled] ${err.stack}`);
   res.status(err.statusCode || 500).json({
     success : false,
@@ -132,6 +138,12 @@ mongoose.connect(process.env.MONGODB_URI || process.env.MONGO_URI, {
     require('./jobs/billingCron').start();
   } else {
     logger.info('[Startup] Billing cron disabled by configuration.');
+  }
+
+  if (process.env.ENABLE_CRM_SYNC_CRON !== 'false') {
+    require('./jobs/crmSyncCron').start();
+  } else {
+    logger.info('[Startup] CRM sync cron disabled by configuration.');
   }
 
   const server = app.listen(PORT, () => {

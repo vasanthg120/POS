@@ -16,8 +16,24 @@ const RoyaltyConfig = require('../models/royaltyConfig');
 const {
   fetchMergedQuotes, eligiblePayments, round2,
 } = require('./quoteTracking.service');
+const { getSyncStatus } = require('./crmSync.service');
 
 const emptyQuoteStats = () => ({ total: 0, pending: 0, approved: 0, rejectedOrExpired: 0 });
+
+/**
+ * Buckets a merged quote for the "Approved / Pending / Rejected-Expired"
+ * KPIs (mutually exclusive, so they always sum to the total).
+ *
+ * "Approved" used to mean paid/partially-paid only, so the "Approved
+ * Quotations" KPI read 0 while clients had approved 61 quotes in the CRM.
+ * It now means the client approved it in the CRM, or it has been paid
+ * (payment implies acceptance).
+ */
+const quoteOutcome = (q) => {
+  if (['paid', 'partially_paid'].includes(q.paymentStatus) || q.approvalStatus === 'approved') return 'approved';
+  if (q.paymentStatus === 'failed' || q.quotationStatus === 'Cancelled' || q.approvalStatus === 'rejected') return 'rejectedOrExpired';
+  return 'pending';
+};
 const emptyPaymentStats = () => ({ count: 0, totalCollected: 0, pendingAmount: 0, failedCount: 0 });
 
 /* ══════════════════════════════════════════════════════════════════════════
@@ -41,17 +57,27 @@ const QUOTE_CACHE_TTL_MS = 60_000;
 const tenantQuoteCache = new Map(); // tenantId -> { expiresAt, promise }
 
 const fetchTenantQuotesUncached = async (tenant) => {
-  if (!tenant.crm?.isConfigured) return { quotes: [], error: null };
+  if (!tenant.crm?.isConfigured) return { quotes: [], error: null, sync: null };
   let apiKey;
   try { apiKey = tenant.getCRMKey(); } catch { apiKey = null; }
-  if (!apiKey) return { quotes: [], error: 'CRM key could not be decrypted.' };
+  if (!apiKey) return { quotes: [], error: 'CRM key could not be decrypted.', sync: null };
 
   try {
+    // fetchMergedQuotes reads the synced copy (crmSync.service), so this no
+    // longer calls the CRM once per tenant per page view.
     const merged = await fetchMergedQuotes(tenant, apiKey);
-    return { quotes: merged, error: null };
+    const sync = await getSyncStatus(tenant._id).catch(() => null);
+    return { quotes: merged, error: null, sync };
   } catch (err) {
-    return { quotes: [], error: err.message || 'Sync failed.' };
+    const sync = await getSyncStatus(tenant._id).catch(() => null);
+    return { quotes: [], error: err.message || 'Sync failed.', sync };
   }
+};
+
+/** Drops a tenant's cached merged quotes so the next read sees fresh data
+ *  (called after a successful CRM sync). */
+const invalidateTenantQuoteCache = (tenantId) => {
+  if (tenantId) tenantQuoteCache.delete(tenantId);
 };
 
 /**
@@ -95,10 +121,27 @@ const inRange = (dateVal, periodStart, periodEnd) => {
   return true;
 };
 
-/** Every real store tenant — excludes the superadmin account (it's an
- *  admin-tier login, not a store) and sub-users. */
+/**
+ * Every account whose data the Super Admin portal monitors: all store
+ * tenants, plus the superadmin account itself once it has connected its own
+ * CRM. Sub-users are excluded (they share their parent's data).
+ *
+ * The superadmin used to be excluded unconditionally ("an admin-tier login,
+ * not a store"), but Settings lets the superadmin connect a CRM — and when
+ * that is the only CRM connection (as in this deployment), every Super Admin
+ * dashboard/quotation/payment view aggregated zero accounts while Settings
+ * showed the CRM as connected.
+ */
+const MONITORED_ACCOUNTS_FILTER = {
+  isSubUser: { $ne: true },
+  $or: [
+    { role: 'tenant' },
+    { role: 'superadmin', 'crm.isConfigured': true },
+  ],
+};
+
 const listMonitoredTenants = () =>
-  Tenant.find({ role: 'tenant', isSubUser: { $ne: true } })
+  Tenant.find(MONITORED_ACCOUNTS_FILTER)
     .select('+crm.apiKey +razorpay.keyId +razorpay.keySecret')
     .sort({ createdAt: -1 });
 
@@ -140,12 +183,12 @@ const buildTenantSnapshot = async (tenant, { periodStart, periodEnd, bypassCache
 
   if (!tenant.crm?.isConfigured) return base;
 
-  const [{ quotes: merged, error }, royaltyConfig] = await Promise.all([
+  const [{ quotes: merged, error, sync }, royaltyConfig] = await Promise.all([
     fetchTenantQuotes(tenant, { bypassCache }),
     RoyaltyConfig.findOne({ tenantId: tenant.tenantId }),
   ]);
 
-  if (error) return { ...base, syncStatus: 'error', syncError: error };
+  if (error) return { ...base, syncStatus: 'error', syncError: error, lastSyncAt: sync?.lastSuccessAt ?? null };
 
   const quotations = emptyQuoteStats();
   const payments = emptyPaymentStats();
@@ -158,10 +201,7 @@ const buildTenantSnapshot = async (tenant, { periodStart, periodEnd, bypassCache
 
     quotations.total++;
     invoicedAmount += q.amount ?? 0;
-
-    if (q.paymentStatus === 'paid' || q.paymentStatus === 'partially_paid') quotations.approved++;
-    else if (q.paymentStatus === 'failed' || q.quotationStatus === 'Cancelled') quotations.rejectedOrExpired++;
-    else quotations.pending++;
+    quotations[quoteOutcome(q)]++;
 
     if (q.paymentStatus === 'pending') {
       payments.pendingAmount += q.amount ?? 0;
@@ -183,10 +223,14 @@ const buildTenantSnapshot = async (tenant, { periodStart, periodEnd, bypassCache
     }
   }
 
+  // Real sync health: numbers come from the last successful sync; if the most
+  // recent attempt failed, flag it (with the reason) while still showing them.
+  const lastSyncFailed = sync?.lastStatus === 'error';
   return {
     ...base,
-    syncStatus: 'ok',
-    lastSyncAt: new Date().toISOString(),
+    syncStatus: lastSyncFailed ? 'error' : 'ok',
+    syncError: lastSyncFailed ? sync.lastError : null,
+    lastSyncAt: sync?.lastSuccessAt ?? null,
     quotations,
     invoicedAmount: round2(invoicedAmount),
     payments: {
@@ -227,6 +271,8 @@ const buildAllTenantQuoteRows = async ({ periodStart, periodEnd, bypassCache = f
         amount: round2(q.amount ?? 0),
         quotationStatus: q.quotationStatus,
         paymentStatus: q.paymentStatus,
+        approvalStatus: q.approvalStatus,
+        outcome: quoteOutcome(q),
         paidAmount: round2(q.paidAmount ?? 0),
         createdBy: q.ownerName || null,
         relatedDeal: q.dealName || null,
@@ -372,7 +418,7 @@ const buildAllTenantSnapshots = async ({ periodStart, periodEnd, bypassCache = f
  *  reachable. Use this instead of buildAllTenantSnapshots() when all you
  *  need is "which tenants exist". */
 const listTenantsLite = async () => {
-  const tenants = await Tenant.find({ role: 'tenant', isSubUser: { $ne: true } })
+  const tenants = await Tenant.find(MONITORED_ACCOUNTS_FILTER)
     .select('tenantId businessName firstName lastName email')
     .sort({ businessName: 1 });
   return tenants.map(t => ({
@@ -390,4 +436,6 @@ module.exports = {
   buildActivityFeed,
   listMonitoredTenants,
   listTenantsLite,
+  invalidateTenantQuoteCache,
+  quoteOutcome,
 };

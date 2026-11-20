@@ -7,7 +7,12 @@ import {
 } from '@angular/forms';
 import { Tenant } from '../services/tenant';
 import { Auth } from '../services/auth';
+import { Crm, CrmSyncStatus } from '../services/crm';
 import { AfterViewChecked } from '@angular/core';
+
+/** The server's message from an HttpErrorResponse (err.message is Angular's generic text). */
+const apiMessage = (err: any, fallback: string): string =>
+  err?.error?.message || err?.message || fallback;
 
 export type SettingsTab = 'business' | 'razorpay' | 'crm' | 'payment' | 'password';
 
@@ -43,6 +48,11 @@ export class Settings implements OnInit {
   showCRMKey = signal(false);
   copied = signal(false);
   private qrGenerated = false;
+
+  // ── CRM sync status (Settings → CRM) ────────────────────────────────────
+  private crm = inject(Crm);
+  crmSync = signal<CrmSyncStatus | null>(null);
+  syncingCRM = signal(false);
 
   /** Base of the public payment link — same origin the copy/QR actions use */
   readonly payBaseUrl = `${inject(DOCUMENT).location.origin}/pay/`;
@@ -148,6 +158,8 @@ export class Settings implements OnInit {
           if (d.city) this.businessForm.get('city')?.disable();
           // Re-evaluate payment tab after data loads
           if (d.setupStep === 'complete') this.activeTab.set('payment');
+          // currentTenant is now fresh — load real CRM sync health for the CRM card.
+          this.loadCrmSyncStatus();
         }
       },
     });
@@ -157,6 +169,45 @@ export class Settings implements OnInit {
     this.activeTab.set(tab);
     this.success.set('');
     this.error.set('');
+    if (tab === 'crm') this.loadCrmSyncStatus();
+  }
+
+  /** Real sync health for the connected-CRM card (replaces the old hardcoded "Active"). */
+  loadCrmSyncStatus(): void {
+    if (!this.auth.currentTenant()?.crm?.isConfigured) { this.crmSync.set(null); return; }
+    this.crm.getSyncStatus().subscribe({
+      next: (res) => this.crmSync.set(res.data),
+      error: () => this.crmSync.set(null),
+    });
+  }
+
+  syncCRMNow(): void {
+    this.syncingCRM.set(true);
+    this.clearMessages();
+    this.crm.syncNow().subscribe({
+      next: (res) => {
+        this.success.set(res.message || 'CRM sync complete.');
+        this.crmSync.set(res.data?.status ?? null);
+        this.syncingCRM.set(false);
+      },
+      error: (err) => {
+        this.error.set(apiMessage(err, 'CRM sync failed.'));
+        if (err?.error?.data?.status) this.crmSync.set(err.error.data.status);
+        this.syncingCRM.set(false);
+      },
+    });
+  }
+
+  crmSyncLabel(): string {
+    const s = this.crmSync();
+    if (!s) return '—';
+    switch (s.status) {
+      case 'running': return '● Syncing…';
+      case 'success': return '● Healthy';
+      case 'partial': return '● Partial';
+      case 'error':   return '● Failing';
+      default:        return 'Not synced yet';
+    }
   }
 
   ngAfterViewChecked(): void {
@@ -253,9 +304,11 @@ export class Settings implements OnInit {
     this.clearMessages();
     this.tenant.saveCRMCredentials(this.crmForm.value).subscribe({
       next: (res) => {
-        this.success.set('CRM credentials saved and verified.');
+        this.success.set(res?.message || 'CRM credentials saved and verified.');
         this.crmForm.reset({ provider: 'prospectconnect' });
         this.loading.set(false);
+        // The first import runs in the background on the server; show its result.
+        setTimeout(() => this.loadCrmSyncStatus(), 5000);
         // Setup complete — advance to Payment Page tab
         if (res.data?.setupStep === 'complete') {
           setTimeout(() => {
@@ -264,7 +317,7 @@ export class Settings implements OnInit {
           }, 100);
         }
       },
-      error: (err) => { this.error.set(err?.message || 'Failed to save CRM credentials.'); this.loading.set(false); },
+      error: (err) => { this.error.set(apiMessage(err, 'Failed to save CRM credentials.')); this.loading.set(false); },
     });
   }
 
@@ -273,16 +326,16 @@ export class Settings implements OnInit {
     this.clearMessages();
     this.tenant.testCRMConnection().subscribe({
       next: (res) => { this.success.set(res.message || 'CRM connection test successful.'); this.testingCRM.set(false); },
-      error: (err) => { this.error.set(err?.message || 'CRM connection test failed.'); this.testingCRM.set(false); },
+      error: (err) => { this.error.set(apiMessage(err, 'CRM connection test failed.')); this.testingCRM.set(false); },
     });
   }
 
   removeCRM(): void {
-    if (!confirm('Remove CRM integration?')) return;
+    if (!confirm('Remove CRM integration? Quotes synced from the CRM will be cleared from the POS (payment tracking is kept).')) return;
     this.clearMessages();
     this.tenant.removeCRMCredentials().subscribe({
-      next: () => this.success.set('CRM integration removed.'),
-      error: (err) => this.error.set(err?.message || 'Failed.'),
+      next: () => { this.success.set('CRM integration removed.'); this.crmSync.set(null); },
+      error: (err) => this.error.set(apiMessage(err, 'Failed.')),
     });
   }
 

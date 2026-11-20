@@ -37,6 +37,7 @@ const emailUtil = require('../utils/email');
 const { bufferInvoicePdf } = require('./invoicePdf.service');
 const billingSettingsService = require('./billingSettings.service');
 const logger = require('../utils/logger');
+const { escapeRegex } = require('../utils/validation');
 
 const DEFAULT_GRACE_PERIOD_DAYS = 7;
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -755,7 +756,7 @@ const listBillingOverview = async ({
 
   const tenantFilter = { role: 'tenant', isSubUser: { $ne: true } };
   if (search) {
-    const re = new RegExp(search, 'i');
+    const re = new RegExp(escapeRegex(search), 'i');
     tenantFilter.$or = [{ email: re }, { firstName: re }, { lastName: re }, { businessName: re }];
   }
 
@@ -871,7 +872,7 @@ const getBillingCalendar = async ({ month, year, search, planId, status, assigne
 
   const tenantFilter = { tenantId: { $in: subs.map((s) => s.tenantId) } };
   if (search) {
-    const re = new RegExp(search, 'i');
+    const re = new RegExp(escapeRegex(search), 'i');
     tenantFilter.$or = [{ businessName: re }, { firstName: re }, { lastName: re }, { email: re }];
   }
   const tenants = await Tenant.find(tenantFilter).select('businessName firstName lastName tenantId');

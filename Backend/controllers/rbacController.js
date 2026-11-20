@@ -3,6 +3,7 @@
 const RbacRole     = require('../models/rbacRole');
 const RbacAuditLog = require('../models/rbacAuditLog');
 const logger       = require('../utils/logger');
+const { escapeRegex } = require('../utils/validation');
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -68,7 +69,7 @@ exports.listRoles = async (req, res, next) => {
     const { tenantId } = req.user;
     const filter = { tenantId };
     if (req.query.q?.trim()) {
-      const re = new RegExp(req.query.q.trim(), 'i');
+      const re = new RegExp(escapeRegex(req.query.q.trim()), 'i');
       filter.$or = [{ name: re }, { description: re }];
     }
     const roles = await RbacRole.find(filter).sort({ isSystem: -1, createdAt: 1 });
