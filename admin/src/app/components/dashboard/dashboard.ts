@@ -95,6 +95,8 @@ export class Dashboard implements OnInit, OnDestroy {
   readonly totalRevPaise     = this.svc.totalRevPaise;
   readonly totalRevRs        = this.svc.totalRevRs;
   readonly totalRefundsRs    = this.svc.totalRefundsRs;
+  readonly crmSync           = this.svc.crmSync;
+  readonly crmSyncWarning    = this.svc.crmSyncWarning;
 
   readonly avgTicket         = this.svc.avgTicketPaise;
 

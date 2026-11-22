@@ -1,5 +1,15 @@
 'use strict';
-require('dotenv').config();
+
+const path = require('path');
+
+const envFile =
+  process.env.NODE_ENV === 'production'
+    ? '.env.production'
+    : '.env';
+
+require('dotenv').config({
+  path: path.join(__dirname, envFile),
+});
 
 const express        = require('express');
 const mongoose       = require('mongoose');
@@ -12,7 +22,6 @@ const logger         = require('./utils/logger');
 const registerRoutes = require('./routes/index');
 const seedSuperAdmin = require('./utils/seedSuperAdmin');
 const seedDefaultPlan = require('./utils/seedDefaultPlan');
-const path           = require('path');
 
 // ✅ REMOVED broken authMiddleware import — auth is handled inside the router 
 
@@ -58,6 +67,9 @@ app.get('/api/health', (_req, res) => res.json({
   timestamp  : new Date().toISOString(),
   environment: process.env.NODE_ENV,
   uptime     : process.uptime(),
+  // Git commit the running build came from (set by the Docker build in CI),
+  // so a deploy can be checked without guessing from uptime.
+  commit     : process.env.GIT_SHA || 'unknown',
 }));
 
 // ✅ Tenant settings — auth handled inside the router via protect middleware
@@ -96,6 +108,12 @@ app.use((_req, res) => res.status(404).json({ success: false, message: 'Route no
 
 // Global error handler
 app.use((err, _req, res, _next) => {
+  // CRM/sync failures carry a specific, credential-free message — show it
+  // (e.g. on Royalty) rather than a generic "Something went wrong."
+  if (err?.isCrmError && !res.headersSent) {
+    logger.warn(`[CRM] ${err.message}`);
+    return res.status(502).json({ success: false, code: 'CRM_ERROR', message: err.message });
+  }
   logger.error(`[Unhandled] ${err.stack}`);
   res.status(err.statusCode || 500).json({
     success : false,
@@ -112,9 +130,24 @@ mongoose.connect(process.env.MONGODB_URI || process.env.MONGO_URI, {
   socketTimeoutMS         : 45000,
 }).then(async () => {
   logger.info('✅ MongoDB connected');
-  await seedSuperAdmin();
-  await seedDefaultPlan();
-  require('./jobs/billingCron').start();
+  if (process.env.ENABLE_STARTUP_SEEDS !== 'false') {
+    await seedSuperAdmin();
+    await seedDefaultPlan();
+  } else {
+    logger.info('[Startup] Database seeding disabled by configuration.');
+  }
+
+  if (process.env.ENABLE_BILLING_CRON !== 'false') {
+    require('./jobs/billingCron').start();
+  } else {
+    logger.info('[Startup] Billing cron disabled by configuration.');
+  }
+
+  if (process.env.ENABLE_CRM_SYNC_CRON !== 'false') {
+    require('./jobs/crmSyncCron').start();
+  } else {
+    logger.info('[Startup] CRM sync cron disabled by configuration.');
+  }
 
   const server = app.listen(PORT, () => {
     logger.info(`🚀 POS Platform API running on port ${PORT} [${process.env.NODE_ENV || 'development'}]`);

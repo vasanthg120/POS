@@ -1,0 +1,30 @@
+
+      - name: Diagnose GitHub OIDC claims
+        env:
+          ACTIONS_ID_TOKEN_REQUEST_URL: ${{ env.ACTIONS_ID_TOKEN_REQUEST_URL }}
+          ACTIONS_ID_TOKEN_REQUEST_TOKEN: ${{ env.ACTIONS_ID_TOKEN_REQUEST_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          TOKEN=$(curl -fsS \
+            -H "Authorization: Bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+            "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=sts.amazonaws.com" \
+            | jq -r '.value')
+
+          export TOKEN
+
+          node <<'NODE'
+          const token = process.env.TOKEN;
+          const payload = JSON.parse(
+            Buffer.from(token.split('.')[1], 'base64url').toString()
+          );
+
+          console.log(JSON.stringify({
+            iss: payload.iss,
+            aud: payload.aud,
+            sub: payload.sub,
+            repository: payload.repository,
+            ref: payload.ref,
+            event_name: payload.event_name
+          }, null, 2));
+          NODE

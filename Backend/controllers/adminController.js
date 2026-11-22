@@ -7,6 +7,7 @@ const RoyaltyConfig = require('../models/royaltyConfig');
 const emailUtil = require('../utils/email');   // ← whole module, not destructured
 const logger    = require('../utils/logger');
 const { seedTenantRoles } = require('../utils/seedTenantRoles');
+const { escapeRegex } = require('../utils/validation');
 
 const generateTenantId = () =>
   'T-' + crypto.randomBytes(4).toString('hex').toUpperCase();
@@ -100,7 +101,7 @@ exports.listTenants = async (req, res, next) => {
     };
 
     if (req.query.search) {
-      const re  = new RegExp(req.query.search, 'i');
+      const re  = new RegExp(escapeRegex(req.query.search), 'i');
       filter.$or = [
         { email: re }, { firstName: re }, { lastName: re }, { businessName: re },
       ];

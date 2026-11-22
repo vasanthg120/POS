@@ -7,6 +7,7 @@ const Payment  = require('../models/payment');
 const Order    = require('../models/order');
 const logger   = require('../utils/logger');
 const { sendPaymentReceipt } = require('../services/receipt.service');
+const { escapeRegex } = require('../utils/validation');
 
 // ── Helper: get Razorpay instance for a tenant ────────────────────────────────
 const getRazorpay = async (tenantId) => {
@@ -253,8 +254,8 @@ exports.getTenantPayments = async (req, res) => {
     // Search
     if (req.query.search) {
       filter.$or = [
-        { gatewayPaymentId: { $regex: req.query.search, $options: 'i' } },
-        { 'billingDetails.email': { $regex: req.query.search, $options: 'i' } },
+        { gatewayPaymentId: { $regex: escapeRegex(req.query.search), $options: 'i' } },
+        { 'billingDetails.email': { $regex: escapeRegex(req.query.search), $options: 'i' } },
       ];
     }
 
@@ -390,7 +391,7 @@ exports.search = async (req, res) => {
     const payments = await Payment.find({
       tenantId,
       $or: [
-        { gatewayPaymentId: { $regex: q, $options: 'i' } },
+        { gatewayPaymentId: { $regex: escapeRegex(q), $options: 'i' } },
       ],
     }).populate({ path: 'orderId', select: 'customerInfo notes quotationNo orderNumber' })
       .sort({ createdAt: -1 }).limit(10).lean();
@@ -399,10 +400,10 @@ exports.search = async (req, res) => {
     const orders = await Order.find({
       tenantId,
       $or: [
-        { quotationNo: { $regex: q, $options: 'i' } },
-        { notes      : { $regex: q, $options: 'i' } },
-        { 'customerInfo.email': { $regex: q, $options: 'i' } },
-        { 'customerInfo.name' : { $regex: q, $options: 'i' } },
+        { quotationNo: { $regex: escapeRegex(q), $options: 'i' } },
+        { notes      : { $regex: escapeRegex(q), $options: 'i' } },
+        { 'customerInfo.email': { $regex: escapeRegex(q), $options: 'i' } },
+        { 'customerInfo.name' : { $regex: escapeRegex(q), $options: 'i' } },
       ],
     }).select('_id quotationNo notes customerInfo').limit(20).lean();
 

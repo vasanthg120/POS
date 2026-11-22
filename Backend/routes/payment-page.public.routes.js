@@ -21,6 +21,7 @@ const PC_API = 'https://api.prospectconnect.ai/quotes/getQuotes';
 
 // ── Lazy-load Tenant model so this file can be required before mongoose connects
 const getTenant = () => require('../models/tenant');
+const { escapeRegex } = require('../utils/validation');
 
 // ── Helper: find tenant by payment-page slug OR city
 //    NOT .lean() — we need the model instance so getCRMKey() works
@@ -29,7 +30,7 @@ async function tenantBySlug(slug) {
   return Tenant.findOne({
     $or: [
       { paymentPageSlug: slug },
-      { city: { $regex: new RegExp(`^${slug}$`, 'i') } },
+      { city: { $regex: new RegExp(`^${escapeRegex(slug)}$`, 'i') } },
     ],
   // Force-include whichever encrypted key field the schema marks select:false
   }).select('+crm.encryptedApiKey +crm.apiKey +crm.key');
@@ -146,7 +147,7 @@ router.get('/tenant/:slug', async (req, res, next) => {
     const tenant = await Tenant.findOne({
       $or: [
         { paymentPageSlug: req.params.slug },
-        { city: { $regex: new RegExp(`^${req.params.slug}$`, 'i') } },
+        { city: { $regex: new RegExp(`^${escapeRegex(req.params.slug)}$`, 'i') } },
       ],
     }).lean();
 

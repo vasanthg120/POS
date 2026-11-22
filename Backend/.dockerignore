@@ -1,0 +1,12 @@
+node_modules
+.env
+.env.*
+logs
+admin
+coverage
+tests
+.git
+.gitignore
+Dockerfile*
+
+*.pre-docker-*

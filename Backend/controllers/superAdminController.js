@@ -118,9 +118,10 @@ exports.getQuotationsAcrossTenants = asyncHandler(async (req, res) => {
   const summary = {
     total: rows.length,
     totalAmount: rows.reduce((s, r) => s + r.amount, 0),
-    approved: rows.filter(r => ['paid', 'partially_paid'].includes(r.paymentStatus)).length,
-    pending: rows.filter(r => r.paymentStatus === 'pending').length,
-    rejectedExpired: rows.filter(r => r.paymentStatus === 'failed' || r.quotationStatus === 'Cancelled').length,
+    // Same buckets as the dashboard KPIs (superAdminAggregation quoteOutcome).
+    approved: rows.filter(r => r.outcome === 'approved').length,
+    pending: rows.filter(r => r.outcome === 'pending').length,
+    rejectedExpired: rows.filter(r => r.outcome === 'rejectedOrExpired').length,
   };
 
   const { pageRows, pagination } = paginate(rows, req);

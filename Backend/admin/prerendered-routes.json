@@ -1,0 +1,30 @@
+{
+  "routes": {
+    "/": {},
+    "/admin": {},
+    "/admin/billing": {},
+    "/admin/dashboard": {},
+    "/admin/margin-calculator": {},
+    "/admin/payments": {},
+    "/admin/quotations": {},
+    "/admin/rbac": {},
+    "/admin/royalty": {},
+    "/admin/settings": {},
+    "/admin/tenants": {},
+    "/admin/tracking": {},
+    "/auth": {},
+    "/auth/forgot-password": {},
+    "/auth/login": {},
+    "/auth/reset-password": {},
+    "/billing": {},
+    "/dashboard": {},
+    "/margin-calculator": {},
+    "/payments": {},
+    "/quotations": {},
+    "/rbac": {},
+    "/royalty": {},
+    "/settings": {},
+    "/tracking": {},
+    "/verify-email": {}
+  }
+}
