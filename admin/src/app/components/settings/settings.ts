@@ -8,6 +8,7 @@ import {
 import { Tenant } from '../services/tenant';
 import { Auth } from '../services/auth';
 import { Crm, CrmSyncStatus } from '../services/crm';
+import { ApiIntegration, ApiKeyStatus } from '../services/api-integration';
 import { describeHttpError } from '../services/api-error';
 import { AfterViewChecked } from '@angular/core';
 
@@ -17,7 +18,7 @@ const apiMessage = (err: any, fallback: string): string => describeHttpError(err
 /** Display names for the `crm.provider` values the backend stores. */
 const CRM_PROVIDER_LABELS: Record<string, string> = { prospectconnect: 'ProspectConnect' };
 
-export type SettingsTab = 'business' | 'razorpay' | 'crm' | 'payment' | 'password';
+export type SettingsTab = 'business' | 'razorpay' | 'crm' | 'payment' | 'api' | 'password';
 
 function passwordMatchValidator(g: AbstractControl) {
   return g.get('newPassword')?.value === g.get('confirmPassword')?.value
@@ -58,6 +59,21 @@ export class Settings implements OnInit {
   syncingCRM = signal(false);
   /** Why the sync status could not be loaded — shown instead of "not synced yet". */
   crmSyncError = signal<string | null>(null);
+
+  // ── API Integration (Settings → API Integration, Haive AI Agent) ───────
+  private apiIntegration = inject(ApiIntegration);
+  /** Public base URL Haive calls, e.g. https://pos.pantheras.io/api/v1 */
+  readonly apiBaseUrl = this.apiIntegration.apiBaseUrl;
+  apiKeyState = signal<ApiKeyStatus | null>(null);
+  apiKeyLoading = signal(false);
+  apiKeyBusy = signal(false);
+  apiKeyError = signal('');
+  /** The full key — held only in memory right after generate/regenerate, cleared on Done or leaving the tab. */
+  revealedApiKey = signal<string | null>(null);
+  apiConfirm = signal<'' | 'regenerate' | 'revoke'>('');
+  copiedField = signal<'' | 'key' | 'endpoint' | 'curl'>('');
+  /** Keys can read the whole account's data: account owners only (the API enforces this too). */
+  canManageApiKeys = computed(() => !this.auth.isSubUser());
 
   /** Connected provider's name, from the tenant settings the backend returned. */
   crmProviderLabel(): string {
@@ -177,10 +193,94 @@ export class Settings implements OnInit {
   }
 
   setTab(tab: SettingsTab): void {
+    // A just-generated key is never kept around once the user moves on.
+    if (tab !== 'api') { this.revealedApiKey.set(null); this.apiConfirm.set(''); }
     this.activeTab.set(tab);
     this.success.set('');
     this.error.set('');
     if (tab === 'crm') this.loadCrmSyncStatus();
+    if (tab === 'api') this.loadApiKeyStatus();
+  }
+
+  // ── API Integration ─────────────────────────────────────────────────────
+
+  loadApiKeyStatus(): void {
+    if (!this.canManageApiKeys()) return;
+    this.apiKeyLoading.set(true);
+    this.apiKeyError.set('');
+    this.apiIntegration.getStatus().subscribe({
+      next: (res) => { this.apiKeyState.set(res.data); this.apiKeyLoading.set(false); },
+      error: (err) => {
+        this.apiKeyError.set(apiMessage(err, 'Could not load the API key status.'));
+        this.apiKeyLoading.set(false);
+      },
+    });
+  }
+
+  generateApiKey(): void { this.runApiKeyAction('generate'); }
+
+  /** First click asks for confirmation inline; the confirm button runs it. */
+  askApiConfirm(action: 'regenerate' | 'revoke'): void { this.apiConfirm.set(action); }
+  cancelApiConfirm(): void { this.apiConfirm.set(''); }
+
+  confirmApiAction(): void {
+    const action = this.apiConfirm();
+    if (action) this.runApiKeyAction(action);
+  }
+
+  private runApiKeyAction(action: 'generate' | 'regenerate' | 'revoke'): void {
+    this.apiKeyBusy.set(true);
+    this.apiKeyError.set('');
+    this.clearMessages();
+    const call = action === 'generate' ? this.apiIntegration.generate()
+      : action === 'regenerate' ? this.apiIntegration.regenerate()
+      : this.apiIntegration.revoke();
+    call.subscribe({
+      next: (res) => {
+        const { apiKey, ...state } = res.data;
+        this.apiKeyState.set(state);
+        this.revealedApiKey.set(apiKey ?? null);
+        this.apiConfirm.set('');
+        this.apiKeyBusy.set(false);
+        this.success.set(res.message);
+      },
+      error: (err) => {
+        this.apiKeyError.set(apiMessage(err, 'The API key action failed.'));
+        this.apiConfirm.set('');
+        this.apiKeyBusy.set(false);
+        // Someone else may have changed the key meanwhile — show the real state.
+        if (err?.status === 409 || err?.status === 404) this.loadApiKeyStatus();
+      },
+    });
+  }
+
+  dismissRevealedKey(): void { this.revealedApiKey.set(null); }
+
+  copyValue(text: string | null | undefined, field: 'key' | 'endpoint' | 'curl'): void {
+    if (!text) return;
+    navigator.clipboard?.writeText(text).then(() => {
+      this.copiedField.set(field);
+      setTimeout(() => { if (this.copiedField() === field) this.copiedField.set(''); }, 2000);
+    }).catch(() => this.apiKeyError.set('Copy failed — select the text and copy it manually.'));
+  }
+
+  /** Example request shown under the credentials (placeholder, never the real key). */
+  apiCurlExample(): string {
+    return `curl -H "Authorization: Bearer YOUR_API_KEY" ${this.apiBaseUrl}/quotations`;
+  }
+
+  apiKeyStatusLabel(): string {
+    switch (this.apiKeyState()?.status) {
+      case 'active':  return 'Active';
+      case 'revoked': return 'Revoked';
+      case 'none':    return 'Not generated';
+      default:        return '—';
+    }
+  }
+
+  apiRevokedReasonLabel(): string {
+    const r = this.apiKeyState()?.key?.revokedReason;
+    return r === 'regenerated' ? 'replaced by a new key' : r === 'tenant_deleted' ? 'account removed' : 'revoked';
   }
 
   /** Real sync health for the connected-CRM card (replaces the old hardcoded "Active"). */
@@ -263,9 +363,9 @@ export class Settings implements OnInit {
 
   /** Returns true if a setup tab is accessible based on progress */
   isTabAccessible(tab: SettingsTab): boolean {
-    if (tab === 'password') return true; // always accessible
+    if (tab === 'password' || tab === 'api') return true; // always accessible
     const idx: Record<SettingsTab, number> = {
-      business: 0, razorpay: 1, crm: 2, payment: 3, password: 99,
+      business: 0, razorpay: 1, crm: 2, payment: 3, api: 99, password: 99,
     };
     return this.unlockedStep() >= idx[tab];
   }

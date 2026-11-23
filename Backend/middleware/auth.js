@@ -2,7 +2,7 @@
 
 const jwt    = require('../utils/jwt');
 const logger = require('../utils/logger');
-const Tenant = require('../models/tenant');
+const { checkAccountAccess, stripReservedPermissions } = require('../utils/accountAccess');
 
 const protect = async (req, res, next) => {
   try {
@@ -42,22 +42,22 @@ const protect = async (req, res, next) => {
       // tenantId → parent's tenantId string for sub-users, own for primaries.
       //            Used by RBAC / member controllers to scope DB queries.
       tenantId: payload.effectiveTenantId ?? payload.tenantId,
+
+      // Reserved keys (Tenant Management) are never honoured from a token,
+      // even one issued before they were made ungrantable.
+      permissions: stripReservedPermissions(payload.permissions),
     };
 
-    // Check suspension on every request for sub-users
-    if (payload.isSubUser) {
-      const member = await Tenant
-        .findById(payload.sub)
-        .select('subUserStatus isSubUser');
-
-      if (!member || member.subUserStatus === 'suspended') {
-        return res.status(403).json({
-          success: false,
-          code   : 'ACCOUNT_SUSPENDED',
-          message: 'Your access has been suspended. Contact your administrator.',
-        });
-      }
+    // Account state on every request: deleted / disabled / billing-suspended
+    // accounts, suspended team members, and team members whose tenant was
+    // disabled are refused even while their access token is still valid.
+    // (This used to check sub-user suspension only, so a tenant disabled in
+    // Tenant Management kept working until it chose to log out.)
+    const { account, problem } = await checkAccountAccess(payload.sub);
+    if (problem) {
+      return res.status(problem.status).json({ success: false, code: problem.code, message: problem.message });
     }
+    req.account = account;
 
     next();
   } catch (err) {

@@ -1,12 +1,13 @@
 'use strict';
 
 const crypto = require('crypto');
-let uuidv4;
-(async () => { ({ v4: uuidv4 } = await import('uuid')); })();
 const Tenant = require('../models/tenant');
 const jwt = require('../utils/jwt');
 const email = require('../utils/email');
 const logger = require('../utils/logger');
+const {
+  stripReservedPermissions, accountAccessProblem, invalidateAccountAccess,
+} = require('../utils/accountAccess');
 
 // ── Cookie helper ─────────────────────────────────────────────────────────────
 const setRefreshCookie = (res, token) => {
@@ -36,55 +37,10 @@ const generateSlug = async (businessName, city) => {
   return slug;
 };
 
-// ── REGISTER ──────────────────────────────────────────────────────────────────
-exports.register = async (req, res) => {
-  try {
-    const { firstName, lastName, email: rawEmail, phone, password, businessName, city, currency } = req.body;
-    const emailLower = rawEmail.toLowerCase();
-
-    const exists = await Tenant.findOne({ email: emailLower });
-    if (exists) {
-      return res.status(409).json({ success: false, code: 'EMAIL_EXISTS', message: 'An account with this email already exists.' });
-    }
-
-    const slugBase = (businessName || emailLower.split('@')[0]).toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 20);
-    const tenantId = `${slugBase}-${uuidv4().split('-')[0]}`;
-
-    const tenant = new Tenant({
-      firstName, lastName,
-      email: emailLower,
-      phone, password,
-      businessName: businessName || '',
-      city: city || '',
-      currency: currency || 'INR',
-      tenantId,
-    });
-
-    if (businessName && city) {
-      const slug = await generateSlug(businessName, city);
-      tenant.paymentPageSlug = slug;
-      tenant.paymentPageUrl = buildPayUrl(slug);
-    }
-
-    const verifyToken = tenant.createEmailVerifyToken();
-    await tenant.save();
-
-    email.sendVerificationEmail(tenant, verifyToken).catch(e =>
-      logger.error(`[Register] Email send failed: ${e.message}`)
-    );
-
-    logger.info(`[Register] New tenant: ${emailLower} (tenantId: ${tenantId})`);
-
-    return res.status(201).json({
-      success: true,
-      message: 'Registration successful. Please verify your email.',
-      data: { email: tenant.email, tenantId },
-    });
-  } catch (err) {
-    logger.error(`[Register] ${err.message}`);
-    return res.status(500).json({ success: false, message: 'Internal server error.' });
-  }
-};
+// ── No self-registration ─────────────────────────────────────────────────────
+// Tenants are created ONLY by the organisation Super Admin through
+// POST /api/admin/tenants (adminController.createTenant). The old public
+// `register` handler that let anyone create a tenant account has been removed.
 
 // ── Builds the tenant payload returned to Angular on login ────────────────────
 const buildLoginTenantPayload = async (tenant) => {
@@ -146,17 +102,16 @@ exports.login = async (req, res) => {
       return res.status(403).json({ success: false, code: 'EMAIL_NOT_VERIFIED', message: 'Please verify your email before logging in.' });
     }
 
-    if (!tenant.isActive) {
-      return res.status(403).json({ success: false, code: 'ACCOUNT_DISABLED', message: 'Your account has been disabled.' });
-    }
-
-    if (tenant.billingSuspended) {
-      return res.status(403).json({
-        success: false,
-        code: 'BILLING_SUSPENDED',
-        message: 'Your subscription payment is overdue. Please contact the platform admin to resume access.',
+    // Disabled / billing-suspended accounts — and team members whose tenant is
+    // disabled or suspended (that used to be missed: a disabled tenant's staff
+    // could still sign in).
+    const accessProblem = await accountAccessProblem(tenant);
+    if (accessProblem) {
+      return res.status(accessProblem.status).json({
+        success: false, code: accessProblem.code, message: accessProblem.message,
       });
     }
+    invalidateAccountAccess(tenant._id);
 
     await Tenant.findByIdAndUpdate(tenant._id, {
       loginAttempts: 0,
@@ -217,7 +172,7 @@ exports.login = async (req, res) => {
         rbacRoleName: tenant.rbacRoleName ?? null,
         subUserStatus: tenant.subUserStatus ?? null,
         permissions: tenant.isSubUser
-          ? (tenant.rbacRoleId?.permissions ?? [])
+          ? stripReservedPermissions(tenant.rbacRoleId?.permissions)
           : [],
       },
       tenant: await buildLoginTenantPayload(tenant),
@@ -356,6 +311,18 @@ exports.refresh = async (req, res) => {
       return res.status(401).json({ success: false, message: 'Token reuse detected. Please log in again.' });
     }
 
+    // Re-check the account before minting new tokens. Refresh used to skip
+    // this, so a tenant disabled in Tenant Management stayed signed in
+    // indefinitely by refreshing every 15 minutes.
+    const accessProblem = await accountAccessProblem(tenant);
+    if (accessProblem) {
+      await Tenant.findByIdAndUpdate(tenant._id, { $pull: { refreshTokens: { token } } });
+      res.clearCookie('refreshToken', { path: '/api/auth/refresh' });
+      return res.status(accessProblem.status).json({
+        success: false, code: accessProblem.code, message: accessProblem.message,
+      });
+    }
+
     // Re-resolve parent _id in case it changed
     let effectiveTenantObjId = String(tenant._id);
     if (tenant.isSubUser && tenant.parentTenantId) {
@@ -462,8 +429,10 @@ const buildPayload = (tenant, parentObjId = null) => ({
   rbacRoleId: tenant.rbacRoleId?._id ?? tenant.rbacRoleId ?? null,
   rbacRoleName: tenant.rbacRoleName ?? null,
   subUserStatus: tenant.subUserStatus ?? null,
+  // Tenant Management is never carried in a token: reserved keys are stripped
+  // even if a legacy role document still holds them.
   permissions: tenant.isSubUser
-    ? (tenant.rbacRoleId?.permissions ?? [])
+    ? stripReservedPermissions(tenant.rbacRoleId?.permissions)
     : [],
 });
 

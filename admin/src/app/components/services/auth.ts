@@ -139,9 +139,14 @@ export class Auth {
     return !!this._state.value.accessToken;
   }
 
-  /** Returns true ONLY for the platform superadmin. */
+  /**
+   * Returns true ONLY for the organisation Super Admin account itself. Team
+   * members are never role 'superadmin' (the backend enforces this too); the
+   * isSubUser check is belt-and-braces for a stale or edited session.
+   */
   isSuperAdmin(): boolean {
-    return this._state.value.user?.role === 'superadmin';
+    const user = this._state.value.user;
+    return user?.role === 'superadmin' && user?.isSubUser !== true;
   }
 
   /** Returns true for any regular tenant user. */
@@ -172,16 +177,17 @@ export class Auth {
    *
    * Rules:
    *  ┌─────────────────────────────────────────────────────────────────┐
-   *  │ Non-sub-user (superadmin or tenant owner)                       │
-   *  │   → Full access to all pages including 'tenants'                │
+   *  │ Organisation Super Admin account                                │
+   *  │   → Everything, including 'tenants' (Tenant Management)         │
    *  ├─────────────────────────────────────────────────────────────────┤
-   *  │ Sub-user under SUPERADMIN (parentTenantId === 'SUPERADMIN')     │
-   *  │   → Exactly what the superadmin granted in their RBAC role      │
-   *  │   → CAN include 'tenants' (Add Tenant) if superadmin chose to   │
+   *  │ Tenant owner (not a sub-user)                                   │
+   *  │   → All tenant pages; never 'tenants'                           │
    *  ├─────────────────────────────────────────────────────────────────┤
-   *  │ Sub-user under a TENANT (parentTenantId !== 'SUPERADMIN')       │
-   *  │   → Exactly what the tenant granted in their RBAC role          │
-   *  │   → 'tenants' (Add Tenant) is ALWAYS stripped — hard block      │
+   *  │ Any sub-user (staff of a tenant OR of the Super Admin)          │
+   *  │   → Exactly what their RBAC role grants; never 'tenants'.       │
+   *  │     Tenant Management is not grantable through RBAC — the       │
+   *  │     backend strips it from roles and tokens and refuses every   │
+   *  │     /api/admin call from anyone but the Super Admin account.    │
    *  └─────────────────────────────────────────────────────────────────┘
    */
   allowedPages(): Set<string> {
@@ -191,7 +197,7 @@ export class Auth {
 
     // ── Non-sub-users: full access ─────────────────────────────────────────
     if (!user.isSubUser) {
-      return new Set([
+      const pages = new Set([
         'dashboard',
         'payments',
         'quotations',
@@ -200,8 +206,9 @@ export class Auth {
         'royalty',
         'billing',
         'settings',
-        'tenants',
       ]);
+      if (this.isSuperAdmin()) pages.add('tenants');
+      return pages;
     }
 
     // ── All sub-users: resolve from their assigned RBAC permissions ─────────
@@ -212,12 +219,8 @@ export class Auth {
         .map(p => p.pageKey),
     );
 
-    // ── Tenant sub-user: hard-block 'tenants' page regardless of DB data ───
-    // Superadmin sub-users keep whatever permissions were assigned, which
-    // may legitimately include 'tenants' if the superadmin chose to grant it.
-    if (user.parentTenantId !== SUPERADMIN_TENANT_ID) {
-      allowed.delete('tenants');
-    }
+    // ── No sub-user ever gets Tenant Management, whatever the role data says ─
+    allowed.delete('tenants');
 
     return allowed;
   }
@@ -230,6 +233,9 @@ export class Auth {
     const user = this.currentUser();
 
     if (!user) return false;
+
+    // Tenant Management belongs to the Super Admin account alone.
+    if (pageKey === 'tenants') return this.isSuperAdmin();
 
     // Full access for tenant/superadmin owners
     if (!user.isSubUser) return true;
@@ -339,6 +345,18 @@ export class Auth {
           return throwError(() => new Error('Logout error'));
         }),
       );
+  }
+
+  /**
+   * Ends the session locally after the backend refused the account itself
+   * (disabled, suspended, billing-suspended, or deleted) and sends the user to
+   * sign-in with the reason. Not a logout call: the server has already revoked
+   * the session.
+   */
+  endSessionForAccountState(code: string): void {
+    if (!this._state.value.accessToken) return;
+    this.clearSession();
+    this.router.navigate(['/auth/login'], { queryParams: { session: code.toLowerCase() } });
   }
 
   silentRefresh(): void {

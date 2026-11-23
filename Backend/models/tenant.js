@@ -160,6 +160,19 @@ tenantSchema.virtual('isSetupComplete').get(function () {
   return this.setupStep === 'complete';
 });
 
+// ── Role invariants ───────────────────────────────────────────────────────────
+// The organisation Super Admin is a standalone account: never a team member
+// (sub-user) of anything. Team members are always role 'tenant' — they get
+// their access from RBAC permissions, and Tenant Management isn't grantable.
+tenantSchema.pre('validate', function () {
+  if (this.role === 'superadmin' && (this.isSubUser || this.parentTenantId)) {
+    this.invalidate('role', 'The Super Admin account cannot be a team member of another account.');
+  }
+  if (this.isSubUser && this.role !== 'tenant') {
+    this.invalidate('role', 'Team members must have the tenant role.');
+  }
+});
+
 // ── Pre-save: hash password ───────────────────────────────────────────────────
 tenantSchema.pre('save', async function () {
   if (this.isModified('password')) {
@@ -234,5 +247,23 @@ tenantSchema.index({ city: 1 });
 tenantSchema.index({ createdAt: -1 });
 tenantSchema.index({ parentTenantId: 1, isSubUser: 1 });
 tenantSchema.index({ parentTenantId: 1, email: 1 });
+// At most ONE organisation Super Admin, enforced by the database itself (a
+// partial unique index: only documents with role 'superadmin' take part).
+tenantSchema.index(
+  { role: 1 },
+  { unique: true, partialFilterExpression: { role: 'superadmin' }, name: 'one_superadmin' },
+);
 
-module.exports = mongoose.model('Tenant', tenantSchema);
+const Tenant = mongoose.model('Tenant', tenantSchema);
+
+// Index builds fail without stopping the app (e.g. 'one_superadmin' when the
+// database already holds two Super Admin accounts) — make that visible.
+Tenant.on('index', (err) => {
+  if (!err) return;
+  require('../utils/logger').error(`[Tenant] Index build failed: ${err.message}`
+    + (/one_superadmin/.test(err.message)
+      ? ' — more than one account has role "superadmin". Keep the organisation Super Admin and set the others to "tenant".'
+      : ''));
+});
+
+module.exports = Tenant;

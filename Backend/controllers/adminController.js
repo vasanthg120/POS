@@ -8,6 +8,55 @@ const emailUtil = require('../utils/email');   // ← whole module, not destruct
 const logger    = require('../utils/logger');
 const { seedTenantRoles } = require('../utils/seedTenantRoles');
 const { escapeRegex } = require('../utils/validation');
+const { invalidateAccountAccess } = require('../utils/accountAccess');
+const { revokeAllForTenant } = require('../services/apiKey.service');
+
+/*
+ * Tenant Management. Every route here is mounted under /api/admin behind
+ * protect + requireSuperAdmin (routes/index.js), so only the organisation
+ * Super Admin account reaches these handlers. createTenant is the ONLY place
+ * in the system that creates a tenant account.
+ */
+
+/**
+ * Loads the store tenant a Tenant Management action targets. The Super Admin
+ * account and team members (sub-users) are not tenants: they are refused
+ * here, so e.g. the status endpoint can no longer disable the Super Admin
+ * (locking the organisation out) or act on another tenant's staff.
+ * Returns the document, or null after sending the error response.
+ */
+const loadStoreTenant = async (req, res, select = '') => {
+  const tenant = await Tenant.findOne({ tenantId: req.params.tenantId }).select(select);
+  if (!tenant) {
+    res.status(404).json({ success: false, message: 'Tenant not found.' });
+    return null;
+  }
+  if (tenant.role === 'superadmin') {
+    res.status(403).json({
+      success: false, code: 'FORBIDDEN',
+      message: 'The organisation Super Admin account cannot be managed from Tenant Management.',
+    });
+    return null;
+  }
+  if (tenant.isSubUser) {
+    res.status(403).json({
+      success: false, code: 'FORBIDDEN',
+      message: 'This is a team member, not a tenant. Team members are managed from their tenant’s Roles & Permissions.',
+    });
+    return null;
+  }
+  return tenant;
+};
+
+/** Signs a tenant and every member of its team out (all refresh tokens). */
+const revokeTenantSessions = async (tenant) => {
+  const team = await Tenant.find({ parentTenantId: tenant.tenantId, isSubUser: true }).select('_id').lean();
+  await Tenant.updateMany(
+    { $or: [{ _id: tenant._id }, { parentTenantId: tenant.tenantId, isSubUser: true }] },
+    { $set: { refreshTokens: [] } },
+  );
+  invalidateAccountAccess([tenant._id, ...team.map(m => m._id)]);
+};
 
 const generateTenantId = () =>
   'T-' + crypto.randomBytes(4).toString('hex').toUpperCase();
@@ -39,12 +88,12 @@ exports.createTenant = async (req, res, next) => {
       businessName, city, currency = 'INR',
     } = req.body;
 
-    const existing = await Tenant.findOne({ email });
+    const existing = await Tenant.findOne({ email: String(email).toLowerCase() });
     if (existing) {
       return res.status(409).json({
         success: false,
         code   : 'EMAIL_EXISTS',
-        message: 'A tenant with this email already exists.',
+        message: 'An account with this email already exists.',
       });
     }
 
@@ -128,10 +177,8 @@ exports.listTenants = async (req, res, next) => {
 // ── GET /api/admin/tenants/:tenantId ─────────────────────────────────────────
 exports.getTenant = async (req, res, next) => {
   try {
-    const tenant = await Tenant.findOne({ tenantId: req.params.tenantId });
-    if (!tenant) {
-      return res.status(404).json({ success: false, message: 'Tenant not found.' });
-    }
+    const tenant = await loadStoreTenant(req, res);
+    if (!tenant) return;
     return res.json({ success: true, data: safeTenant(tenant) });
   } catch (err) {
     next(err);
@@ -146,16 +193,19 @@ exports.setTenantStatus = async (req, res, next) => {
       return res.status(422).json({ success: false, message: '`isActive` must be a boolean.' });
     }
 
-    const tenant = await Tenant.findOneAndUpdate(
-      { tenantId: req.params.tenantId },
-      { isActive },
-      { new: true },
-    );
-    if (!tenant) {
-      return res.status(404).json({ success: false, message: 'Tenant not found.' });
-    }
+    const tenant = await loadStoreTenant(req, res);
+    if (!tenant) return;
 
-    logger.info(`[Admin] Tenant ${tenant.email} isActive → ${isActive} by ${req.user.email}`);
+    tenant.isActive = isActive;
+    await tenant.save();
+
+    // Disabling takes effect now, not when tokens expire: the tenant and its
+    // whole team are signed out, and protect/refresh/login refuse them
+    // (utils/accountAccess.js) until the tenant is enabled again.
+    if (!isActive) await revokeTenantSessions(tenant);
+    else invalidateAccountAccess();
+
+    logger.info(`[Admin] Tenant ${tenant.tenantId} isActive → ${isActive} by superadmin ${req.user.sub}`);
     return res.json({
       success: true,
       message: `Tenant ${isActive ? 'enabled' : 'disabled'} successfully.`,
@@ -169,14 +219,11 @@ exports.setTenantStatus = async (req, res, next) => {
 // ── PATCH /api/admin/tenants/:tenantId ────────────────────────────────────────
 exports.updateTenant = async (req, res, next) => {
   try {
-    const tenant = await Tenant.findOne({ tenantId: req.params.tenantId });
-    if (!tenant) {
-      return res.status(404).json({ success: false, message: 'Tenant not found.' });
-    }
-    if (tenant.role === 'superadmin') {
-      return res.status(403).json({ success: false, message: 'The platform superadmin account cannot be edited here.' });
-    }
+    const tenant = await loadStoreTenant(req, res);
+    if (!tenant) return;
 
+    // Profile fields only — role, tenantId, isSubUser etc. are never taken
+    // from the request body.
     const {
       firstName, lastName, email, phone, businessName, city, currency,
     } = req.body;
@@ -214,18 +261,17 @@ exports.updateTenant = async (req, res, next) => {
 // ── DELETE /api/admin/tenants/:tenantId ───────────────────────────────────────
 exports.deleteTenant = async (req, res, next) => {
   try {
-    const tenant = await Tenant.findOne({ tenantId: req.params.tenantId });
-    if (!tenant) {
-      return res.status(404).json({ success: false, message: 'Tenant not found.' });
-    }
-    if (tenant.role === 'superadmin') {
-      return res.status(403).json({ success: false, message: 'The platform superadmin account cannot be deleted.' });
-    }
+    const tenant = await loadStoreTenant(req, res);
+    if (!tenant) return;
 
+    await revokeTenantSessions(tenant);
+    // Integration API keys stop working with the tenant (kept as revoked history).
+    await revokeAllForTenant(tenant._id, { actorId: req.user.sub, reason: 'tenant_deleted' });
     await Tenant.deleteMany({ parentTenantId: tenant.tenantId, isSubUser: true });
     await TenantSubscription.deleteOne({ tenantId: tenant.tenantId });
     await RoyaltyConfig.deleteOne({ tenantId: tenant.tenantId });
     await Tenant.deleteOne({ _id: tenant._id });
+    invalidateAccountAccess();
 
     logger.info(`[Admin] Tenant ${tenant.email} (${tenant.tenantId}) deleted by ${req.user.email}`);
     return res.json({
@@ -240,10 +286,8 @@ exports.deleteTenant = async (req, res, next) => {
 // ── POST /api/admin/tenants/:tenantId/reset-password ─────────────────────────
 exports.resetTenantPassword = async (req, res, next) => {
   try {
-    const tenant = await Tenant.findOne({ tenantId: req.params.tenantId }).select('+password');
-    if (!tenant) {
-      return res.status(404).json({ success: false, message: 'Tenant not found.' });
-    }
+    const tenant = await loadStoreTenant(req, res, '+password');
+    if (!tenant) return;
 
     const rawPassword    = crypto.randomBytes(12).toString('base64').slice(0, 16) + '@1Aa';
     tenant.password      = rawPassword;

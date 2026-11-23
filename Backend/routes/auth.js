@@ -38,12 +38,6 @@ const forgotLimiter = rateLimit({
   message : { success: false, message: 'Too many password reset requests. Try again in 1 hour.' },
 });
 
-const registerLimiter = rateLimit({
-  windowMs: 60 * 60 * 1000,
-  max     : 20,
-  message : { success: false, message: 'Too many registration attempts. Try again later.' },
-});
-
 const resendLimiter = rateLimit({
   windowMs: 60 * 60 * 1000,
   max     : 5,
@@ -66,43 +60,9 @@ const passwordRules = () =>
 
 // ── Routes ────────────────────────────────────────────────────────────────
 
-// POST /api/auth/register
-router.post(
-  '/register',
-  registerLimiter,
-  [
-    body('firstName')
-      .trim().notEmpty().withMessage('First name is required.')
-      .isLength({ max: 50 }).withMessage('First name too long.'),
-    body('lastName')
-      .trim().notEmpty().withMessage('Last name is required.')
-      .isLength({ max: 50 }).withMessage('Last name too long.'),
-    body('email')
-      .isEmail().withMessage('Valid email is required.')
-      .normalizeEmail(),
-    body('phone')
-      .optional()
-      .matches(/^[+]?[\d\s\-()]{7,15}$/)
-      .withMessage('Invalid phone number.'),
-    passwordRules(),
-    body('confirmPassword')
-      .custom((value, { req }) => {
-        if (value !== req.body.password) throw new Error('Passwords do not match.');
-        return true;
-      }),
-    body('businessName')
-      .optional().trim().isLength({ max: 100 }).withMessage('Business name too long.'),
-    body('city')
-      .optional().trim().isLength({ max: 50 }),
-    body('currency')
-      .optional().isIn(['INR', 'USD', 'EUR', 'GBP', 'AED'])
-      .withMessage('Unsupported currency.'),
-    body('termsAccepted')
-      .equals('true').withMessage('You must accept the Terms & Conditions.'),
-  ],
-  validate,
-  authController.register
-);
+// POST /api/auth/register was removed: there is no self-registration.
+// Tenants are created only by the organisation Super Admin
+// (POST /api/admin/tenants). This legacy router is not mounted by app.js.
 
 // POST /api/auth/login
 router.post(

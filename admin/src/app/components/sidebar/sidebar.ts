@@ -162,12 +162,6 @@ const ROUTE_SEGMENT: Record<string, string> = {
   'Settings'            : 'settings',
 };
 
-/**
- * The superadmin's tenantId as stored in MongoDB.
- * Must match the value in auth.ts SUPERADMIN_TENANT_ID.
- */
-const SUPERADMIN_TENANT_ID = 'SUPERADMIN';
-
 @Component({
   selector   : 'app-sidebar',
   standalone : true,
@@ -213,25 +207,20 @@ export class Sidebar implements OnInit {
     const allowedPages = this.auth.allowedPages();
     const isSubUser    = user?.isSubUser ?? false;
 
-    // Is this a sub-user whose parent is a tenant (not superadmin)?
-    // These users can NEVER see Add Tenant even if permissions say otherwise.
-    const isTenantSubUser =
-      isSubUser && user?.parentTenantId !== SUPERADMIN_TENANT_ID;
+    // Tenant Management items are for the Super Admin account only — never a
+    // sub-user, whichever team it belongs to (the backend refuses them too).
+    const canManageTenants = this.auth.isSuperAdmin();
 
     this.navItems = ALL_NAV_ITEMS
       .filter(item => {
         // ── Step 1: top-level role must match ──────────────────────────────
         if (!item.roles.includes(role)) return false;
 
-        // ── Step 2: hard-block Add Tenant for tenant sub-users ─────────────
-        // Belt-and-suspenders on top of allowedPages() which already strips
-        // 'tenants' for tenant sub-users. This prevents any edge case where
-        // a stale session or legacy permission data could leak the item.
-        if (isTenantSubUser && item.pageKey === 'tenants') return false;
+        // ── Step 2: Tenant Management only for the Super Admin account ─────
+        if (item.pageKey === 'tenants' && !canManageTenants) return false;
 
         // ── Step 3: all sub-users filtered by their allowedPages set ───────
-        // For superadmin sub-users this includes 'tenants' if granted.
-        // For tenant sub-users 'tenants' was already deleted in allowedPages().
+        // ('tenants' is never in a sub-user's allowedPages.)
         if (isSubUser && item.pageKey) {
           return allowedPages.has(item.pageKey);
         }

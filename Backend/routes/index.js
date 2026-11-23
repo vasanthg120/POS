@@ -5,9 +5,12 @@
 // Registers all routes with role-based access control.
 //
 // Role matrix:
-//   superadmin → /api/admin/*  (full platform control)
-//   tenant     → /api/tenant/* (own data only)
+//   superadmin → /api/admin/*  (full platform control — the ONE organisation
+//                Super Admin account; the only place tenants are created)
+//   tenant     → /api/tenant/* (own data only; team members are role 'tenant'
+//                and are limited further by RBAC page permissions)
 //   public     → /api/payments/config, /api/payments/create-order, etc.
+//   There is no self-registration: no public route creates an account.
 // ════════════════════════════════════════════════════════════════════════════
 
 const express = require('express');
@@ -29,6 +32,7 @@ const royaltyCtrl = require('../controllers/royaltyController');
 const billingCtrl = require('../controllers/billingController');
 const subscriptionPlanCtrl = require('../controllers/subscriptionPlanController');
 const tenantBillingCtrl = require('../controllers/tenantBillingController');
+const apiKeyCtrl = require('../controllers/apiKeyController');
 
 const { protect } = require('../middleware/auth');
 const requireSuperAdmin = require('../middleware/requireSuperAdmin');
@@ -113,12 +117,15 @@ module.exports = (app) => {
 
   // ══════════════════════════════════════════════════════════════════════════
   // SUPERADMIN  /api/admin/*
-  // Requires: valid JWT + role === 'superadmin'
+  // Requires: valid JWT + the organisation Super Admin account, verified
+  // against the database (middleware/requireSuperAdmin.js). Team members of
+  // the Super Admin never pass, whatever RBAC permissions they hold.
   // ══════════════════════════════════════════════════════════════════════════
   const admin = express.Router();
   admin.use(protect, requireSuperAdmin);   // <── both guards on every route
 
-  // Provision a new tenant (generates credentials, sends welcome email)
+  // Provision a new tenant (generates credentials, sends welcome email).
+  // The ONLY tenant-creation endpoint in the system.
   // ── POST /api/admin/tenants
   admin.post('/tenants', [
     personNameRule('firstName', 'First name'),
@@ -455,6 +462,15 @@ module.exports = (app) => {
     param('invoiceId').notEmpty(),
     ...razorpayVerifyRules(),
   ], validate, tenantBillingCtrl.verifyPayment);
+
+  // ── Settings → API Integration (Haive AI Agent) ──────────────────────────
+  // Account owners only (tenant owner, or the Super Admin for its own space).
+  // The keys authenticate the integration API at /api/v1
+  // (routes/integration.v1.routes.js).
+  tenant.get('/integrations/api-key', apiKeyCtrl.ownerOnly, apiKeyCtrl.getStatus);
+  tenant.post('/integrations/api-key', limiter(10, 15), apiKeyCtrl.ownerOnly, apiKeyCtrl.generate);
+  tenant.post('/integrations/api-key/regenerate', limiter(10, 15), apiKeyCtrl.ownerOnly, apiKeyCtrl.regenerate);
+  tenant.delete('/integrations/api-key', limiter(10, 15), apiKeyCtrl.ownerOnly, apiKeyCtrl.revoke);
 
   app.use('/api/tenant', tenant);
 

@@ -10,6 +10,7 @@ const {
 } = require('../utils/email');
 const logger   = require('../utils/logger');
 const { escapeRegex } = require('../utils/validation');
+const { stripReservedPermissions, invalidateAccountAccess } = require('../utils/accountAccess');
 
 // ── Temp password generator (Node 14+ compatible) ─────────────────────────────
 const randomChar = (str) => str[crypto.randomBytes(1)[0] % str.length];
@@ -56,22 +57,13 @@ const safeMember = (u) => ({
   createdAt      : u.createdAt,
 });
 
-/**
- * Resolve the effective permissions for a sub-user being created/assigned.
- *
- * The permissions are stored on the RbacRole document, not the member.
- * However, when we embed/resolve them at login (JWT population), we must
- * ensure 'tenants' never leaks to a sub-user whose parent is a tenant
- * (not superadmin).
- *
- * This helper is a defence-in-depth check: the primary enforcement is in
- * rbacController.filterPermissionsForCaller which blocks 'tenants' from
- * ever being persisted on a tenant-owned role in the first place.
- *
- * parentTenantId  — the tenantId of the inviting user (req.user.tenantId)
- * callerRole      — req.user.role ('superadmin' | 'tenant')
+/*
+ * Team members (sub-users) are always role 'tenant' and get their access
+ * from their RBAC role. Tenant Management ('tenants') is never part of that
+ * access — for any team, including the Super Admin's own staff. It is
+ * stripped when roles are saved (rbacController / models/rbacRole.js) and
+ * again when permissions are put into a login token (authController).
  */
-const isSuperAdminCaller = (callerRole) => callerRole === 'superadmin';
 
 // ── GET /api/tenant/members ───────────────────────────────────────────────────
 exports.listMembers = async (req, res, next) => {
@@ -99,20 +91,14 @@ exports.listMembers = async (req, res, next) => {
 exports.inviteMember = async (req, res, next) => {
   try {
     const { tenantId } = req.user;
-    const callerRole   = req.user.role; // 'superadmin' | 'tenant'
     const { email, firstName, lastName, phone, roleId } = req.body;
 
     // Validate role belongs to this tenant
     const role = await RbacRole.findOne({ _id: roleId, tenantId });
     if (!role) return res.status(404).json({ success: false, message: 'Role not found.' });
 
-    // Defence-in-depth: if the role somehow contains 'tenants' page permission
-    // but the caller is a tenant (not superadmin), strip it before the invite
-    // proceeds. The primary guard is in rbacController, but this ensures
-    // any legacy data cannot be exploited through the invite flow.
-    if (!isSuperAdminCaller(callerRole)) {
-      role.permissions = (role.permissions ?? []).filter(p => p.pageKey !== 'tenants');
-    }
+    // Defence-in-depth for legacy data: Tenant Management never comes with a role.
+    role.permissions = stripReservedPermissions(role.permissions);
 
     // Block if already a member of this tenant
     const existing = await Tenant.findOne({ email: email.toLowerCase(), parentTenantId: tenantId });
@@ -180,17 +166,13 @@ exports.inviteMember = async (req, res, next) => {
 exports.assignExistingMember = async (req, res, next) => {
   try {
     const { tenantId } = req.user;
-    const callerRole   = req.user.role; // 'superadmin' | 'tenant'
     const { email, roleId } = req.body;
 
     const role = await RbacRole.findOne({ _id: roleId, tenantId });
     if (!role) return res.status(404).json({ success: false, message: 'Role not found.' });
 
-    // Defence-in-depth: strip 'tenants' page permission from the role
-    // if the assigning user is a tenant (not superadmin).
-    if (!isSuperAdminCaller(callerRole)) {
-      role.permissions = (role.permissions ?? []).filter(p => p.pageKey !== 'tenants');
-    }
+    // Defence-in-depth for legacy data: Tenant Management never comes with a role.
+    role.permissions = stripReservedPermissions(role.permissions);
 
     // Must already have a registered account
     const existing = await Tenant.findOne({ email: email.toLowerCase(), isSubUser: false });
@@ -199,6 +181,16 @@ exports.assignExistingMember = async (req, res, next) => {
         success: false,
         code   : 'USER_NOT_FOUND',
         message: 'No registered account found with this email. Use "Invite" to send them a new account invite.',
+      });
+    }
+
+    // The organisation Super Admin is the top-level account — it can never be
+    // pulled into a tenant's team as a member.
+    if (existing.role === 'superadmin') {
+      return res.status(403).json({
+        success: false,
+        code   : 'FORBIDDEN',
+        message: 'The organisation Super Admin account cannot be added to a team.',
       });
     }
 
@@ -310,6 +302,7 @@ exports.setStatus = async (req, res, next) => {
 
     member.subUserStatus = status;
     await member.save();
+    invalidateAccountAccess(member._id);
 
     logger.info(`[Member] ${member.email} → ${status} by ${req.user.email}`);
     return res.json({
@@ -328,6 +321,7 @@ exports.removeMember = async (req, res, next) => {
     if (!member) return res.status(404).json({ success: false, message: 'Member not found.' });
 
     await Tenant.deleteOne({ _id: member._id });
+    invalidateAccountAccess(member._id);
     await RbacRole.findByIdAndUpdate(member.rbacRoleId, { $inc: { memberCount: -1 } });
 
     logger.info(`[Member] ${member.email} removed from tenant ${tenantId} by ${req.user.email}`);

@@ -29,9 +29,25 @@ const seedSuperAdmin = async () => {
 
   const existing = await Tenant.findOne({ email: email.toLowerCase() });
 
+  // There is exactly one organisation Super Admin (also enforced by the
+  // 'one_superadmin' unique index in models/tenant.js). If one already exists
+  // under a different email, this seed must not create or promote a second.
+  const otherSuperAdmin = await Tenant.findOne({
+    role: 'superadmin',
+    ...(existing ? { _id: { $ne: existing._id } } : {}),
+  }).select('_id tenantId');
+
   if (existing) {
     // Ensure the record has the correct role even if it was created earlier
     if (existing.role !== 'superadmin') {
+      if (existing.isSubUser) {
+        logger.error(`[SeedSuperAdmin] ${email} is a team member of ${existing.parentTenantId}; refusing to promote it to Super Admin.`);
+        return;
+      }
+      if (otherSuperAdmin) {
+        logger.error(`[SeedSuperAdmin] A Super Admin already exists (${otherSuperAdmin.tenantId}); refusing to promote ${email} to a second one.`);
+        return;
+      }
       existing.role = 'superadmin';
       await existing.save();
       logger.info(`[SeedSuperAdmin] Existing user ${email} promoted to superadmin.`);
@@ -39,6 +55,12 @@ const seedSuperAdmin = async () => {
       logger.info(`[SeedSuperAdmin] Superadmin ${email} already exists — skipping.`);
     }
     await seedTenantRoles(SUPERADMIN_TENANT_ID);
+    return;
+  }
+
+  if (otherSuperAdmin) {
+    logger.error(`[SeedSuperAdmin] SUPERADMIN_EMAIL (${email}) has no account, but a Super Admin already exists`
+      + ` (${otherSuperAdmin.tenantId}); not creating a second one. Update SUPERADMIN_EMAIL to match.`);
     return;
   }
 

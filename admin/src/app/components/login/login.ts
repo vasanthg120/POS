@@ -25,6 +25,8 @@ export class Login implements OnInit, OnDestroy {
   serverError    = '';
   billingSuspended = false;
   sessionExpired = false;
+  /** Why the server ended the session (account disabled, suspended…), if it did. */
+  sessionEndedReason = '';
 
   private returnUrl = '/dashboard';
   private destroy$  = new Subject<void>();
@@ -44,7 +46,14 @@ export class Login implements OnInit, OnDestroy {
     });
 
     this.returnUrl     = this.route.snapshot.queryParams['returnUrl'] || '/dashboard';
-    this.sessionExpired = this.route.snapshot.queryParams['session'] === 'expired';
+    const session = this.route.snapshot.queryParams['session'];
+    this.sessionExpired = session === 'expired';
+    this.sessionEndedReason = ({
+      account_disabled : 'Your account has been disabled. Contact your administrator.',
+      account_suspended: 'Your access has been suspended. Contact your administrator.',
+      billing_suspended: 'Your subscription payment is overdue. Please contact the platform admin to resume access.',
+      account_not_found: 'This account no longer exists. Contact your administrator.',
+    } as Record<string, string>)[session] ?? '';
 
     // If already logged in, route by role
     this.auth.isLoggedIn$

@@ -29,6 +29,7 @@
 // ════════════════════════════════════════════════════════════════════════════
 
 const Tenant = require('../models/tenant');
+const { invalidateAccountAccess } = require('../utils/accountAccess');
 const TenantSubscription = require('../models/tenantSubscription');
 const SubscriptionPlan = require('../models/subscriptionPlan');
 const BillingAuditLog = require('../models/billingAuditLog');
@@ -280,6 +281,7 @@ const runDailyBillingSweep = async () => {
             if (!tenant.billingSuspended) {
               tenant.billingSuspended = true;
               await tenant.save();
+              invalidateAccountAccess();   // take effect on the next request, not after the cache TTL
               invoice.suspendedAt = now;
               changed = true;
               suspended++;
@@ -334,6 +336,7 @@ const reactivateIfClear = async (tenantId, subscription) => {
 
   tenant.billingSuspended = false;
   await tenant.save();
+  invalidateAccountAccess();
   subscription.tenantStatus = 'active';
   await subscription.save();
   await audit(tenantId, 'reactivated', 'Tenant reactivated — all overdue invoices resolved.', {

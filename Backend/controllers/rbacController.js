@@ -4,6 +4,7 @@ const RbacRole     = require('../models/rbacRole');
 const RbacAuditLog = require('../models/rbacAuditLog');
 const logger       = require('../utils/logger');
 const { escapeRegex } = require('../utils/validation');
+const { stripReservedPermissions } = require('../utils/accountAccess');
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -17,7 +18,8 @@ const safeRole = (r) => ({
   description: r.description,
   color      : r.color,
   isSystem   : r.isSystem,
-  permissions: r.permissions,
+  // Legacy roles may still carry a reserved key in the DB; never show it.
+  permissions: stripReservedPermissions(r.permissions),
   memberCount: r.memberCount,
   createdAt  : r.createdAt,
   updatedAt  : r.updatedAt,
@@ -47,21 +49,17 @@ const audit = async ({ tenantId, roleId, roleName, user, action, detail, changes
 };
 
 /**
- * Strip page keys that the caller is not allowed to grant.
+ * Strip page keys no role may grant.
  *
- * Rules:
- *  - Superadmin  → can grant ANY page key including 'tenants'.
- *  - Tenant owner → can grant everything EXCEPT 'tenants' (Add Tenant).
- *    Even if a crafted request sends it, it is silently removed here
- *    so it is never persisted to the role document.
+ * 'tenants' (Tenant Management) is reserved for the organisation Super Admin
+ * account itself. It used to be grantable by the Super Admin to its own team
+ * members; now NO caller can put it on a role — tenants, tenant owners and the
+ * Super Admin alike. A crafted request that sends it has it silently removed,
+ * so it is never persisted (models/rbacRole.js strips it again on save).
+ * `callerRole` is kept for call-site compatibility; it no longer changes the result.
  */
-const filterPermissionsForCaller = (permissions, callerRole) => {
-  if (!Array.isArray(permissions)) return [];
-  if (callerRole === 'superadmin') return permissions;
-
-  // Tenant context — 'tenants' page must never appear in a tenant-owned role
-  return permissions.filter(p => p.pageKey !== 'tenants');
-};
+// eslint-disable-next-line no-unused-vars
+const filterPermissionsForCaller = (permissions, callerRole) => stripReservedPermissions(permissions);
 
 // ── GET /api/tenant/rbac/roles ────────────────────────────────────────────────
 exports.listRoles = async (req, res, next) => {

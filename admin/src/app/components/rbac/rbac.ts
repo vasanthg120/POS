@@ -99,11 +99,6 @@ const PAGES: Page[] = [
     availableActions: ['view', 'edit'],
     icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>`,
   },
-  {
-    key: 'tenants', label: 'Tenants', category: 'admin',
-    availableActions: ['view', 'edit'],
-    icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>`,
-  },
 ];
 
 const ROLE_COLORS = [
@@ -674,13 +669,10 @@ export class Rbac implements OnInit {
   private readonly auth = inject(Auth);
 
   // Add computed:
-  availablePages = computed(() => {
-    const user = this.auth.currentUser();
-    // Superadmin managing their own RBAC roles can grant 'tenants' access
-    if (!user || user.role === 'superadmin') return PAGES;
-    // Tenant managing roles: strip 'tenants' page from the matrix
-    return PAGES.filter(p => p.key !== 'tenants');
-  });
+  // Tenant Management ('tenants') is not in PAGES: it can't be granted to any
+  // role — not by a tenant, and not by the Super Admin to its own staff. Only
+  // the Super Admin account itself manages tenants (enforced by the API).
+  availablePages = computed(() => PAGES);
 
   // Sub-users with only 'rbac:view' can open this page (e.g. to see their own
   // permissions) but must not see mutating controls — the backend already

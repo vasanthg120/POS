@@ -22,6 +22,16 @@ const rbacRoleSchema = new mongoose.Schema({
     createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'Tenant' },
 }, { timestamps: true });
 
+// 'tenants' stays in the pageKey enum only so legacy documents still load;
+// it is removed before every save — Tenant Management is never grantable
+// through a role (see utils/accountAccess.js RESERVED_PAGE_KEYS).
+rbacRoleSchema.pre('validate', function () {
+    const { RESERVED_PAGE_KEYS } = require('../utils/accountAccess');
+    if (Array.isArray(this.permissions) && this.permissions.some(p => RESERVED_PAGE_KEYS.has(p.pageKey))) {
+        this.permissions = this.permissions.filter(p => !RESERVED_PAGE_KEYS.has(p.pageKey));
+    }
+});
+
 rbacRoleSchema.index({ tenantId: 1, slug: 1 }, { unique: true });
 rbacRoleSchema.index({ tenantId: 1, name: 1 });
 

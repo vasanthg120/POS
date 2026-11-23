@@ -41,7 +41,7 @@ app.use(cors({
   origin      : (origin, cb) => { if (!origin || allowedOrigins.includes(origin)) return cb(null, true); cb(new Error(`CORS: ${origin} not allowed`)); },
   credentials : true,
   methods     : ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'x-idempotency-key'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'x-idempotency-key', 'X-API-Key'],
   maxAge: 3600,
 }));
 
@@ -49,6 +49,11 @@ app.use(compression({ level: 6, threshold: 1024 }));
 app.use(express.json({ limit: '10kb' }));
 app.use(express.urlencoded({ extended: true, limit: '10kb' }));
 app.use(cookieParser());
+
+// Access logs must never contain credentials: redact secret-looking query
+// parameters (API keys, reset/verification tokens) from the logged URL.
+const SECRET_QUERY_PARAMS = /([?&](?:api[_-]?key|apikey|key|token|access_token|secret|password)=)[^&#]*/gi;
+morgan.token('url', (req) => String(req.originalUrl || req.url || '').replace(SECRET_QUERY_PARAMS, '$1[REDACTED]'));
 
 app.use(morgan('combined', {
   stream: { write: msg => logger.info(msg.trim()) },
@@ -78,6 +83,9 @@ app.use('/tenant/settings', tenantSettingsRouter);
 
 const statementsRouter = require('./routes/razorpay.statements.routes');
 app.use('/tenant/statements', statementsRouter);
+
+// ✅ POS Integration API v1 (Haive AI Agent) — API-key auth, tenant-scoped.
+app.use('/api/v1', require('./routes/integration.v1.routes'));
 
 const quotationsRouter = require('./routes/crm.quotes.routes');
 app.use('/tenant/quotes', quotationsRouter);

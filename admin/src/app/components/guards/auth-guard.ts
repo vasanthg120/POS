@@ -15,7 +15,9 @@ export const authGuard: CanActivateFn = (route, state) => {
 };
 
 // ── superAdminGuard ───────────────────────────────────────────────────────────
-// Gates /admin/* — superadmin only.
+// Gates /admin/* (Tenant Management, cross-tenant monitoring, billing) — the
+// organisation Super Admin account only; never a team member. This is UX
+// only: every /api/admin call is enforced server-side as well.
 export const superAdminGuard: CanActivateFn = (_route, _state) => {
   const auth   = inject(Auth);
   const router = inject(Router);
