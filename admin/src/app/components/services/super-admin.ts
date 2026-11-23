@@ -2,6 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Environment } from '../environment/environment';
+import { QuoteDetailData } from '../shared/quote-detail/quote-detail.model';
 
 export interface TenantQuotationStats {
   total: number;
@@ -45,6 +46,8 @@ export interface TenantSnapshot {
 }
 
 export interface TenantsOverviewFilters {
+  /** 'all' = no date bounds (every synced quotation). */
+  period?: 'all';
   month?: number;   // 1-12
   year?: number;
   dateFrom?: string;
@@ -84,20 +87,35 @@ export interface QuotationRow {
   quotationNo: string;
   customerName: string;
   customerEmail: string;
+  customerPhone?: string;
+  companyName?: string;
   quotationDate: string | null;
+  expiryDate?: string | null;
+  isExpired?: boolean;
   amount: number;
+  currency?: string;
   quotationStatus: string;
   paymentStatus: string;
+  approvalStatus?: 'approved' | 'rejected' | 'pending' | 'draft' | string;
+  /** Dashboard KPI bucket. */
+  outcome?: QuoteOutcome;
   paidAmount: number;
+  balanceDue?: number;
   createdBy: string | null;
   relatedDeal: string | null;
   lastUpdated: string | null;
 }
 
+export type QuoteOutcome = 'approved' | 'pending' | 'rejectedOrExpired';
+
 export interface QuotationsFilters extends TenantsOverviewFilters {
   tenantId?: string;
   status?: string;
   paymentStatus?: string;
+  outcome?: QuoteOutcome | '';
+  approval?: string;
+  sort?: 'amount' | 'customerName' | 'quotationDate' | 'paidAmount';
+  dir?: 'asc' | 'desc';
   search?: string;
   minAmount?: number;
   maxAmount?: number;
@@ -108,6 +126,8 @@ export interface QuotationsFilters extends TenantsOverviewFilters {
 export interface QuotationsSummary {
   total: number;
   totalAmount: number;
+  paidAmount?: number;
+  balanceDue?: number;
   approved: number;
   pending: number;
   rejectedExpired: number;
@@ -149,6 +169,8 @@ export interface PaymentsFilters extends TenantsOverviewFilters {
   maxAmount?: number;
   page?: number;
   limit?: number;
+  sort?: 'paymentDate' | 'paymentAmount' | 'customerName';
+  dir?: 'asc' | 'desc';
 }
 
 export interface PaymentsResponse {
@@ -192,6 +214,12 @@ export interface ActivityResponse {
   period: { from: string | null; to: string | null };
 }
 
+export interface QuoteDetailResponse {
+  tenant: { tenantId: string; tenantName: string };
+  quote: QuoteDetailData;
+  lastSyncAt: string | null;
+}
+
 @Injectable({ providedIn: 'root' })
 export class SuperAdminService {
   private readonly http = inject(HttpClient);
@@ -220,6 +248,13 @@ export class SuperAdminService {
   getQuotations(filters: QuotationsFilters = {}): Observable<{ success: boolean; data: QuotationsResponse }> {
     return this.http.get<{ success: boolean; data: QuotationsResponse }>(
       `${this.base}/quotations`, { params: this.toParams(filters) },
+    );
+  }
+
+  /** One quotation in full (CRM + tracking + payments) for the detail drawer. */
+  getQuoteDetail(tenantId: string, quoteId: string): Observable<{ success: boolean; data: QuoteDetailResponse }> {
+    return this.http.get<{ success: boolean; data: QuoteDetailResponse }>(
+      `${this.base}/tenants/${encodeURIComponent(tenantId)}/quotes/${encodeURIComponent(quoteId)}`,
     );
   }
 

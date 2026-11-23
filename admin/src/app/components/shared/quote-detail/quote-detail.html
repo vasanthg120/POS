@@ -1,0 +1,230 @@
+<div class="qd">
+
+  <!-- ══ Hero ══════════════════════════════════════════════════════════════ -->
+  <section class="qd-hero">
+    <div class="qd-hero-top">
+      <div class="qd-hero-id">
+        <button class="qd-code" (click)="copy(quote.quoteNumber, 'num')" title="Copy quotation number">
+          #{{ quote.quoteNumber }}
+          <span class="qd-copied" *ngIf="copied === 'num'">Copied</span>
+        </button>
+        <span class="qd-tenant" *ngIf="tenantName">{{ tenantName }}</span>
+      </div>
+      <div class="qd-pills">
+        <span class="qd-pill" [ngClass]="'tone-' + approvalTone()"><i></i>{{ approvalLabel() }}</span>
+        <span class="qd-pill" [ngClass]="'tone-' + payTone()"><i></i>{{ payLabel() }}</span>
+        <span class="qd-pill tone-warning" *ngIf="quote.isExpired"><i></i>Expired</span>
+      </div>
+    </div>
+
+    <h3 class="qd-title">{{ displayTitle }}</h3>
+    <div class="qd-sub">
+      <span *ngIf="quote.customerName">{{ quote.customerName }}</span>
+      <span *ngIf="quote.companyName"> · {{ quote.companyName }}</span>
+      <span *ngIf="quote.quotationStatus"> · Stage: <b>{{ quote.quotationStatus }}</b></span>
+    </div>
+
+    <div class="qd-money">
+      <div class="qd-money-main">
+        <span class="qd-money-label">Quotation total</span>
+        <span class="qd-money-value">{{ money(quote.amount) }}</span>
+      </div>
+      <div class="qd-money-side">
+        <div><span class="qd-money-label">Collected</span><span class="qd-money-paid">{{ money(paid) }}</span></div>
+        <div><span class="qd-money-label">Balance due</span><span class="qd-money-due" [class.zero]="balance <= 0">{{ money(balance) }}</span></div>
+      </div>
+    </div>
+    <div class="qd-progress" [attr.aria-label]="paidPct + '% collected'">
+      <div class="qd-progress-fill" [style.width.%]="paidPct"></div>
+    </div>
+    <div class="qd-progress-meta">{{ paidPct }}% collected</div>
+  </section>
+
+  <!-- ══ Tabs ══════════════════════════════════════════════════════════════ -->
+  <nav class="qd-tabs" role="tablist">
+    <button *ngFor="let t of tabs" role="tab" class="qd-tab" [class.active]="tab === t.id"
+      [attr.aria-selected]="tab === t.id" (click)="setTab(t.id)">
+      {{ t.label }}
+      <span class="qd-tab-count" *ngIf="t.id === 'payments' && payments.length">{{ payments.length }}</span>
+      <span class="qd-tab-count" *ngIf="t.id === 'activity' && activity.length">{{ activity.length }}</span>
+    </button>
+  </nav>
+
+  <div class="qd-panel">
+
+    <!-- ── Overview ─────────────────────────────────────────────────────── -->
+    <ng-container *ngIf="tab === 'overview'">
+      <div class="qd-facts">
+        <div class="qd-fact"><span>Quotation #</span><b class="mono">{{ quote.quoteNumber }}</b></div>
+        <div class="qd-fact"><span>Stage</span><b>{{ quote.quotationStatus || '—' }}</b></div>
+        <div class="qd-fact"><span>Created</span><b>{{ date(quote.createdAt, true) }}</b></div>
+        <div class="qd-fact">
+          <span>Expires</span>
+          <b [class.warn]="quote.isExpired">{{ date(quote.expiryDate) }}</b>
+          <small *ngIf="quote.expiryDate">{{ relative(quote.expiryDate) }}</small>
+        </div>
+        <div class="qd-fact"><span>Last modified</span><b>{{ date(quote.updatedAt, true) }}</b></div>
+        <div class="qd-fact"><span>CRM status</span><b>{{ quote.status || '—' }}{{ quote.isDraft ? ' (draft)' : '' }}</b></div>
+        <div class="qd-fact"><span>Payment collection</span><b>{{ paymentOptionLabel() }}</b></div>
+        <div class="qd-fact" *ngIf="tenantName"><span>Tenant</span><b>{{ tenantName }}</b></div>
+      </div>
+
+      <div class="qd-cards">
+        <div class="qd-card">
+          <div class="qd-card-head">Customer</div>
+          <div class="qd-person">
+            <div class="qd-avatar">{{ initials(quote.customerName) }}</div>
+            <div class="qd-person-info">
+              <b>{{ quote.customerName || '—' }}</b>
+              <span *ngIf="quote.companyName">{{ quote.companyName }}</span>
+            </div>
+          </div>
+          <dl class="qd-dl">
+            <div *ngIf="quote.email"><dt>Email</dt><dd><a [href]="'mailto:' + quote.email">{{ quote.email }}</a></dd></div>
+            <div *ngIf="quote.phone"><dt>Phone</dt><dd><a [href]="'tel:' + quote.phone">{{ quote.phone }}</a></dd></div>
+            <div *ngIf="quote.customerAddress"><dt>Address</dt><dd>{{ quote.customerAddress }}</dd></div>
+          </dl>
+        </div>
+
+        <div class="qd-card">
+          <div class="qd-card-head">Quotation owner</div>
+          <div class="qd-person">
+            <div class="qd-avatar qd-avatar--alt">{{ initials(quote.ownerName) }}</div>
+            <div class="qd-person-info">
+              <b>{{ quote.ownerName || '—' }}</b>
+              <span *ngIf="quote.ownerCompany">{{ quote.ownerCompany }}<ng-container *ngIf="quote.ownerCompanyCity">, {{ quote.ownerCompanyCity }}</ng-container></span>
+            </div>
+          </div>
+          <dl class="qd-dl">
+            <div *ngIf="quote.ownerEmail"><dt>Email</dt><dd><a [href]="'mailto:' + quote.ownerEmail">{{ quote.ownerEmail }}</a></dd></div>
+            <div *ngIf="quote.ownerPhone"><dt>Phone</dt><dd><a [href]="'tel:' + quote.ownerPhone">{{ quote.ownerPhone }}</a></dd></div>
+            <div *ngFor="let t of quote.ownerTaxIds ?? []"><dt>{{ t.label }}</dt><dd class="mono">{{ t.value }}</dd></div>
+          </dl>
+        </div>
+      </div>
+
+      <div class="qd-card" *ngIf="quote.clientFeedback?.length">
+        <div class="qd-card-head">Client feedback</div>
+        <div class="qd-feedback" *ngFor="let f of quote.clientFeedback">
+          <p>{{ f.text }}</p>
+          <small>{{ f.fromClient ? 'From client' : 'Internal' }} · {{ date(f.date, true) }}</small>
+        </div>
+      </div>
+
+      <div class="qd-card" *ngIf="quote.notes">
+        <div class="qd-card-head">Notes</div>
+        <p class="qd-notes">{{ quote.notes }}</p>
+      </div>
+    </ng-container>
+
+    <!-- ── Pricing ──────────────────────────────────────────────────────── -->
+    <ng-container *ngIf="tab === 'pricing'">
+      <div class="qd-card" *ngIf="quote.breakdown as b; else noBreakdown">
+        <div class="qd-card-head">Price build-up</div>
+        <table class="qd-price">
+          <tbody>
+            <tr><td>Subtotal</td><td class="num">{{ money(b.subtotal) }}</td></tr>
+            <tr *ngFor="let d of b.discounts" class="neg"><td>Discount · {{ d.name }}</td><td class="num">− {{ money(d.amount) }}</td></tr>
+            <tr *ngFor="let f of b.fees"><td>Fee · {{ f.name }}</td><td class="num">+ {{ money(f.amount) }}</td></tr>
+            <tr *ngFor="let t of b.taxes"><td>Tax · {{ t.name }}<span *ngIf="t.rate" class="qd-rate">{{ t.rate }}</span></td><td class="num">+ {{ money(t.amount) }}</td></tr>
+          </tbody>
+          <tfoot>
+            <tr><td>Total</td><td class="num">{{ money(b.total) }}</td></tr>
+          </tfoot>
+        </table>
+        <p class="qd-hint">Line items are not included in the CRM's quotation list, so the subtotal is derived as total − taxes − fees + discounts.</p>
+      </div>
+      <ng-template #noBreakdown>
+        <div class="qd-empty">No pricing breakdown for this quotation.</div>
+      </ng-template>
+
+      <div class="qd-stats3" *ngIf="quote.breakdown as b">
+        <div><span>Discounts</span><b>{{ money(b.discountTotal) }}</b></div>
+        <div><span>Fees</span><b>{{ money(b.feesTotal) }}</b></div>
+        <div><span>Taxes</span><b>{{ money(b.taxTotal) }}</b></div>
+      </div>
+    </ng-container>
+
+    <!-- ── Payments ─────────────────────────────────────────────────────── -->
+    <ng-container *ngIf="tab === 'payments'">
+      <div class="qd-stats3">
+        <div><span>Status</span><b><span class="qd-pill" [ngClass]="'tone-' + payTone()"><i></i>{{ payLabel() }}</span></b></div>
+        <div><span>Collected</span><b>{{ money(paid) }}</b></div>
+        <div><span>Balance due</span><b>{{ money(balance) }}</b></div>
+      </div>
+
+      <div class="qd-card">
+        <div class="qd-card-head">Payment records <span class="qd-count">{{ payments.length }}</span></div>
+        <div class="qd-empty" *ngIf="!payments.length">No payment recorded yet.</div>
+        <div class="qd-pay" *ngFor="let p of payments; trackBy: trackByIdx">
+          <div class="qd-pay-ico" [class.rzp]="p.source === 'Razorpay'">{{ p.source === 'Razorpay' ? 'R' : '₹' }}</div>
+          <div class="qd-pay-info">
+            <b>{{ money(p.amount) }}</b>
+            <span>{{ p.source }}<ng-container *ngIf="p.reference"> · <span class="mono">{{ p.reference }}</span></ng-container></span>
+          </div>
+          <div class="qd-pay-date">{{ date(p.date) }}</div>
+        </div>
+      </div>
+
+      <div class="qd-card" *ngIf="quote.paymentMethod || quote.bankTransferRef || quote.paidAt || quote._paymentId">
+        <div class="qd-card-head">Payment details</div>
+        <dl class="qd-dl">
+          <div *ngIf="quote.paymentMethod"><dt>Method</dt><dd>{{ quote.paymentMethod }}</dd></div>
+          <div *ngIf="quote.paidAt"><dt>Paid on</dt><dd>{{ date(quote.paidAt, true) }}</dd></div>
+          <div *ngIf="quote.bankTransferRef"><dt>Reference</dt><dd class="mono">{{ quote.bankTransferRef }}</dd></div>
+          <div *ngIf="quote.bankTransferNotes"><dt>Notes</dt><dd>{{ quote.bankTransferNotes }}</dd></div>
+          <div *ngIf="quote._paymentId"><dt>Razorpay ID</dt><dd class="mono">{{ quote._paymentId }}</dd></div>
+          <div *ngIf="quote.rzpBank"><dt>Bank</dt><dd>{{ quote.rzpBank }}</dd></div>
+          <div *ngIf="quote.rzpVpa"><dt>UPI VPA</dt><dd class="mono">{{ quote.rzpVpa }}</dd></div>
+          <div *ngIf="quote.rzpWallet"><dt>Wallet</dt><dd>{{ quote.rzpWallet }}</dd></div>
+        </dl>
+      </div>
+
+      <div class="qd-card" *ngIf="quote.manualPayments?.length">
+        <div class="qd-card-head">Manual installments</div>
+        <table class="qd-table">
+          <thead><tr><th>Date</th><th>Method</th><th>Reference</th><th class="num">Amount</th></tr></thead>
+          <tbody>
+            <tr *ngFor="let m of quote.manualPayments">
+              <td>{{ date(m.paymentDate) }}</td>
+              <td>{{ m.method }}</td>
+              <td class="mono">{{ m.referenceNumber || '—' }}</td>
+              <td class="num">{{ money(m.amount) }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </ng-container>
+
+    <!-- ── Activity ─────────────────────────────────────────────────────── -->
+    <ng-container *ngIf="tab === 'activity'">
+      <div class="qd-empty" *ngIf="!activity.length">No activity yet.</div>
+      <ol class="qd-timeline" *ngIf="activity.length">
+        <li *ngFor="let a of activity; trackBy: trackByIdx" [ngClass]="'tone-' + a.tone">
+          <span class="qd-tl-dot"></span>
+          <div class="qd-tl-body">
+            <div class="qd-tl-title">{{ a.title }}</div>
+            <div class="qd-tl-detail" *ngIf="a.detail">{{ a.detail }}</div>
+          </div>
+          <time class="qd-tl-when" *ngIf="a.when">{{ date(a.when, a.when.length > 12) }}</time>
+        </li>
+      </ol>
+    </ng-container>
+
+    <!-- ── Raw CRM record ───────────────────────────────────────────────── -->
+    <ng-container *ngIf="tab === 'crm'">
+      <div class="qd-raw-tools">
+        <input class="qd-input" type="search" placeholder="Filter fields…" [(ngModel)]="rawFilter" aria-label="Filter CRM fields" />
+        <button class="qd-btn" (click)="copyRaw()">{{ copied === 'json' ? 'Copied ✓' : 'Copy JSON' }}</button>
+      </div>
+      <div class="qd-empty" *ngIf="!filteredRaw.length">No fields match.</div>
+      <dl class="qd-raw">
+        <div *ngFor="let r of filteredRaw; trackBy: trackByIdx" [class.long]="r.long">
+          <dt class="mono">{{ r.key }}</dt>
+          <dd [class.mono]="r.long"><pre *ngIf="r.long; else shortVal">{{ r.value }}</pre><ng-template #shortVal>{{ r.value }}</ng-template></dd>
+        </div>
+      </dl>
+      <p class="qd-hint">Read-only copy synced from the CRM. Large text blocks (terms, comments, signatures) are not stored.</p>
+    </ng-container>
+  </div>
+</div>

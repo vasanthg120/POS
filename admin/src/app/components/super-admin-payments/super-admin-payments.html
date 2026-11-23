@@ -12,11 +12,12 @@
         </div>
         <div class="header-title-block">
           <span class="header-title">Payment Tracking</span>
-          <span class="header-breadcrumb">All Tenants → Payments</span>
+          <span class="header-breadcrumb">All Tenants → Payments · {{ periodText }}</span>
         </div>
       </div>
       <div class="header-right">
-        <button class="hdr-btn" [disabled]="isLoading" (click)="refresh()" title="Bypass the 60s cache and re-fetch live from CRM/Razorpay">
+        <app-period-picker [compact]="true" [value]="period" (valueChange)="onPeriodChange($event)"></app-period-picker>
+        <button class="hdr-btn" [disabled]="isLoading" (click)="refresh()" title="Re-read every tenant's synced data now">
           <svg viewBox="0 0 16 16" fill="none" width="14" height="14" [class.btn-spin]="isLoading">
             <path d="M13.5 8a5.5 5.5 0 1 1-1.6-3.9M13.5 2.5v3h-3" stroke="currentColor" stroke-width="1.4"
               stroke-linecap="round" stroke-linejoin="round" />
@@ -41,30 +42,34 @@
         <div class="kpi-card kpi-skeleton" *ngFor="let _ of skeletonRows; trackBy: trackByIdx"></div>
       </ng-container>
       <ng-container *ngIf="!isLoading">
-        <div class="kpi-card">
+        <button class="kpi-card is-clickable" [class.is-active]="!activeSource" (click)="setSource('')" title="Show all payments">
           <div class="kpi-body">
             <div class="kpi-label">Total Payments</div>
             <div class="kpi-value">{{ summary.totalCount }}</div>
+            <div class="kpi-sub">{{ periodText }}</div>
           </div>
-        </div>
+        </button>
         <div class="kpi-card kpi-card--hero">
           <div class="kpi-body">
             <div class="kpi-label">Total Collected</div>
             <div class="kpi-value">{{ fmtINR(summary.totalCollected) }}</div>
+            <div class="kpi-sub">{{ activeSource ? activeSource + ' only' : 'All sources' }}</div>
           </div>
         </div>
-        <div class="kpi-card">
+        <button class="kpi-card is-clickable" [class.is-active]="activeSource === 'Manual'" (click)="setSource('Manual')" title="Show manual payments">
           <div class="kpi-body">
             <div class="kpi-label">Manual Payments</div>
-            <div class="kpi-value">{{ summary.manualCount }}</div>
+            <div class="kpi-value">{{ activeSource === 'Razorpay' ? '—' : summary.manualCount }}</div>
+            <div class="kpi-sub">Bank transfer, cash, cheque…</div>
           </div>
-        </div>
-        <div class="kpi-card">
+        </button>
+        <button class="kpi-card is-clickable" [class.is-active]="activeSource === 'Razorpay'" (click)="setSource('Razorpay')" title="Show Razorpay payments">
           <div class="kpi-body">
             <div class="kpi-label">Razorpay Payments</div>
-            <div class="kpi-value">{{ summary.razorpayCount }}</div>
+            <div class="kpi-value">{{ activeSource === 'Manual' ? '—' : summary.razorpayCount }}</div>
+            <div class="kpi-sub">Captured online</div>
           </div>
-        </div>
+        </button>
       </ng-container>
     </div>
 
@@ -117,23 +122,6 @@
         </div>
 
         <div class="filter-bottom-row">
-          <div class="date-range-group">
-            <span class="fchip-label">Period</span>
-            <div class="range-inputs">
-              <div class="range-field">
-                <label>Month</label>
-                <select class="range-input" [(ngModel)]="selectedMonth" (ngModelChange)="onPeriodChange()">
-                  <option *ngFor="let m of monthOptions" [ngValue]="m.value">{{ m.label }}</option>
-                </select>
-              </div>
-              <div class="range-field">
-                <label>Year</label>
-                <select class="range-input" [(ngModel)]="selectedYear" (ngModelChange)="onPeriodChange()">
-                  <option *ngFor="let y of yearOptions" [ngValue]="y">{{ y }}</option>
-                </select>
-              </div>
-            </div>
-          </div>
           <button class="reset-btn" (click)="resetFilters()">
             <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M13.5 8a5.5 5.5 0 1 1-1.6-3.9M13.5 2.5v3h-3" stroke-linecap="round" stroke-linejoin="round" /></svg>
             Reset filters
@@ -152,7 +140,13 @@
 
       <div class="load-bar" *ngIf="isLoading"><div class="load-bar-fill"></div></div>
 
-      <div class="empty-state" *ngIf="!isLoading && rows.length === 0">
+      <div class="empty-state" *ngIf="!isLoading && loadError" role="alert">
+        <div class="empty-title">Couldn’t load payments</div>
+        <div class="kpi-sub">{{ loadError }}</div>
+        <button class="reset-btn" (click)="load()">Retry</button>
+      </div>
+
+      <div class="empty-state" *ngIf="!isLoading && !loadError && rows.length === 0">
         <div class="empty-title">No payments match this period/filters</div>
         <button class="reset-btn" (click)="resetFilters()">Clear filters</button>
       </div>
@@ -174,7 +168,7 @@
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let r of rows; trackBy: trackByRow">
+            <tr class="is-clickable" *ngFor="let r of rows; trackBy: trackByRow" (click)="openRow(r)" tabindex="0" (keydown.enter)="openRow(r)">
               <td><span class="tenant-chip">{{ r.tenantName }}</span></td>
               <td><span class="ticket-code">{{ r.quotationNo }}</span></td>
               <td>
@@ -214,4 +208,6 @@
       </div>
     </div>
   </main>
+
+  <app-sa-drilldown [request]="drill" (closed)="closeDrill()"></app-sa-drilldown>
 </div>

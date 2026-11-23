@@ -8,6 +8,8 @@ import { FormsModule  } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { Crm }          from '../services/crm';
 import { Auth }         from '../services/auth';
+import { QuoteDetail }  from '../shared/quote-detail/quote-detail';
+import { QuoteDetailData } from '../shared/quote-detail/quote-detail.model';
 
 /* ── Domain types ─────────────────────────────────────────────────── */
 export interface QuoteItem {
@@ -75,7 +77,7 @@ export type SortDir   = 'asc' | 'desc';
 @Component({
   selector        : 'app-quotations',
   standalone      : true,
-  imports         : [CommonModule, FormsModule, RouterModule, DatePipe, TitleCasePipe, DecimalPipe],
+  imports         : [CommonModule, FormsModule, RouterModule, DatePipe, TitleCasePipe, DecimalPipe, QuoteDetail],
   templateUrl     : './quotations.html',
   styleUrls       : ['./quotations.css'],
   changeDetection : ChangeDetectionStrategy.OnPush,
@@ -117,13 +119,16 @@ export class Quotations implements OnInit, OnDestroy {
     if (!all.length) return null;
 
     const totalValue    = all.reduce((s, q) => s + this.getAmount(q), 0);
-    const accepted      = all.filter(q => ['accepted', 'approved', 'paid'].includes(this.getApprovalStatus(q)));
-    const pending       = all.filter(q => ['sent', 'open', 'draft', 'published'].includes(this.getApprovalStatus(q)));
+    // getApprovalStatus() used to return the pipeline stage first, so these
+    // never matched and Accepted / Pending always read 0.
+    const accepted      = all.filter(q => this.getApprovalStatus(q) === 'accepted');
+    const pending       = all.filter(q => this.getApprovalStatus(q) === 'sent');
     const expiringSoon  = all.filter(q => this.isExpiringSoon(q) && !this.isExpired(q));
     const conversionRate = all.length ? Math.round((accepted.length / all.length) * 100) : 0;
 
     return {
       totalValue,
+      acceptedValue : accepted.reduce((s, q) => s + this.getAmount(q), 0),
       acceptedCount : accepted.length,
       pendingCount  : pending.length,
       expiringSoon  : expiringSoon.length,
@@ -153,7 +158,11 @@ export class Quotations implements OnInit, OnDestroy {
       );
     }
 
-    if (status) {
+    if (status === 'paid') {
+      list = list.filter(item => item['paymentStatus'] === 'paid');
+    } else if (status === 'expiring') {
+      list = list.filter(item => this.isExpiringSoon(item) && !this.isExpired(item));
+    } else if (status) {
       list = list.filter(item => this.getApprovalStatus(item) === status.toLowerCase());
     }
 
@@ -238,19 +247,11 @@ export class Quotations implements OnInit, OnDestroy {
     this.loading.set(true);
     this.error.set('');
 
-    const hasFilters = this.filterStatus() || this.dateFrom() || this.dateTo();
-    const obs$ = hasFilters
-      ? this.crm.searchQuotes({
-          search    : this.searchTerm(),
-          limit     : this.PAGE,
-          startAfter: this.startAfter,
-          status    : this.filterStatus() || undefined,
-          dateFrom  : this.dateFrom()    || undefined,
-          dateTo    : this.dateTo()      || undefined,
-        })
-      : this.crm.getQuotes(this.searchTerm(), this.PAGE, this.startAfter);
-
-    obs$.subscribe({
+    // Every synced quotation in one call; search, status and date filters are
+    // applied in the browser (filteredQuotes). Filtering used to call the CRM
+    // live for a single page of 25 and then filter that page, so a filtered
+    // view showed a handful of quotes out of the full set.
+    this.crm.getQuotes('', this.PAGE, 0).subscribe({
       next: (res) => {
         if (res.success) {
           const incoming: Quote[] =
@@ -271,22 +272,8 @@ export class Quotations implements OnInit, OnDestroy {
     });
   }
 
-  loadMore(): void {
-    if (this.loadingMore()) return;
-    this.startAfter += this.PAGE;
-    this.loadingMore.set(true);
-    const hasFilters = this.filterStatus() || this.dateFrom() || this.dateTo();
-    const obs$ = hasFilters
-      ? this.crm.searchQuotes({ search: this.searchTerm(), limit: this.PAGE, startAfter: this.startAfter })
-      : this.crm.getQuotes(this.searchTerm(), this.PAGE, this.startAfter);
-    obs$.subscribe({
-      next : (res) => {
-        if (res.success) this.quotes.update(prev => [...prev, ...(res.data?.quotes || [])]);
-        this.loadingMore.set(false);
-      },
-      error: () => { this.startAfter -= this.PAGE; this.loadingMore.set(false); },
-    });
-  }
+  /** Kept for the template; the list is always complete, so there is nothing more to load. */
+  loadMore(): void { this.loadQuotes(); }
 
   /* ── Sort ─────────────────────────────────────────────────────── */
   toggleSort(field: SortField): void {
@@ -302,17 +289,22 @@ export class Quotations implements OnInit, OnDestroy {
   /* ── Search / filter ──────────────────────────────────────────── */
   onSearch(value: string): void {
     this.searchTerm.set(value);
-    if (this.searchTimeout) clearTimeout(this.searchTimeout);
-    this.searchTimeout = setTimeout(() => { this.currentPage.set(1); this.loadQuotes(); }, 350);
+    this.currentPage.set(1);
   }
 
-  onStatusChange(value: string): void { this.filterStatus.set(value); this.loadQuotes(); }
-  onDateChange(): void { this.loadQuotes(); }
+  onStatusChange(value: string): void { this.filterStatus.set(value); this.currentPage.set(1); }
+  onDateChange(): void { this.currentPage.set(1); }
+
+  /** KPI cards filter the list; clicking the active card clears it. */
+  toggleStatus(value: string): void {
+    this.onStatusChange(this.filterStatus() === value ? '' : value);
+    document.querySelector('.tbl-panel')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
 
   clearFilters(): void {
     this.searchTerm.set(''); this.filterStatus.set('');
     this.dateFrom.set(''); this.dateTo.set('');
-    this.loadQuotes();
+    this.currentPage.set(1);
   }
 
   toggleDateFilter(): void { this.showDateFilter.update(v => !v); }
@@ -320,7 +312,7 @@ export class Quotations implements OnInit, OnDestroy {
   clearDates(): void {
     this.dateFrom.set(''); this.dateTo.set('');
     this.showDateFilter.set(false);
-    this.loadQuotes();
+    this.currentPage.set(1);
   }
 
   refresh(): void { this.loadQuotes(); }
@@ -335,6 +327,26 @@ export class Quotations implements OnInit, OnDestroy {
   onPageSizeChange(): void { this.currentPage.set(1); }
 
   /* ── Detail drawer ────────────────────────────────────────────── */
+  /** The selected quote in the shape the shared detail view reads. */
+  selectedDetail = computed<QuoteDetailData | null>(() => {
+    const q = this.selectedQuote();
+    if (!q) return null;
+    return {
+      ...q,
+      quoteId    : String(q.quoteId ?? q.id ?? ''),
+      quoteNumber: this.getQuoteId(q),
+      dealName   : this.getDealName(q),
+      ownerName  : this.getOwner(q),
+      customerName: this.getCustomer(q),
+      amount     : this.getAmount(q),
+      currency   : this.getCurrency(q),
+      expiryDate : this.getExpiryDate(q)?.toISOString() ?? null,
+      isExpired  : this.isExpired(q),
+      createdAt  : q.createdAt != null ? String(q.createdAt) : null,
+      updatedAt  : q.updatedAt != null ? String(q.updatedAt) : null,
+    } as QuoteDetailData;
+  });
+
   openDetail(quote: Quote): void  { this.selectedQuote.set(quote); }
   closeDetail(): void              { this.selectedQuote.set(null);  }
 
@@ -456,7 +468,14 @@ export class Quotations implements OnInit, OnDestroy {
    * Maps ProspectConnect values to our display values.
    */
 getApprovalStatus(q: Quote): string {
-  if (q.quotationStatus) return q.quotationStatus.toLowerCase().replace(/\s+/g, '_');
+  // The backend's normalised approval (approved | rejected | pending | draft).
+  // This used to return the POS pipeline stage first (quotationStatus is set
+  // on every quote), so the Approval column, filter and stats showed stages.
+  const a = String(q['approvalStatus'] ?? '').toLowerCase();
+  if (a === 'approved') return 'accepted';
+  if (a === 'rejected') return 'rejected';
+  if (a === 'draft')    return 'draft';
+  if (a === 'pending')  return this.isExpired(q) ? 'expired' : 'sent';
 
   const raw =
     q.clientApprovalStatus          ||
@@ -482,6 +501,14 @@ getApprovalStatus(q: Quote): string {
   /** Quote publish status (internal — used for badge colour context) */
   getStatus(q: Quote): string {
     return this.getApprovalStatus(q);
+  }
+
+  approvalLabel(q: Quote): string {
+    const map: Record<string, string> = {
+      accepted: 'Accepted', sent: 'Awaiting client', expired: 'Expired', draft: 'Draft', rejected: 'Rejected',
+    };
+    const s = this.getApprovalStatus(q);
+    return map[s] ?? s.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
   }
 
   /** Currency code */

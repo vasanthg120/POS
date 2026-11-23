@@ -14,16 +14,7 @@
         </div>
       </div>
       <div class="header-right">
-        <div class="range-field">
-          <select class="range-input" [(ngModel)]="selectedMonth" (ngModelChange)="onPeriodChange()">
-            <option *ngFor="let m of monthOptions" [ngValue]="m.value">{{ m.label }}</option>
-          </select>
-        </div>
-        <div class="range-field">
-          <select class="range-input" [(ngModel)]="selectedYear" (ngModelChange)="onPeriodChange()">
-            <option *ngFor="let y of yearOptions" [ngValue]="y">{{ y }}</option>
-          </select>
-        </div>
+        <app-period-picker [compact]="true" [value]="period" (valueChange)="onPeriodChange($event)"></app-period-picker>
         <button class="hdr-btn" [disabled]="isLoading" (click)="load()">
           <svg viewBox="0 0 16 16" fill="none" width="14" height="14" [class.btn-spin]="isLoading">
             <path d="M13.5 8a5.5 5.5 0 1 1-1.6-3.9M13.5 2.5v3h-3" stroke="currentColor" stroke-width="1.4"
@@ -85,33 +76,41 @@
         <div class="integ-card">
           <div class="integ-title">Last Synced</div>
           <div class="integ-status">{{ t.lastSyncAt ? fmtDateTime(t.lastSyncAt) : '—' }}</div>
-          <div class="integ-sub">Live on every request — no cache</div>
+          <div class="integ-sub">CRM → POS sync, refreshed automatically</div>
         </div>
       </div>
 
       <!-- ── KPI Strip ────────────────────────────────────────────────────── -->
       <div class="kpi-strip td-kpi-strip">
-        <div class="kpi-card">
+<div class="kpi-card is-clickable" role="button" tabindex="0" (click)="openQuotes('Quotations')" (keydown.enter)="openQuotes('Quotations')">
+          <span class="drill-hint" aria-hidden="true"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 3l5 5-5 5" stroke-linecap="round" stroke-linejoin="round" /></svg></span>
           <div class="kpi-body">
             <div class="kpi-label">Quotations</div>
             <div class="kpi-value">{{ t.quotations.total }}</div>
-            <div class="kpi-sub">{{ t.quotations.approved }} approved · {{ t.quotations.pending }} pending · {{ t.quotations.rejectedOrExpired }} rejected/expired</div>
+            <div class="kpi-sub kpi-sub--links">
+              <button (click)="$event.stopPropagation(); setOutcome('approved')">{{ t.quotations.approved }} approved</button> ·
+              <button (click)="$event.stopPropagation(); setOutcome('pending')">{{ t.quotations.pending }} pending</button> ·
+              <button (click)="$event.stopPropagation(); setOutcome('rejectedOrExpired')">{{ t.quotations.rejectedOrExpired }} rejected/expired</button>
+            </div>
           </div>
         </div>
-        <div class="kpi-card kpi-card--hero">
+<div class="kpi-card kpi-card--hero is-clickable" role="button" tabindex="0" (click)="openQuotes('Invoiced quotations')" (keydown.enter)="openQuotes('Invoiced quotations')">
+          <span class="drill-hint" aria-hidden="true"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 3l5 5-5 5" stroke-linecap="round" stroke-linejoin="round" /></svg></span>
           <div class="kpi-body">
             <div class="kpi-label">Total Invoiced</div>
             <div class="kpi-value">{{ fmtINR(t.invoicedAmount) }}</div>
           </div>
         </div>
-        <div class="kpi-card kpi-card--hero">
+<div class="kpi-card kpi-card--hero is-clickable" role="button" tabindex="0" (click)="openPayments('Payments received')" (keydown.enter)="openPayments('Payments received')">
+          <span class="drill-hint" aria-hidden="true"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 3l5 5-5 5" stroke-linecap="round" stroke-linejoin="round" /></svg></span>
           <div class="kpi-body">
             <div class="kpi-label">Payments Received</div>
             <div class="kpi-value">{{ fmtINR(t.payments.totalCollected) }}</div>
             <div class="kpi-sub kpi-sub--ok">{{ t.payments.count }} payment{{ t.payments.count !== 1 ? 's' : '' }}</div>
           </div>
         </div>
-        <div class="kpi-card">
+<div class="kpi-card is-clickable" role="button" tabindex="0" (click)="openQuotes('Payment pending', { paymentStatus: 'pending' })" (keydown.enter)="openQuotes('Payment pending', { paymentStatus: 'pending' })">
+          <span class="drill-hint" aria-hidden="true"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 3l5 5-5 5" stroke-linecap="round" stroke-linejoin="round" /></svg></span>
           <div class="kpi-body">
             <div class="kpi-label">Pending Payments</div>
             <div class="kpi-value">{{ fmtINR(t.payments.pendingAmount) }}</div>
@@ -122,7 +121,7 @@
           <div class="kpi-body">
             <div class="kpi-label">Royalty</div>
             <div class="kpi-value">{{ fmtINR(t.royalty.totalPayable) }}</div>
-            <div class="kpi-sub">This period</div>
+            <div class="kpi-sub">{{ periodText }}</div>
 
             <ng-container *ngIf="!royaltyEditing">
               <div class="royalty-pct-row">
@@ -147,10 +146,77 @@
         </div>
       </div>
 
-      <p class="scope-note">
-        Showing {{ monthOptions[selectedMonth - 1].label }} {{ selectedYear }}. Detailed CRM / Quotations / Payments /
-        Razorpay / Royalty / Activity tabs for this tenant are planned for a later phase.
-      </p>
+      <!-- ── Records: quotations / payments for this tenant ─────────────────── -->
+      <section class="records-panel">
+        <div class="records-head">
+          <nav class="records-tabs" role="tablist">
+            <button role="tab" [class.active]="tab === 'quotations'" [attr.aria-selected]="tab === 'quotations'" (click)="setTab('quotations')">
+              Quotations <span class="tab-count">{{ t.quotations.total }}</span>
+            </button>
+            <button role="tab" [class.active]="tab === 'payments'" [attr.aria-selected]="tab === 'payments'" (click)="setTab('payments')">
+              Payments <span class="tab-count">{{ t.payments.count }}</span>
+            </button>
+          </nav>
+          <div class="records-tools">
+            <div class="seg" *ngIf="tab === 'quotations'">
+              <button [class.on]="!outcome" (click)="setOutcome('')">All</button>
+              <button [class.on]="outcome === 'approved'" (click)="setOutcome('approved')">Approved</button>
+              <button [class.on]="outcome === 'pending'" (click)="setOutcome('pending')">Pending</button>
+              <button [class.on]="outcome === 'rejectedOrExpired'" (click)="setOutcome('rejectedOrExpired')">Rejected / Expired</button>
+            </div>
+            <input class="range-input records-search" type="search" placeholder="Search…" [(ngModel)]="listSearch"
+              (keyup.enter)="onListSearch()" (search)="onListSearch()" aria-label="Search records" />
+          </div>
+        </div>
+
+        <div class="load-bar" *ngIf="listLoading"><div class="load-bar-fill"></div></div>
+        <div class="records-empty sync-err" *ngIf="!listLoading && listError">{{ listError }}</div>
+
+        <ng-container *ngIf="tab === 'quotations' && !listError">
+          <div class="records-empty" *ngIf="!listLoading && !quoteRows.length">No quotations for {{ periodText | lowercase }}.</div>
+          <table class="rec-tbl" *ngIf="quoteRows.length" [class.is-dim]="listLoading">
+            <thead><tr><th>Quotation</th><th>Customer</th><th>Date</th><th class="text-right">Amount</th><th class="text-right">Collected</th><th>Outcome</th><th>Payment</th></tr></thead>
+            <tbody>
+              <tr class="is-clickable" *ngFor="let r of quoteRows" (click)="openQuote(r.tenantId, r.quoteId)" tabindex="0" (keydown.enter)="openQuote(r.tenantId, r.quoteId)">
+                <td><code class="rec-code">#{{ r.quotationNo }}</code> <span class="rec-deal">{{ r.relatedDeal }}</span></td>
+                <td>{{ r.customerName || '—' }}<div class="rec-sub">{{ r.companyName || r.customerEmail }}</div></td>
+                <td>{{ fmtDate(r.quotationDate) }}</td>
+                <td class="text-right"><b>{{ fmtINR(r.amount) }}</b></td>
+                <td class="text-right">{{ r.paidAmount ? fmtINR(r.paidAmount) : '—' }}</td>
+                <td><span class="out-badge" [ngClass]="'out--' + r.outcome">{{ outcomeLabel(r.outcome) }}</span></td>
+                <td><span class="pay-badge" [ngClass]="'pbadge--' + r.paymentStatus">{{ payLabel(r.paymentStatus) }}</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </ng-container>
+
+        <ng-container *ngIf="tab === 'payments' && !listError">
+          <div class="records-empty" *ngIf="!listLoading && !paymentRows.length">No payments for {{ periodText | lowercase }}.</div>
+          <table class="rec-tbl" *ngIf="paymentRows.length" [class.is-dim]="listLoading">
+            <thead><tr><th>Date</th><th>Quotation</th><th>Customer</th><th>Source</th><th>Reference</th><th class="text-right">Amount</th></tr></thead>
+            <tbody>
+              <tr class="is-clickable" *ngFor="let r of paymentRows" (click)="openQuote(r.tenantId, r.quoteId)" tabindex="0" (keydown.enter)="openQuote(r.tenantId, r.quoteId)">
+                <td>{{ fmtDate(r.paymentDate) }}</td>
+                <td><code class="rec-code">#{{ r.quotationNo }}</code></td>
+                <td>{{ r.customerName || '—' }}</td>
+                <td>{{ r.paymentSource }}<div class="rec-sub">{{ r.paymentMethod }}</div></td>
+                <td class="rec-mono">{{ r.transactionReference || '—' }}</td>
+                <td class="text-right"><b class="rec-ok">{{ fmtINR(r.paymentAmount) }}</b></td>
+              </tr>
+            </tbody>
+          </table>
+        </ng-container>
+
+        <div class="records-foot" *ngIf="listPage.total > listLimit">
+          <span>{{ (listPage.page - 1) * listPage.limit + 1 }}–{{ (listPage.page - 1) * listPage.limit + (tab === 'quotations' ? quoteRows.length : paymentRows.length) }} of {{ listPage.total }}</span>
+          <div class="pager">
+            <button class="pager-btn" [disabled]="listPage.page <= 1 || listLoading" (click)="loadList(listPage.page - 1)">‹ Prev</button>
+            <button class="pager-btn" [disabled]="listPage.page >= listPage.pages || listLoading" (click)="loadList(listPage.page + 1)">Next ›</button>
+          </div>
+        </div>
+      </section>
     </ng-container>
   </main>
+
+  <app-sa-drilldown [request]="drill" (closed)="closeDrill()"></app-sa-drilldown>
 </div>

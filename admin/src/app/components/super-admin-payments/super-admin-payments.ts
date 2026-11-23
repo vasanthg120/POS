@@ -4,21 +4,20 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
 import { Subject, debounceTime, takeUntil } from 'rxjs';
 
 import {
   SuperAdminService, PaymentRow, PaymentsResponse, TenantLite, Pagination,
 } from '../services/super-admin';
-
-const MONTH_NAMES = [
-  'January', 'February', 'March', 'April', 'May', 'June',
-  'July', 'August', 'September', 'October', 'November', 'December',
-];
+import { PeriodPicker } from '../shared/period-picker/period-picker';
+import { PERIOD_PRESETS, PeriodPreset, PeriodState, defaultPeriod, periodLabel, periodParams } from '../shared/period';
+import { SaDrilldown, DrillRequest } from '../shared/sa-drilldown/sa-drilldown';
 
 @Component({
   selector: 'app-super-admin-payments',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, PeriodPicker, SaDrilldown],
   templateUrl: './super-admin-payments.html',
   styleUrls: ['./super-admin-payments.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -31,19 +30,15 @@ export class SuperAdminPayments implements OnInit, OnDestroy {
   tenants: TenantLite[] = [];
   isLoading = true;
   isExporting = false;
+  loadError = '';
   skeletonRows = Array(4);
   filtersCollapsed = true;
   tenantErrors: { tenantId: string; tenantName: string; error: string }[] = [];
 
-  readonly monthOptions = MONTH_NAMES.map((label, i) => ({ value: i + 1, label }));
-  readonly yearOptions: number[] = (() => {
-    const y = new Date().getFullYear();
-    return [y - 2, y - 1, y, y + 1];
-  })();
-
-  selectedMonth = new Date().getMonth() + 1;
-  selectedYear = new Date().getFullYear();
+  // Defaults to "All time" (was the current month only).
+  period: PeriodState = defaultPeriod();
   searchQuery = '';
+  drill: DrillRequest | null = null;
   activeTenant = '';
   activeSource = '';
   pageSize = 25;
@@ -60,9 +55,17 @@ export class SuperAdminPayments implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
   private filterTrigger$ = new Subject<void>();
 
-  constructor(private svc: SuperAdminService, private cdr: ChangeDetectorRef) {}
+  constructor(private svc: SuperAdminService, private cdr: ChangeDetectorRef, private route: ActivatedRoute) {}
 
   ngOnInit(): void {
+    const q = this.route.snapshot.queryParamMap;
+    const preset = q.get('preset') as PeriodPreset | null;
+    if (preset && PERIOD_PRESETS.some(p => p.value === preset)) {
+      this.period = { preset, month: Number(q.get('month')) || this.period.month, year: Number(q.get('year')) || this.period.year };
+    }
+    const source = q.get('source');
+    if (source && this.sourceOptions.some(o => o.value === source)) this.activeSource = source;
+    this.activeTenant = q.get('tenantId') ?? '';
     this.filterTrigger$.pipe(debounceTime(250), takeUntil(this.destroy$)).subscribe(() => this.load());
     this.load();
     this.svc.getTenantsLite().pipe(takeUntil(this.destroy$)).subscribe({
@@ -79,9 +82,7 @@ export class SuperAdminPayments implements OnInit, OnDestroy {
     this.cdr.markForCheck();
 
     this.svc.getPayments({
-      month: this.selectedMonth, year: this.selectedYear,
-      tenantId: this.activeTenant, source: this.activeSource,
-      search: this.searchQuery.trim(),
+      ...this.filters(),
       page: this.pagination.page, limit: this.pageSize,
       refresh,
     }).pipe(takeUntil(this.destroy$)).subscribe({
@@ -90,24 +91,48 @@ export class SuperAdminPayments implements OnInit, OnDestroy {
         this.summary = res.data.summary;
         this.pagination = res.data.pagination;
         this.tenantErrors = res.data.tenantErrors;
+        this.loadError = '';
         this.isLoading = false;
-        this.applySort();
         this.cdr.markForCheck();
       },
-      error: () => { this.isLoading = false; this.cdr.markForCheck(); },
+      error: (err) => {
+        this.loadError = err?.error?.message || err?.message || 'Could not load payments.';
+        this.isLoading = false; this.cdr.markForCheck();
+      },
     });
   }
 
+  private filters() {
+    return {
+      ...periodParams(this.period),
+      tenantId: this.activeTenant, source: this.activeSource,
+      search: this.searchQuery.trim(),
+      sort: this.sortField, dir: this.sortDir,
+    };
+  }
+
+  get periodText(): string { return periodLabel(this.period); }
+
+  /** KPI cards filter by source; clicking the active one clears it. */
+  setSource(source: '' | 'Manual' | 'Razorpay'): void {
+    this.activeSource = this.activeSource === source ? '' : source;
+    this.load();
+  }
+
+  openRow(r: PaymentRow): void {
+    this.drill = { kind: 'quote', tenantId: r.tenantId, quoteId: r.quoteId, tenantName: r.tenantName };
+    this.cdr.markForCheck();
+  }
+  closeDrill(): void { this.drill = null; this.cdr.markForCheck(); }
+
   refresh(): void { this.load(false, true); }
 
-  onPeriodChange(): void { this.filterTrigger$.next(); }
+  onPeriodChange(p: PeriodState): void { this.period = p; this.filterTrigger$.next(); }
   applyFiltersDebounced(): void { this.filterTrigger$.next(); }
   toggleFilters(): void { this.filtersCollapsed = !this.filtersCollapsed; }
 
   resetFilters(): void {
-    const now = new Date();
-    this.selectedMonth = now.getMonth() + 1;
-    this.selectedYear = now.getFullYear();
+    this.period = defaultPeriod();
     this.searchQuery = '';
     this.activeTenant = '';
     this.activeSource = '';
@@ -129,23 +154,12 @@ export class SuperAdminPayments implements OnInit, OnDestroy {
   sortBy(field: typeof this.sortField): void {
     this.sortDir = this.sortField === field ? (this.sortDir === 'asc' ? 'desc' : 'asc') : 'desc';
     this.sortField = field;
-    this.applySort();
-    this.cdr.markForCheck();
+    this.load();
   }
 
   sortIcon(field: typeof this.sortField): string {
     if (this.sortField !== field) return '⇅';
     return this.sortDir === 'asc' ? '↑' : '↓';
-  }
-
-  private applySort(): void {
-    const asc = this.sortDir === 'asc';
-    this.rows = [...this.rows].sort((a, b) => {
-      const av = this.sortField === 'paymentAmount' ? a.paymentAmount : (this.sortField === 'customerName' ? a.customerName : a.paymentDate);
-      const bv = this.sortField === 'paymentAmount' ? b.paymentAmount : (this.sortField === 'customerName' ? b.customerName : b.paymentDate);
-      if (typeof av === 'number' && typeof bv === 'number') return asc ? av - bv : bv - av;
-      return asc ? String(av ?? '').localeCompare(String(bv ?? '')) : String(bv ?? '').localeCompare(String(av ?? ''));
-    });
   }
 
   fmtINR(n: number): string {
@@ -164,12 +178,7 @@ export class SuperAdminPayments implements OnInit, OnDestroy {
     this.isExporting = true;
     this.cdr.markForCheck();
 
-    this.svc.getPayments({
-      month: this.selectedMonth, year: this.selectedYear,
-      tenantId: this.activeTenant, source: this.activeSource,
-      search: this.searchQuery.trim(),
-      page: 1, limit: 5000,
-    }).pipe(takeUntil(this.destroy$)).subscribe({
+    this.svc.getPayments({ ...this.filters(), page: 1, limit: 5000 }).pipe(takeUntil(this.destroy$)).subscribe({
       next: (res) => {
         this.isExporting = false;
         this.downloadCSV(res.data.rows);
@@ -194,7 +203,7 @@ export class SuperAdminPayments implements OnInit, OnDestroy {
     const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     Object.assign(document.createElement('a'), {
-      href: url, download: `payments-all-tenants-${this.selectedYear}-${String(this.selectedMonth).padStart(2, '0')}.csv`,
+      href: url, download: `payments-all-tenants-${this.periodText.toLowerCase().replace(/[^a-z0-9]+/g, '-')}.csv`,
     }).click();
     URL.revokeObjectURL(url);
   }

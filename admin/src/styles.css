@@ -1043,3 +1043,62 @@ a {
 .settings-root {
     padding: 10px;
 }
+
+/* ════════════════════════════════════════════════════════════════
+   CLICKABLE CARDS / ROWS — "click anything to see the details"
+   Add .is-clickable to any card or row that opens a detail view.
+   ════════════════════════════════════════════════════════════════ */
+.is-clickable {
+  cursor: pointer;
+  position: relative;
+}
+
+.is-clickable:hover {
+  border-color: var(--sky-mid) !important;
+}
+
+.is-clickable:focus-visible {
+  outline: 2px solid var(--sky);
+  outline-offset: 2px;
+}
+
+.is-clickable .drill-hint {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: var(--sky);
+  background: var(--sky-light);
+  opacity: 0;
+  transform: translateX(-3px);
+  transition: opacity var(--t-fast), transform var(--t-fast);
+  pointer-events: none;
+}
+
+.is-clickable .drill-hint svg {
+  width: 12px;
+  height: 12px;
+}
+
+.is-clickable:hover .drill-hint,
+.is-clickable:focus-visible .drill-hint {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.is-clickable.is-active {
+  border-color: var(--sky) !important;
+  box-shadow: 0 0 0 3px var(--sky-light);
+}
+
+tr.is-clickable:hover td {
+  background: var(--info-bg);
+}
+
+@media (hover: none) {
+  .is-clickable .drill-hint { opacity: .8; transform: none; }
+}

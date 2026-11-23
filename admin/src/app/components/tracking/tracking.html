@@ -71,7 +71,8 @@
 
       <ng-container *ngIf="!isLoading">
 
-        <div class="kpi-card kpi-card--hero">
+<div class="kpi-card kpi-card--hero is-clickable" role="button" tabindex="0" title="Show all quotes" [class.is-active]="activeKpi === 'all'" (click)="drillKpi('all')" (keydown.enter)="drillKpi('all')">
+          <span class="drill-hint" aria-hidden="true"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 3l5 5-5 5" stroke-linecap="round" stroke-linejoin="round" /></svg></span>
           <div class="kpi-icon-wrap kpi-icon--blue">
             <svg viewBox="0 0 18 18" fill="none" width="16" height="16">
               <path d="M3 4h12M3 8h12M3 12h7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
@@ -84,7 +85,8 @@
           </div>
         </div>
 
-        <div class="kpi-card">
+<div class="kpi-card is-clickable" role="button" tabindex="0" title="Show fully paid quotes" [class.is-active]="activeKpi === 'paid'" (click)="drillKpi('paid')" (keydown.enter)="drillKpi('paid')">
+          <span class="drill-hint" aria-hidden="true"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 3l5 5-5 5" stroke-linecap="round" stroke-linejoin="round" /></svg></span>
           <div class="kpi-icon-wrap kpi-icon--emerald">
             <svg viewBox="0 0 18 18" fill="none" width="16" height="16">
               <path
@@ -99,7 +101,8 @@
           </div>
         </div>
 
-        <div class="kpi-card">
+<div class="kpi-card is-clickable" role="button" tabindex="0" title="Show converted (paid) quotes" [class.is-active]="activeKpi === 'paid'" (click)="drillKpi('paid')" (keydown.enter)="drillKpi('paid')">
+          <span class="drill-hint" aria-hidden="true"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 3l5 5-5 5" stroke-linecap="round" stroke-linejoin="round" /></svg></span>
           <div class="kpi-icon-wrap kpi-icon--teal">
             <svg viewBox="0 0 18 18" fill="none" width="16" height="16">
               <path d="M2 13l4.5-5.5 3 3 5-7" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"
@@ -113,7 +116,8 @@
           </div>
         </div>
 
-        <div class="kpi-card">
+<div class="kpi-card is-clickable" role="button" tabindex="0" title="Show quotes with payment pending" [class.is-active]="activeKpi === 'pending'" (click)="drillKpi('pending')" (keydown.enter)="drillKpi('pending')">
+          <span class="drill-hint" aria-hidden="true"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 3l5 5-5 5" stroke-linecap="round" stroke-linejoin="round" /></svg></span>
           <div class="kpi-icon-wrap kpi-icon--amber">
             <svg viewBox="0 0 18 18" fill="none" width="16" height="16">
               <circle cx="9" cy="9" r="7" stroke="currentColor" stroke-width="1.4" />
@@ -127,7 +131,8 @@
           </div>
         </div>
 
-        <div class="kpi-card" [class.kpi-card--alert]="stats.overdueCount > 0">
+<div class="kpi-card is-clickable" role="button" tabindex="0" title="Show overdue quotes" [class.kpi-card--alert]="stats.overdueCount > 0" [class.is-active]="activeKpi === 'overdue'" (click)="drillKpi('overdue')" (keydown.enter)="drillKpi('overdue')">
+          <span class="drill-hint" aria-hidden="true"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 3l5 5-5 5" stroke-linecap="round" stroke-linejoin="round" /></svg></span>
           <div class="kpi-icon-wrap kpi-icon--rose">
             <svg viewBox="0 0 18 18" fill="none" width="16" height="16">
               <path d="M9 2L2 16h14L9 2z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round" />
@@ -141,7 +146,8 @@
           </div>
         </div>
 
-        <div class="kpi-card">
+<div class="kpi-card is-clickable" role="button" tabindex="0" title="Show failed payments" [class.is-active]="activeKpi === 'failed'" (click)="drillKpi('failed')" (keydown.enter)="drillKpi('failed')">
+          <span class="drill-hint" aria-hidden="true"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 3l5 5-5 5" stroke-linecap="round" stroke-linejoin="round" /></svg></span>
           <div class="kpi-icon-wrap kpi-icon--violet">
             <svg viewBox="0 0 18 18" fill="none" width="16" height="16">
               <rect x="2" y="4" width="14" height="10" rx="2" stroke="currentColor" stroke-width="1.4" />
@@ -171,7 +177,8 @@
           <span class="analytics-title">Payment Status</span>
         </div>
         <div class="sbar-list">
-          <div class="sbar-row" *ngFor="let s of paymentStatusList; trackBy: trackByKey">
+          <div class="sbar-row is-clickable" *ngFor="let s of paymentStatusList; trackBy: trackByKey" role="button" tabindex="0"
+            [class.is-active]="activePaymentStatus === s.key" (click)="drillPay(s.key)" (keydown.enter)="drillPay(s.key)">
             <span class="sbar-label">{{ s.label }}</span>
             <div class="sbar-track">
               <div class="sbar-fill" [ngClass]="'sfill--' + s.key" [style.width.%]="getPayPercent(s.key)"></div>
@@ -186,7 +193,8 @@
           <span class="analytics-title">Payment Methods</span>
         </div>
         <div class="sbar-list">
-          <div class="sbar-row" *ngFor="let m of methodList; trackBy: trackByIdx">
+          <div class="sbar-row is-clickable" *ngFor="let m of methodList; trackBy: trackByIdx" role="button" tabindex="0"
+            [class.is-active]="activePaymentMethod === m" (click)="drillMethod(m)" (keydown.enter)="drillMethod(m)">
             <span class="sbar-label">{{ m }}</span>
             <div class="sbar-track">
               <div class="sbar-fill sfill--method" [style.width.%]="getMethodPercent(m)"></div>
@@ -201,7 +209,8 @@
           <span class="analytics-title">Quotation Pipeline</span>
         </div>
         <div class="pipeline-wrap">
-          <div class="pipeline-col" *ngFor="let s of pipelineStages; trackBy: trackByVal">
+          <div class="pipeline-col is-clickable" *ngFor="let s of pipelineStages; trackBy: trackByVal" role="button" tabindex="0"
+            [class.is-active]="activeQuotationStatus === s.value" (click)="drillStage(s.value)" (keydown.enter)="drillStage(s.value)">
             <div class="pipe-count">{{ getQuotCount(s.value) }}</div>
             <div class="pipe-bar-track">
               <div class="pipe-bar" [ngClass]="s.cls" [style.height.%]="getPipelinePercent(s.value)"></div>
@@ -333,7 +342,7 @@
     </div>
 
     <!-- ══ TABLE ══ -->
-    <div class="table-panel">
+    <div class="table-panel" id="tracking-table">
       <div class="table-header">
         <div class="table-header-left">
           <span class="table-title">Quotations &amp; Payments</span>
@@ -415,8 +424,8 @@
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let r of pagedRecords; trackBy: trackById" [class.row--overdue]="isOverdue(r)"
-              (click)="openDrawer(r)">
+            <tr class="is-clickable" *ngFor="let r of pagedRecords; trackBy: trackById" [class.row--overdue]="isOverdue(r)"
+              (click)="openDrawer(r)" tabindex="0" (keydown.enter)="openDrawer(r)">
 
               <td>
                 <div class="cust-cell">

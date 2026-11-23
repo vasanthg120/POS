@@ -1,11 +1,11 @@
 'use strict';
 
 const Tenant = require('../models/tenant');
-const { resolvePeriod } = require('../services/quoteTracking.service');
+const { resolvePeriod, round2 } = require('../services/quoteTracking.service');
 const {
   buildTenantSnapshot, buildAllTenantSnapshots,
   buildAllTenantQuoteRows, buildAllTenantPaymentRows,
-  buildActivityFeed, listTenantsLite,
+  buildActivityFeed, listTenantsLite, findTenantQuote,
 } = require('../services/superAdminAggregation.service');
 
 const asyncHandler = (fn) => (req, res, next) =>
@@ -59,8 +59,8 @@ exports.getTenantsLite = asyncHandler(async (req, res) => {
    Management table, from a single call.
    ══════════════════════════════════════════════════════════════════════════ */
 exports.getTenantsOverview = asyncHandler(async (req, res) => {
-  const { month, year, dateFrom, dateTo } = req.query;
-  const { periodStart, periodEnd } = resolvePeriod({ month, year, dateFrom, dateTo });
+  const { month, year, dateFrom, dateTo, period } = req.query;
+  const { periodStart, periodEnd } = resolvePeriod({ month, year, dateFrom, dateTo, period });
 
   const tenants = await buildAllTenantSnapshots({ periodStart, periodEnd, bypassCache: wantsFreshData(req) });
 
@@ -72,8 +72,8 @@ exports.getTenantsOverview = asyncHandler(async (req, res) => {
    Single-tenant version, for the Tenant Detail page.
    ══════════════════════════════════════════════════════════════════════════ */
 exports.getTenantOverview = asyncHandler(async (req, res) => {
-  const { month, year, dateFrom, dateTo } = req.query;
-  const { periodStart, periodEnd } = resolvePeriod({ month, year, dateFrom, dateTo });
+  const { month, year, dateFrom, dateTo, period } = req.query;
+  const { periodStart, periodEnd } = resolvePeriod({ month, year, dateFrom, dateTo, period });
 
   const tenant = await Tenant
     .findOne({ tenantId: req.params.tenantId })
@@ -93,10 +93,10 @@ exports.getTenantOverview = asyncHandler(async (req, res) => {
    ══════════════════════════════════════════════════════════════════════════ */
 exports.getQuotationsAcrossTenants = asyncHandler(async (req, res) => {
   const {
-    month, year, dateFrom, dateTo,
-    tenantId, status, paymentStatus, search, minAmount, maxAmount,
+    month, year, dateFrom, dateTo, period,
+    tenantId, status, paymentStatus, outcome, approval, search, minAmount, maxAmount,
   } = req.query;
-  const { periodStart, periodEnd } = resolvePeriod({ month, year, dateFrom, dateTo });
+  const { periodStart, periodEnd } = resolvePeriod({ month, year, dateFrom, dateTo, period });
 
   const { rows: allRows, tenantErrors } = await buildAllTenantQuoteRows({
     periodStart, periodEnd, bypassCache: wantsFreshData(req),
@@ -106,18 +106,36 @@ exports.getQuotationsAcrossTenants = asyncHandler(async (req, res) => {
   if (tenantId) rows = rows.filter(r => r.tenantId === tenantId);
   if (status) rows = rows.filter(r => (r.quotationStatus || '').toLowerCase() === String(status).toLowerCase());
   if (paymentStatus) rows = rows.filter(r => r.paymentStatus === paymentStatus);
+  // outcome = the dashboard KPI bucket (approved | pending | rejectedOrExpired),
+  // so a KPI card can drill down to exactly the quotes it counts.
+  if (outcome) rows = rows.filter(r => r.outcome === outcome);
+  if (approval) rows = rows.filter(r => r.approvalStatus === approval);
   if (minAmount) rows = rows.filter(r => r.amount >= Number(minAmount));
   if (maxAmount) rows = rows.filter(r => r.amount <= Number(maxAmount));
   if (search) {
     const q = String(search).trim().toLowerCase();
     rows = rows.filter(r =>
-      `${r.quotationNo} ${r.customerName} ${r.customerEmail} ${r.tenantName}`.toLowerCase().includes(q));
+      `${r.quotationNo} ${r.customerName} ${r.customerEmail} ${r.companyName} ${r.tenantName} ${r.relatedDeal ?? ''} ${r.createdBy ?? ''}`
+        .toLowerCase().includes(q));
+  }
+
+  const sortField = ['amount', 'customerName', 'quotationDate', 'paidAmount'].includes(req.query.sort) ? req.query.sort : null;
+  if (sortField) {
+    const dir = req.query.dir === 'asc' ? 1 : -1;
+    rows = [...rows].sort((a, b) => {
+      const av = a[sortField], bv = b[sortField];
+      if (sortField === 'quotationDate') return dir * (new Date(av || 0) - new Date(bv || 0));
+      if (typeof av === 'number' && typeof bv === 'number') return dir * (av - bv);
+      return dir * String(av ?? '').localeCompare(String(bv ?? ''));
+    });
   }
 
   // Summary reflects the full filtered set, before the page slice.
   const summary = {
     total: rows.length,
-    totalAmount: rows.reduce((s, r) => s + r.amount, 0),
+    totalAmount: round2(rows.reduce((s, r) => s + r.amount, 0)),
+    paidAmount: round2(rows.reduce((s, r) => s + (r.paidAmount || 0), 0)),
+    balanceDue: round2(rows.reduce((s, r) => s + (r.balanceDue || 0), 0)),
     // Same buckets as the dashboard KPIs (superAdminAggregation quoteOutcome).
     approved: rows.filter(r => r.outcome === 'approved').length,
     pending: rows.filter(r => r.outcome === 'pending').length,
@@ -136,6 +154,24 @@ exports.getQuotationsAcrossTenants = asyncHandler(async (req, res) => {
 });
 
 /* ══════════════════════════════════════════════════════════════════════════
+   GET /api/admin/tenants/:tenantId/quotes/:quoteId
+   One quotation in full — CRM details, price breakdown, tracking, payments,
+   timeline — for the detail drawer every Super Admin list opens.
+   ══════════════════════════════════════════════════════════════════════════ */
+exports.getTenantQuoteDetail = asyncHandler(async (req, res) => {
+  const result = await findTenantQuote(req.params.tenantId, req.params.quoteId, {
+    bypassCache: wantsFreshData(req),
+  });
+  if (!result) return fail(res, 'Tenant not found.', 404);
+  if (!result.quote) {
+    return fail(res, result.error
+      ? `Could not load this tenant's quotations: ${result.error}`
+      : `Quotation "${req.params.quoteId}" not found.`, result.error ? 502 : 404);
+  }
+  return ok(res, result);
+});
+
+/* ══════════════════════════════════════════════════════════════════════════
    GET /api/admin/payments
    Cross-tenant Payment Tracking — one row per actual payment transaction
    (Manual or Razorpay) across every tenant. Filtered server-side, then
@@ -143,10 +179,10 @@ exports.getQuotationsAcrossTenants = asyncHandler(async (req, res) => {
    ══════════════════════════════════════════════════════════════════════════ */
 exports.getPaymentsAcrossTenants = asyncHandler(async (req, res) => {
   const {
-    month, year, dateFrom, dateTo,
+    month, year, dateFrom, dateTo, period,
     tenantId, source, status, method, search, minAmount, maxAmount,
   } = req.query;
-  const { periodStart, periodEnd } = resolvePeriod({ month, year, dateFrom, dateTo });
+  const { periodStart, periodEnd } = resolvePeriod({ month, year, dateFrom, dateTo, period });
 
   const { rows: allRows, tenantErrors } = await buildAllTenantPaymentRows({
     periodStart, periodEnd, bypassCache: wantsFreshData(req),
@@ -165,10 +201,20 @@ exports.getPaymentsAcrossTenants = asyncHandler(async (req, res) => {
       `${r.quotationNo} ${r.customerName} ${r.customerEmail} ${r.tenantName} ${r.transactionReference}`.toLowerCase().includes(q));
   }
 
+  const paySort = ['paymentDate', 'paymentAmount', 'customerName'].includes(req.query.sort) ? req.query.sort : null;
+  if (paySort) {
+    const dir = req.query.dir === 'asc' ? 1 : -1;
+    rows = [...rows].sort((a, b) => {
+      if (paySort === 'paymentDate') return dir * (new Date(a.paymentDate || 0) - new Date(b.paymentDate || 0));
+      if (paySort === 'paymentAmount') return dir * (a.paymentAmount - b.paymentAmount);
+      return dir * String(a.customerName ?? '').localeCompare(String(b.customerName ?? ''));
+    });
+  }
+
   // Summary reflects the full filtered set, before the page slice.
   const summary = {
     totalCount: rows.length,
-    totalCollected: rows.reduce((s, r) => s + r.paymentAmount, 0),
+    totalCollected: round2(rows.reduce((s, r) => s + r.paymentAmount, 0)),
     manualCount: rows.filter(r => r.paymentSource === 'Manual').length,
     razorpayCount: rows.filter(r => r.paymentSource === 'Razorpay').length,
   };
@@ -190,8 +236,8 @@ exports.getPaymentsAcrossTenants = asyncHandler(async (req, res) => {
    recorded, and CRM sync failures, sorted by recency and paginated.
    ══════════════════════════════════════════════════════════════════════════ */
 exports.getActivityFeed = asyncHandler(async (req, res) => {
-  const { month, year, dateFrom, dateTo, tenantId, type, severity } = req.query;
-  const { periodStart, periodEnd } = resolvePeriod({ month, year, dateFrom, dateTo });
+  const { month, year, dateFrom, dateTo, period, tenantId, type, severity } = req.query;
+  const { periodStart, periodEnd } = resolvePeriod({ month, year, dateFrom, dateTo, period });
 
   const { events: allEvents, tenantErrors } = await buildActivityFeed({
     periodStart, periodEnd, bypassCache: wantsFreshData(req),

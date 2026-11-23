@@ -11,6 +11,19 @@ import { Router } from '@angular/router';
 import { interval } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DashboardService, getToken } from '../services/dashboard';
+import { Auth } from '../services/auth';
+
+/** Where each KPI card leads: the page that lists the records behind it. */
+const CARD_TARGETS: Record<string, { path: string; page: string; label: string }> = {
+  'revenue':   { path: '/tracking',   page: 'tracking',   label: 'Open Tracking: collected revenue by quotation' },
+  'month-rev': { path: '/tracking',   page: 'tracking',   label: 'Open Tracking: this month\'s payments' },
+  'payments':  { path: '/payments',   page: 'payments',   label: 'Open Payments' },
+  'quotes':    { path: '/quotations', page: 'quotations', label: 'Open Quotations' },
+  'avg':       { path: '/quotations', page: 'quotations', label: 'Open Quotations: deal sizes' },
+  'pay-success': { path: '/payments', page: 'payments',   label: 'Open Payments' },
+  'pay-pending': { path: '/payments', page: 'payments',   label: 'Open Payments' },
+  'pay-failed':  { path: '/payments', page: 'payments',   label: 'Open Payments' },
+};
 
 export interface KpiCard {
   id: string;
@@ -71,6 +84,7 @@ export class Dashboard implements OnInit, OnDestroy {
   private router     = inject(Router);
   private destroyRef = inject(DestroyRef);
   private svc        = inject(DashboardService);
+  private auth       = inject(Auth);
 
   readonly loading           = this.svc.loading;
   readonly error             = this.svc.error;
@@ -140,6 +154,19 @@ export class Dashboard implements OnInit, OnDestroy {
 
   clearTooltip(): void {
     this.tooltip.set(null);
+  }
+
+  /** True when a card links to a page this user is allowed to open. */
+  canDrill(id: string): boolean {
+    const t = CARD_TARGETS[id];
+    return !!t && this.auth.canAccess(t.page, 'view');
+  }
+
+  drillLabel(id: string): string { return CARD_TARGETS[id]?.label ?? ''; }
+
+  openCard(id: string): void {
+    if (!this.canDrill(id)) return;
+    this.router.navigate([CARD_TARGETS[id].path]);
   }
 
   goToLogin(): void {

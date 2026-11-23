@@ -207,11 +207,38 @@ const normaliseApproval = (raw) => {
 const sumNumeric = (arr, key) =>
   Array.isArray(arr) ? arr.reduce((s, x) => s + (Number.isFinite(x?.[key]) ? x[key] : 0), 0) : 0;
 
+const num = (v) => { const n = Number(v); return Number.isFinite(n) ? n : 0; };
+
+/**
+ * ProspectConnect's price adjustments: `discount`, `fees`, `tax` (plus the
+ * per-group `group*` arrays, empty in every quote seen so far). Returned as
+ * display rows so a detail view can show how the total was reached.
+ */
+const adjustmentRows = (q) => {
+  const pick = (arr, nameKey, amountKey) => (Array.isArray(arr) ? arr : [])
+    .filter(x => x && typeof x === 'object')
+    .map(x => ({
+      name: String(x[nameKey] ?? '').trim() || 'Unnamed',
+      amount: round2(num(x[amountKey])),
+      rate: x.tax_input != null && x.currency === '%' ? `${x.tax_input}%` : null,
+    }));
+  return {
+    discounts: [...pick(q.discount, 'discount_name', 'discount_amount'), ...pick(q.groupDiscount, 'discount_name', 'discount_amount')],
+    fees:      [...pick(q.fees, 'fees_name', 'fees_amount'),             ...pick(q.groupFees, 'fees_name', 'fees_amount')],
+    taxes:     [...pick(q.tax, 'tax_name', 'tax_amount'),                ...pick(q.groupTax, 'tax_name', 'tax_amount')],
+  };
+};
+
+const joinAddress = (c = {}) =>
+  [c.address, c.city, c.state, c.postal_code || c.zip, c.country]
+    .map(v => String(v ?? '').trim()).filter(Boolean).join(', ');
+
 const normalise = (q) => {
   const client  = q.client_details ?? {};
   const contact = q.contact_detail ?? {};
   const owner   = q.quote_owner   ?? {};
   const deal    = q.deal          ?? {};
+  const ownerCo = q.quote_owner_company ?? {};
 
   const rawItems = Array.isArray(q.items)     ? q.items
                  : Array.isArray(q.line_items) ? q.line_items
@@ -221,6 +248,12 @@ const normalise = (q) => {
   const status     = q.quote_status ?? q.status ?? 'draft';
   const expiryDate = q.expiration_date ?? q.expiry_date ?? q.expiryDate ?? null;
   const approval   = normaliseApproval(q.client_approval_status);
+
+  const amount = num(q.quote_amount ?? q.amount ?? q.total);
+  const { discounts, fees, taxes } = adjustmentRows(q);
+  const discountTotal = round2(discounts.reduce((s, x) => s + x.amount, 0));
+  const feesTotal     = round2(fees.reduce((s, x) => s + x.amount, 0));
+  const taxAmount     = round2(taxes.reduce((s, x) => s + x.amount, 0));
 
   return {
     id:          q._id ?? q.id,
@@ -251,8 +284,41 @@ const normalise = (q) => {
     expiryDate,
     notes: q.notes ?? '',
     items: rawItems,
+
+    // ── Detail-view fields ────────────────────────────────────────────────
+    companyName:     client.company_name ?? '',
+    customerAddress: joinAddress(client),
+    dealId:          deal.id ?? '',
+    ownerCompany:    ownerCo.company_name ?? '',
+    ownerCompanyCity: ownerCo.city ?? '',
+    ownerTaxIds:     Array.isArray(ownerCo.tax_ids)
+      ? ownerCo.tax_ids.map(t => ({ label: t?.label || t?.type || 'Tax ID', value: t?.value || '' })).filter(t => t.value)
+      : [],
+    isDraft:        q.in_draft_mode === true || String(status).toLowerCase() === 'draft',
+    paymentOption:  q.payment_option ?? '',
+    // Price build-up: subtotal − discounts + fees + taxes = amount.
+    breakdown: {
+      subtotal: round2(amount - taxAmount - feesTotal + discountTotal),
+      discounts, fees, taxes,
+      discountTotal, feesTotal, taxTotal: taxAmount,
+      total: round2(amount),
+    },
+    clientFeedback: (Array.isArray(q.approvals_feedback) ? q.approvals_feedback : [])
+      .filter(f => f && f.feedback)
+      .map(f => ({ text: String(f.feedback), date: f.feedback_date ?? null, fromClient: f.is_client_feedback === true })),
+
     raw: stripHeavyFields(q),
   };
+};
+
+/** Case-insensitive match of a normalised quote against a free-text search. */
+const matchesSearch = (q, term) => {
+  const t = String(term ?? '').trim().toLowerCase();
+  if (!t) return true;
+  return [
+    q.quoteNumber, q.quoteId, q.title, q.dealName, q.customerName, q.companyName,
+    q.email, q.phone, q.ownerName, q.ownerEmail,
+  ].some(v => String(v ?? '').toLowerCase().includes(t));
 };
 
 /* ── Auto-detect payment status from Razorpay ────────────────────────────── */
@@ -386,15 +452,17 @@ const resolveQuotStage = (q) => {
  * every quote's current payment state" helper `getQuotes` uses internally.
  */
 const fetchMergedQuotes = async (tenant, apiKey, search = '') => {
-  // Full lists come from the locally synced copy (services/crmSync.service.js);
-  // a search still goes to the CRM live. Lazy require: crmSync requires this file.
+  // Everything — including a search — reads the locally synced copy
+  // (services/crmSync.service.js). A search used to go to the CRM live and
+  // returned at most one page, so searched lists were silently truncated.
+  // Lazy require: crmSync requires this file.
   const { getSyncedQuotes } = require('./crmSync.service');
   const [raw, rzpMap] = await Promise.all([
-    search ? fetchAllQuotes(apiKey, search) : getSyncedQuotes(tenant, apiKey).then(r => r.quotes),
+    getSyncedQuotes(tenant, apiKey).then(r => r.quotes),
     fetchRazorpayPaymentMap(tenant),
   ]);
 
-  const quotes = raw.map(normalise);
+  const quotes = raw.map(normalise).filter(q => matchesSearch(q, search));
 
   const trackingRecords = await QuoteTracking.find({ tenantId: tenant._id }).lean();
   const trackingMap     = new Map(trackingRecords.map(t => [String(t.quoteId), t]));
@@ -463,8 +531,14 @@ const eligiblePayments = (quote) => {
  * the current month. Shared so every period-scoped report (Royalty, Super
  * Admin dashboard) resolves "this month" identically.
  */
-const resolvePeriod = ({ month, year, dateFrom, dateTo } = {}) => {
+const resolvePeriod = ({ month, year, dateFrom, dateTo, period } = {}) => {
   const now = new Date();
+  // `period=all` → no date bounds at all (every synced quote). Without it the
+  // Super Admin views always defaulted to the current month, so with 108
+  // quotes synced only the 11 created this month were ever shown.
+  if (String(period ?? '').toLowerCase() === 'all') {
+    return { periodStart: null, periodEnd: null };
+  }
   if (dateFrom || dateTo) {
     return {
       periodStart: dateFrom ? new Date(dateFrom) : null,
@@ -497,6 +571,7 @@ module.exports = {
   fetchRazorpayPaymentMap,
   loadTenant,
   normalise,
+  matchesSearch,
   autoDetectFromRazorpay,
   mergeTracking,
   resolvePayStatus,

@@ -269,3 +269,53 @@
   text-align: center;
   padding: 8px;
 }
+
+/* ── Clickable KPI cards ───────────────────────────────────────────────── */
+.kpi-card.is-clickable { padding-right: 34px; transition: box-shadow var(--t-base), transform var(--t-base), border-color var(--t-fast); }
+.kpi-card.is-clickable:hover { box-shadow: var(--sh-md); transform: translateY(-1px); }
+.kpi-sub--links button { border: 0; background: none; padding: 0; font: inherit; color: var(--blue); cursor: pointer; }
+.kpi-sub--links button:hover { text-decoration: underline; }
+
+/* ── Records panel ─────────────────────────────────────────────────────── */
+.records-panel { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-lg); overflow: hidden; }
+.records-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 0 16px; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+.records-tabs { display: flex; gap: 4px; }
+.records-tabs button {
+  display: inline-flex; align-items: center; gap: 6px; padding: 14px 12px; border: 0; background: none; cursor: pointer;
+  font: 600 13px var(--font-body); color: var(--text-muted); border-bottom: 2px solid transparent; margin-bottom: -1px;
+}
+.records-tabs button:hover { color: var(--text-primary); }
+.records-tabs button.active { color: var(--blue); border-bottom-color: var(--sky); }
+.tab-count { font-size: 11px; background: var(--surface-3); color: var(--text-secondary); border-radius: var(--r-full); padding: 0 7px; }
+.records-tools { display: flex; align-items: center; gap: 8px; padding: 8px 0; flex-wrap: wrap; }
+.records-search { min-width: 180px; }
+.seg { display: inline-flex; border: 1px solid var(--border); border-radius: var(--r-md); overflow: hidden; }
+.seg button { border: 0; background: var(--surface); padding: 6px 10px; font: 600 11.5px var(--font-body); color: var(--text-secondary); cursor: pointer; border-left: 1px solid var(--border); }
+.seg button:first-child { border-left: 0; }
+.seg button.on { background: var(--btn-bg); color: var(--btn-text); }
+.records-empty { padding: 32px 16px; text-align: center; font-size: 13px; color: var(--text-muted); }
+.sync-err { color: var(--error); }
+.rec-tbl { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+.rec-tbl.is-dim { opacity: .55; }
+.rec-tbl th { text-align: left; padding: 9px 14px; font-size: 10px; text-transform: uppercase; letter-spacing: .5px; color: var(--text-muted); background: var(--surface-2); border-bottom: 1px solid var(--border); white-space: nowrap; }
+.rec-tbl td { padding: 10px 14px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+.rec-tbl tbody tr:last-child td { border-bottom: 0; }
+.rec-tbl tbody tr:focus-visible { outline: 2px solid var(--sky); outline-offset: -2px; }
+.text-right { text-align: right !important; }
+.rec-code { font: 600 11px var(--font-mono); background: var(--indigo-light); color: var(--blue); border-radius: var(--r-xs); padding: 1px 6px; }
+.rec-deal { font-weight: 600; margin-left: 4px; }
+.rec-sub { font-size: 11px; color: var(--text-muted); }
+.rec-mono { font-family: var(--font-mono); font-size: 11.5px; color: var(--text-secondary); }
+.rec-ok { color: var(--success); }
+.out-badge { display: inline-block; padding: 3px 9px; border-radius: var(--r-full); font-size: 10.5px; font-weight: 700; white-space: nowrap; }
+.out--approved { background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; }
+.out--pending { background: #fffbeb; color: #b45309; border: 1px solid #fde68a; }
+.out--rejectedOrExpired { background: #fff1f2; color: #be123c; border: 1px solid #fecdd3; }
+.pbadge--partially_paid { background: var(--indigo-light); color: var(--indigo); border: 1px solid rgba(79, 70, 229, .18); }
+.pbadge--pending { background: var(--warning-bg); color: var(--warning); border: 1px solid var(--warning-border); }
+.pbadge--refunded { background: var(--info-bg); color: var(--sky); border: 1px solid var(--info-border); }
+.records-foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 16px; border-top: 1px solid var(--border); font-size: 12px; color: var(--text-muted); }
+.pager { display: flex; gap: 8px; }
+.pager-btn { padding: 6px 12px; background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--r-sm); font: 600 12px var(--font-body); color: var(--text-secondary); cursor: pointer; }
+.pager-btn:hover:not(:disabled) { border-color: var(--sky); color: var(--sky); }
+.pager-btn:disabled { opacity: .4; cursor: not-allowed; }

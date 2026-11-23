@@ -114,7 +114,11 @@
   ══════════════════════════════════════════════════════════════════ -->
   <div class="kpi-grid">
     @for (card of kpiCards(); track card.id) {
-    <div class="kpi-card kpi-{{ card.color }}" [class.skeleton]="card.loading">
+    <div class="kpi-card kpi-{{ card.color }}" [class.skeleton]="card.loading" [class.is-clickable]="canDrill(card.id)"
+      [attr.role]="canDrill(card.id) ? 'link' : null" [attr.tabindex]="canDrill(card.id) ? 0 : null"
+      [attr.title]="canDrill(card.id) ? drillLabel(card.id) : null"
+      (click)="openCard(card.id)" (keydown.enter)="openCard(card.id)">
+      @if (canDrill(card.id)) { <span class="drill-hint" aria-hidden="true"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 3l5 5-5 5" stroke-linecap="round" stroke-linejoin="round" /></svg></span> }
       <div class="kpi-icon-wrap">
         <svg viewBox="0 0 24 24" class="kpi-icon">
           <path [attr.d]="iconPath(card.icon)" />
@@ -342,17 +346,17 @@
   <div class="section-grid-3 mt-section">
 
     <!-- Payment status summary cards -->
-    <div class="stat-card stat-success">
+    <div class="stat-card stat-success" [class.is-clickable]="canDrill('pay-success')" (click)="openCard('pay-success')">
       <p class="stat-label">Successful</p>
       <p class="stat-num">{{ successPayments() | number }}</p>
       <p class="stat-sub">Captured &amp; verified</p>
     </div>
-    <div class="stat-card stat-warning">
+    <div class="stat-card stat-warning" [class.is-clickable]="canDrill('pay-pending')" (click)="openCard('pay-pending')">
       <p class="stat-label">Pending</p>
       <p class="stat-num">{{ pendingPayments() | number }}</p>
       <p class="stat-sub">Awaiting capture</p>
     </div>
-    <div class="stat-card stat-error">
+    <div class="stat-card stat-error" [class.is-clickable]="canDrill('pay-failed')" (click)="openCard('pay-failed')">
       <p class="stat-label">Failed</p>
       <p class="stat-num">{{ failedPayments() | number }}</p>
       <p class="stat-sub">Declined / timed out</p>

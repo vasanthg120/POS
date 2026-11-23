@@ -148,6 +148,12 @@ module.exports = (app) => {
     param('tenantId').notEmpty(),
   ], validate, superAdminCtrl.getTenantOverview);
 
+  // One quotation in full, for the Super Admin detail drawer.
+  admin.get('/tenants/:tenantId/quotes/:quoteId', [
+    param('tenantId').notEmpty(),
+    param('quoteId').notEmpty().isLength({ max: 64 }),
+  ], validate, superAdminCtrl.getTenantQuoteDetail);
+
   // Royalty percentage — set from the platform side only; tenants can view
   // but not edit their own rate (see /tenant/royalty/config, GET-only).
   admin.get('/tenants/:tenantId/royalty-config', [

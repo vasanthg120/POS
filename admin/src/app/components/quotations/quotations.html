@@ -98,7 +98,8 @@
     <!-- ── KPI STRIP ──────────────────────────────────────────────────── -->
     <div class="kpi-strip" *ngIf="stats() as s">
 
-      <div class="kpi-card kpi-card--featured">
+      <div class="kpi-card kpi-card--featured is-clickable" role="button" tabindex="0" [attr.aria-label]="'Show all quotations'" (click)="toggleStatus('')" (keydown.enter)="toggleStatus('')">
+        <span class="drill-hint" aria-hidden="true"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 3l5 5-5 5" stroke-linecap="round" stroke-linejoin="round" /></svg></span>
         <div class="kpi-card__top">
           <div class="kpi-icon emerald">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
@@ -114,11 +115,12 @@
             <span class="kpi-currency">{{ s.currency }}</span>
             <span class="kpi-amount">{{ formatAmount(s.totalValue) }}</span>
           </div>
-          <span class="kpi-sub">All loaded quotes</span>
+          <span class="kpi-sub">All synced quotations</span>
         </div>
       </div>
 
-      <div class="kpi-card">
+      <div class="kpi-card is-clickable" role="button" tabindex="0" [attr.aria-label]="'Show accepted quotations'" [class.is-active]="filterStatus() === 'accepted'" (click)="toggleStatus('accepted')" (keydown.enter)="toggleStatus('accepted')">
+        <span class="drill-hint" aria-hidden="true"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 3l5 5-5 5" stroke-linecap="round" stroke-linejoin="round" /></svg></span>
         <div class="kpi-card__top">
           <div class="kpi-icon emerald">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
@@ -130,11 +132,12 @@
         <div class="kpi-card__body">
           <span class="kpi-label">Accepted</span>
           <div class="kpi-value"><span class="kpi-amount">{{ s.acceptedCount }}</span></div>
-          <span class="kpi-sub kpi-sub--emerald">Won quotes</span>
+          <span class="kpi-sub kpi-sub--emerald">{{ s.currency }} {{ formatAmount(s.acceptedValue) }} won</span>
         </div>
       </div>
 
-      <div class="kpi-card">
+      <div class="kpi-card is-clickable" role="button" tabindex="0" [attr.aria-label]="'Show quotations awaiting the client'" [class.is-active]="filterStatus() === 'sent'" (click)="toggleStatus('sent')" (keydown.enter)="toggleStatus('sent')">
+        <span class="drill-hint" aria-hidden="true"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 3l5 5-5 5" stroke-linecap="round" stroke-linejoin="round" /></svg></span>
         <div class="kpi-card__top">
           <div class="kpi-icon sky">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
@@ -150,7 +153,8 @@
         </div>
       </div>
 
-      <div class="kpi-card">
+      <div class="kpi-card is-clickable" role="button" tabindex="0" [attr.aria-label]="'Show quotations expiring within 7 days'" [class.is-active]="filterStatus() === 'expiring'" (click)="toggleStatus('expiring')" (keydown.enter)="toggleStatus('expiring')">
+        <span class="drill-hint" aria-hidden="true"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 3l5 5-5 5" stroke-linecap="round" stroke-linejoin="round" /></svg></span>
         <div class="kpi-card__top">
           <div class="kpi-icon amber">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
@@ -257,6 +261,7 @@
             <option value="accepted">Accepted</option>
             <option value="rejected">Rejected</option>
             <option value="expired">Expired</option>
+            <option value="expiring">Expiring in 7 days</option>
             <option value="paid">Paid</option>
           </select>
         </div>
@@ -460,8 +465,9 @@
               <td>
                 <span class="status-tag" [ngClass]="'stag--' + getApprovalStatus(q)">
                   <span class="stag-dot"></span>
-                  {{ getApprovalStatus(q) | titlecase }}
+                  {{ approvalLabel(q) }}
                 </span>
+                <div class="stage-sub" *ngIf="q.quotationStatus">{{ q.quotationStatus }}</div>
               </td>
 
               <!-- Row chevron -->
@@ -635,84 +641,9 @@
       </div>
     </div>
 
-    <!-- Amount band -->
-    <div class="dr-amount-band" [ngClass]="'band--' + getApprovalStatus(q)">
-      <div class="dr-amount-left">
-        <span class="dr-currency">{{ getCurrency(q) }}</span>
-        <span class="dr-amount">{{ formatAmount(getAmount(q)) }}</span>
-      </div>
-      <span class="status-tag" [ngClass]="'stag--' + getApprovalStatus(q)">
-        <span class="stag-dot"></span>
-        {{ getApprovalStatus(q) | titlecase }}
-      </span>
-    </div>
-
-    <!-- Body -->
-    <div class="dr-body">
-
-      <!-- ── Deal Overview ── -->
-      <section class="dr-section">
-        <h4 class="dr-section-label">Deal Overview</h4>
-        <dl class="dr-dl">
-          <div class="dr-row">
-            <dt>Quote Number</dt>
-            <dd class="mono">#{{ getQuoteId(q) }}</dd>
-          </div>
-          <div class="dr-row">
-            <dt>Deal Name</dt>
-            <dd>{{ getDealName(q) }}</dd>
-          </div>
-          <div class="dr-row" *ngIf="getOwner(q)">
-            <dt>Quote Owner</dt>
-            <dd>{{ getOwner(q) }}</dd>
-          </div>
-          <div class="dr-row">
-            <dt>Client Approval</dt>
-            <dd>
-              <span class="status-tag" [ngClass]="'stag--' + getApprovalStatus(q)">
-                <span class="stag-dot"></span>
-                {{ getApprovalStatus(q) | titlecase }}
-              </span>
-            </dd>
-          </div>
-          <div class="dr-row" *ngIf="getDate(q.createdAt)">
-            <dt>Created On</dt>
-            <dd>{{ getDate(q.createdAt) | date:'dd MMM yyyy, HH:mm' }}</dd>
-          </div>
-          <!-- FIX: use getExpiryDate() which reads raw.expiration_date -->
-          <div class="dr-row" *ngIf="getExpiryDate(q) as expDate">
-            <dt>Expiration Date</dt>
-            <dd [class.warn]="isExpiringSoon(q)" [class.expired-text]="isExpired(q)">
-              {{ expDate | date:'dd MMM yyyy' }}
-              <span class="expiry-badge" *ngIf="isExpiringSoon(q) && !isExpired(q)">⚠ {{ getDaysToExpiry(q) }}d
-                left</span>
-              <span class="expiry-badge expiry-badge--expired" *ngIf="isExpired(q)">Expired</span>
-            </dd>
-          </div>
-        </dl>
-      </section>
-
-      <!-- ── Client ── -->
-      <section class="dr-section">
-        <h4 class="dr-section-label">Client</h4>
-        <div class="dr-customer-card">
-          <div class="dr-avatar" [style.background]="getAvatarColor(getCustomer(q))">
-            {{ getCustomer(q)[0]?.toUpperCase() || '?' }}
-          </div>
-          <div class="dr-cust-info">
-            <span class="dr-cust-name">{{ getCustomer(q) }}</span>
-            <a class="dr-cust-email" *ngIf="q.email" [href]="'mailto:' + q.email">{{ q.email }}</a>
-            <span class="dr-cust-phone mono" *ngIf="q.phone">{{ q.phone }}</span>
-          </div>
-        </div>
-      </section>
-
-      <!-- ── Notes ── -->
-      <section class="dr-section" *ngIf="q.notes">
-        <h4 class="dr-section-label">Notes</h4>
-        <p class="dr-notes">{{ q.notes }}</p>
-      </section>
-
+    <!-- Full detail: overview, pricing, payments, activity, CRM record -->
+    <div class="dr-body dr-body--detail">
+      <app-quote-detail *ngIf="selectedDetail() as d" [quote]="d"></app-quote-detail>
     </div>
 
     <!-- Drawer nav -->

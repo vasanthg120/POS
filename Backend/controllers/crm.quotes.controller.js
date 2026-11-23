@@ -8,6 +8,7 @@ const {
   fetchRazorpayPaymentMap,
   loadTenant: loadTenantRaw,
   normalise,
+  matchesSearch,
   autoDetectFromRazorpay,
   mergeTracking,
   eligiblePayments,
@@ -100,15 +101,15 @@ exports.getQuotes = asyncHandler(async (req, res) => {
   const limit      = Math.min(200, parseInt(req.query.limit)      || 25);
   const startAfter = Math.max(0,   parseInt(req.query.startAfter) || 0);
 
-  // Full list: the locally synced copy. Search: the CRM's own search, live.
+  // Always the full locally synced copy; a search filters it here. Searching
+  // used to call the CRM live for a single page (limit 25), so a search or a
+  // filtered view never showed more than one page of matches.
   const [{ quotes: raw, sync }, rzpMap] = await Promise.all([
-    search
-      ? fetchPage(apiKey, { search, limit, startAfter }).then(quotes => ({ quotes, sync: null }))
-      : getSyncedQuotes(tenant, apiKey),
+    getSyncedQuotes(tenant, apiKey),
     fetchRazorpayPaymentMap(tenant),
   ]);
 
-  const quotes = raw.map(normalise);
+  const quotes = raw.map(normalise).filter(q => matchesSearch(q, search));
 
   // Fetch all QuoteTracking records for this tenant in one query
   const trackingRecords = await QuoteTracking.find({ tenantId: tenant._id }).lean();
@@ -323,7 +324,11 @@ exports.getQuoteById = asyncHandler(async (req, res) => {
                   ?? rzpMap?.byQuotationNo?.get(String(quote.quoteId));
   const merged     = mergeTracking(quote, tracking, rzpPayment);
 
-  return ok(res, merged);
+  return ok(res, {
+    ...merged,
+    balanceDue: round2(Math.max(0, (merged.amount ?? 0) - (merged.paidAmount ?? 0))),
+    payments: eligiblePayments(merged),
+  });
 });
 
 /* ══════════════════════════════════════════════════════════════════════════
@@ -338,18 +343,42 @@ exports.searchQuotes = asyncHandler(async (req, res) => {
     status, dateFrom, dateTo,
   } = req.body;
 
-  const raw = await fetchPage(loaded.apiKey, {
-    search:     String(search).trim(),
-    limit:      Math.min(200, parseInt(limit)      || 25),
-    startAfter: Math.max(0,   parseInt(startAfter) || 0),
-  });
+  // Filters run over every synced quote (merged with tracking), not over one
+  // live CRM page of `limit` quotes as before — that returned a handful of
+  // matches out of the first 25 and hid the rest.
+  const { tenant, apiKey } = loaded;
+  const [{ quotes: raw }, trackingRecords, rzpMap] = await Promise.all([
+    getSyncedQuotes(tenant, apiKey),
+    QuoteTracking.find({ tenantId: tenant._id }).lean(),
+    fetchRazorpayPaymentMap(tenant),
+  ]);
+  const trackingMap = new Map(trackingRecords.map(t => [String(t.quoteId), t]));
 
-  let quotes = raw.map(normalise);
-  if (status)   quotes = quotes.filter(q => (q.clientApprovalStatus ?? q.status ?? '').toLowerCase() === status.toLowerCase());
+  const wanted = String(status ?? '').trim().toLowerCase();
+  const snake  = (v) => String(v ?? '').trim().toLowerCase().replace(/\s+/g, '_');
+  let quotes = raw.map(normalise)
+    .filter(q => matchesSearch(q, search))
+    .map((q) => {
+      const rzpPayment = rzpMap?.byQuotationNo?.get(q.quoteNumber)
+                      ?? rzpMap?.byQuotationNo?.get(String(q.quoteId));
+      return mergeTracking(q, trackingMap.get(String(q.quoteId)), rzpPayment);
+    });
+
+  if (wanted) {
+    quotes = quotes.filter(q => [
+      q.approvalStatus, q.clientApprovalStatus, q.status, q.paymentStatus, snake(q.quotationStatus),
+      q.isExpired ? 'expired' : '',
+    ].some(v => snake(v) === snake(wanted)));
+  }
   if (dateFrom) quotes = quotes.filter(q => q.createdAt && new Date(q.createdAt) >= new Date(dateFrom));
   if (dateTo)   quotes = quotes.filter(q => q.createdAt && new Date(q.createdAt) <= new Date(dateTo + 'T23:59:59'));
 
-  return ok(res, { quotes, total: quotes.length, startAfter, limit, search });
+  return ok(res, {
+    quotes, total: quotes.length,
+    startAfter: Math.max(0, parseInt(startAfter) || 0),
+    limit: Math.min(200, parseInt(limit) || 25),
+    search,
+  });
 });
 
 /* ══════════════════════════════════════════════════════════════════════════

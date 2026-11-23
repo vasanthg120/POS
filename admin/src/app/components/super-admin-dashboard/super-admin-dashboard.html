@@ -11,12 +11,13 @@
         </div>
         <div class="header-title-block">
           <span class="header-title">Super Admin Dashboard</span>
-          <span class="header-breadcrumb">Franchise Network → Overview</span>
+          <span class="header-breadcrumb">Franchise Network → Overview · {{ periodText }}</span>
         </div>
       </div>
       <div class="header-right">
         <div class="hdr-action-group">
-          <button class="hdr-btn" [disabled]="isLoading" (click)="load()">
+          <app-period-picker [compact]="true" [value]="period" (valueChange)="onPeriodChange($event)"></app-period-picker>
+          <button class="hdr-btn" [disabled]="isLoading" (click)="refresh()" title="Re-read every tenant's synced data now">
             <svg viewBox="0 0 16 16" fill="none" width="14" height="14" [class.btn-spin]="isLoading">
               <path d="M13.5 8a5.5 5.5 0 1 1-1.6-3.9M13.5 2.5v3h-3" stroke="currentColor" stroke-width="1.4"
                 stroke-linecap="round" stroke-linejoin="round" />
@@ -38,7 +39,8 @@
       </ng-container>
 
       <ng-container *ngIf="!isLoading">
-        <div class="kpi-card kpi-card--hero">
+        <div class="kpi-card kpi-card--hero is-clickable" role="button" tabindex="0" aria-label="Show tenants" (click)="openKpi('tenants')" (keydown.enter)="openKpi('tenants')" (keydown.space)="$event.preventDefault(); openKpi('tenants')">
+          <span class="drill-hint" aria-hidden="true"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 3l5 5-5 5" stroke-linecap="round" stroke-linejoin="round" /></svg></span>
           <div class="kpi-icon-wrap kpi-icon--blue">
             <svg viewBox="0 0 18 18" fill="none" width="16" height="16">
               <path d="M2 15V6l7-4 7 4v9M6 15v-4h4v4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" />
@@ -51,7 +53,8 @@
           </div>
         </div>
 
-        <div class="kpi-card">
+        <div class="kpi-card is-clickable" role="button" tabindex="0" aria-label="Show all quotations" (click)="openKpi('quotations')" (keydown.enter)="openKpi('quotations')" (keydown.space)="$event.preventDefault(); openKpi('quotations')">
+          <span class="drill-hint" aria-hidden="true"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 3l5 5-5 5" stroke-linecap="round" stroke-linejoin="round" /></svg></span>
           <div class="kpi-icon-wrap kpi-icon--teal">
             <svg viewBox="0 0 18 18" fill="none" width="16" height="16">
               <path d="M14 2H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V6z" stroke="currentColor" stroke-width="1.4" />
@@ -61,11 +64,12 @@
           <div class="kpi-body">
             <div class="kpi-label">Total Quotations</div>
             <div class="kpi-value">{{ kpi.totalQuotations }}</div>
-            <div class="kpi-sub">This period, across all tenants</div>
+            <div class="kpi-sub">{{ periodText }}, across all tenants</div>
           </div>
         </div>
 
-        <div class="kpi-card">
+        <div class="kpi-card is-clickable" role="button" tabindex="0" aria-label="Show pending quotations" (click)="openKpi('pendingQuotes')" (keydown.enter)="openKpi('pendingQuotes')" (keydown.space)="$event.preventDefault(); openKpi('pendingQuotes')">
+          <span class="drill-hint" aria-hidden="true"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 3l5 5-5 5" stroke-linecap="round" stroke-linejoin="round" /></svg></span>
           <div class="kpi-icon-wrap kpi-icon--amber">
             <svg viewBox="0 0 18 18" fill="none" width="16" height="16">
               <circle cx="9" cy="9" r="7" stroke="currentColor" stroke-width="1.4" />
@@ -78,7 +82,8 @@
           </div>
         </div>
 
-        <div class="kpi-card">
+        <div class="kpi-card is-clickable" role="button" tabindex="0" aria-label="Show approved quotations" (click)="openKpi('approvedQuotes')" (keydown.enter)="openKpi('approvedQuotes')" (keydown.space)="$event.preventDefault(); openKpi('approvedQuotes')">
+          <span class="drill-hint" aria-hidden="true"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 3l5 5-5 5" stroke-linecap="round" stroke-linejoin="round" /></svg></span>
           <div class="kpi-icon-wrap kpi-icon--emerald">
             <svg viewBox="0 0 18 18" fill="none" width="16" height="16">
               <path d="M3 9.5 7 13l8-8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
@@ -90,7 +95,8 @@
           </div>
         </div>
 
-        <div class="kpi-card">
+        <div class="kpi-card is-clickable" role="button" tabindex="0" aria-label="Show rejected or expired quotations" (click)="openKpi('rejectedQuotes')" (keydown.enter)="openKpi('rejectedQuotes')" (keydown.space)="$event.preventDefault(); openKpi('rejectedQuotes')">
+          <span class="drill-hint" aria-hidden="true"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 3l5 5-5 5" stroke-linecap="round" stroke-linejoin="round" /></svg></span>
           <div class="kpi-icon-wrap kpi-icon--rose">
             <svg viewBox="0 0 18 18" fill="none" width="16" height="16">
               <path d="M5 5l8 8M13 5l-8 8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
@@ -102,7 +108,8 @@
           </div>
         </div>
 
-        <div class="kpi-card kpi-card--hero">
+        <div class="kpi-card kpi-card--hero is-clickable" role="button" tabindex="0" aria-label="Show invoiced quotations" (click)="openKpi('invoiced')" (keydown.enter)="openKpi('invoiced')" (keydown.space)="$event.preventDefault(); openKpi('invoiced')">
+          <span class="drill-hint" aria-hidden="true"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 3l5 5-5 5" stroke-linecap="round" stroke-linejoin="round" /></svg></span>
           <div class="kpi-icon-wrap kpi-icon--violet">
             <svg viewBox="0 0 18 18" fill="none" width="16" height="16">
               <path d="M14 2H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V6z" stroke="currentColor" stroke-width="1.4" />
@@ -112,11 +119,12 @@
           <div class="kpi-body">
             <div class="kpi-label">Total Invoiced Amount</div>
             <div class="kpi-value">{{ fmtINR(kpi.totalInvoiced) }}</div>
-            <div class="kpi-sub">Full quoted amount, this period</div>
+            <div class="kpi-sub">Full quoted amount · {{ collectionRate }}% collected</div>
           </div>
         </div>
 
-        <div class="kpi-card kpi-card--hero">
+        <div class="kpi-card kpi-card--hero is-clickable" role="button" tabindex="0" aria-label="Show payments received" (click)="openKpi('collected')" (keydown.enter)="openKpi('collected')" (keydown.space)="$event.preventDefault(); openKpi('collected')">
+          <span class="drill-hint" aria-hidden="true"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 3l5 5-5 5" stroke-linecap="round" stroke-linejoin="round" /></svg></span>
           <div class="kpi-icon-wrap kpi-icon--emerald">
             <svg viewBox="0 0 18 18" fill="none" width="16" height="16">
               <path d="M9 2v14M5.5 5.5c0-1.3 1.5-2.5 3.5-2.5s3.5 1.2 3.5 2.5-1.5 2-3.5 2.5c-2 .5-3.5 1.2-3.5 2.5s1.5 2.5 3.5 2.5 3.5-1.2 3.5-2.5"
@@ -130,7 +138,8 @@
           </div>
         </div>
 
-        <div class="kpi-card">
+        <div class="kpi-card is-clickable" role="button" tabindex="0" aria-label="Show quotations with payment pending" (click)="openKpi('pendingPayments')" (keydown.enter)="openKpi('pendingPayments')" (keydown.space)="$event.preventDefault(); openKpi('pendingPayments')">
+          <span class="drill-hint" aria-hidden="true"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 3l5 5-5 5" stroke-linecap="round" stroke-linejoin="round" /></svg></span>
           <div class="kpi-icon-wrap kpi-icon--amber">
             <svg viewBox="0 0 18 18" fill="none" width="16" height="16">
               <rect x="2" y="4" width="14" height="10" rx="2" stroke="currentColor" stroke-width="1.4" />
@@ -143,7 +152,8 @@
           </div>
         </div>
 
-        <div class="kpi-card">
+        <div class="kpi-card is-clickable" role="button" tabindex="0" aria-label="Show failed payments" (click)="openKpi('failedPayments')" (keydown.enter)="openKpi('failedPayments')" (keydown.space)="$event.preventDefault(); openKpi('failedPayments')">
+          <span class="drill-hint" aria-hidden="true"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 3l5 5-5 5" stroke-linecap="round" stroke-linejoin="round" /></svg></span>
           <div class="kpi-icon-wrap kpi-icon--rose">
             <svg viewBox="0 0 18 18" fill="none" width="16" height="16">
               <circle cx="9" cy="9" r="7" stroke="currentColor" stroke-width="1.4" />
@@ -156,7 +166,8 @@
           </div>
         </div>
 
-        <div class="kpi-card kpi-card--hero">
+        <div class="kpi-card kpi-card--hero is-clickable" role="button" tabindex="0" aria-label="Show royalty-earning payments" (click)="openKpi('royalty')" (keydown.enter)="openKpi('royalty')" (keydown.space)="$event.preventDefault(); openKpi('royalty')">
+          <span class="drill-hint" aria-hidden="true"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 3l5 5-5 5" stroke-linecap="round" stroke-linejoin="round" /></svg></span>
           <div class="kpi-icon-wrap kpi-icon--indigo">
             <svg viewBox="0 0 18 18" fill="none" width="16" height="16">
               <circle cx="5.5" cy="5.5" r="2" stroke="currentColor" stroke-width="1.4" />
@@ -167,11 +178,12 @@
           <div class="kpi-body">
             <div class="kpi-label">Total Royalty</div>
             <div class="kpi-value">{{ fmtINR(kpi.totalRoyalty) }}</div>
-            <div class="kpi-sub">Owed across all tenants, this period</div>
+            <div class="kpi-sub">Owed across all tenants · {{ periodText }}</div>
           </div>
         </div>
 
-        <div class="kpi-card">
+        <div class="kpi-card is-clickable" role="button" tabindex="0" aria-label="Show CRM connection status" (click)="openKpi('crm')" (keydown.enter)="openKpi('crm')" (keydown.space)="$event.preventDefault(); openKpi('crm')">
+          <span class="drill-hint" aria-hidden="true"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 3l5 5-5 5" stroke-linecap="round" stroke-linejoin="round" /></svg></span>
           <div class="kpi-icon-wrap kpi-icon--blue">
             <svg viewBox="0 0 18 18" fill="none" width="16" height="16">
               <path d="M2 9a7 7 0 0 1 12-5M16 9a7 7 0 0 1-12 5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" />
@@ -184,7 +196,8 @@
           </div>
         </div>
 
-        <div class="kpi-card">
+        <div class="kpi-card is-clickable" role="button" tabindex="0" aria-label="Show Razorpay connection status" (click)="openKpi('razorpay')" (keydown.enter)="openKpi('razorpay')" (keydown.space)="$event.preventDefault(); openKpi('razorpay')">
+          <span class="drill-hint" aria-hidden="true"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 3l5 5-5 5" stroke-linecap="round" stroke-linejoin="round" /></svg></span>
           <div class="kpi-icon-wrap kpi-icon--teal">
             <svg viewBox="0 0 18 18" fill="none" width="16" height="16">
               <rect x="2" y="4" width="14" height="10" rx="2" stroke="currentColor" stroke-width="1.4" />
@@ -197,6 +210,58 @@
           </div>
         </div>
       </ng-container>
+    </div>
+
+    <!-- ── Insights: outcome split + recent quotations ─────────────────────── -->
+    <div class="insights-row" *ngIf="!isLoading && !loadError">
+      <section class="insight-card">
+        <div class="insight-head">
+          <span class="insight-title">Quotation outcomes</span>
+          <span class="insight-meta">{{ kpi.totalQuotations }} quotations · {{ periodText }}</span>
+        </div>
+        <div class="outcome-bar" role="img" [attr.aria-label]="kpi.approvedQuotations + ' approved, ' + kpi.pendingQuotations + ' pending, ' + kpi.rejectedExpiredQuotations + ' rejected or expired'">
+          <span *ngFor="let o of outcomeSplit" [ngClass]="'ob-' + o.key" [style.width.%]="o.pct"></span>
+        </div>
+        <div class="outcome-legend">
+          <button class="outcome-item is-clickable" *ngFor="let o of outcomeSplit"
+            (click)="openKpi(o.key === 'approved' ? 'approvedQuotes' : o.key === 'pending' ? 'pendingQuotes' : 'rejectedQuotes')">
+            <i [ngClass]="'ob-' + o.key"></i>
+            <span class="oi-label">{{ o.label }}</span>
+            <b>{{ o.count }}</b>
+            <small>{{ o.pct }}%</small>
+          </button>
+        </div>
+        <div class="collect-row">
+          <div class="collect-text">
+            <span>Collected</span>
+            <b>{{ fmtINR(kpi.totalCollected) }}</b>
+            <small>of {{ fmtINR(kpi.totalInvoiced) }} quoted</small>
+          </div>
+          <div class="collect-bar"><span [style.width.%]="collectionRate"></span></div>
+          <span class="collect-pct">{{ collectionRate }}%</span>
+        </div>
+      </section>
+
+      <section class="insight-card insight-card--list">
+        <div class="insight-head">
+          <span class="insight-title">Recent quotations</span>
+          <button class="link-btn" (click)="openKpi('quotations')">View all →</button>
+        </div>
+        <div class="recent-empty" *ngIf="recentLoading">Loading…</div>
+        <div class="recent-empty sync-err" *ngIf="!recentLoading && recentError">{{ recentError }}</div>
+        <div class="recent-empty" *ngIf="!recentLoading && !recentError && !recent.length">No quotations in this period.</div>
+        <button class="recent-row is-clickable" *ngFor="let r of recent; trackBy: trackByRow" (click)="openQuote(r)">
+          <span class="recent-code">#{{ r.quotationNo }}</span>
+          <span class="recent-main">
+            <b>{{ r.relatedDeal || r.customerName || 'Quotation' }}</b>
+            <small>{{ r.customerName }} · {{ r.tenantName }} · {{ fmtDate(r.quotationDate) }}</small>
+          </span>
+          <span class="recent-side">
+            <b>{{ fmtINR(r.amount) }}</b>
+            <span class="pay-badge" [ngClass]="'pbadge--' + r.paymentStatus">{{ payLabel(r.paymentStatus) }}</span>
+          </span>
+        </button>
+      </section>
     </div>
 
     <!-- ── Filter Panel ──────────────────────────────────────────────────── -->
@@ -253,24 +318,6 @@
         </div>
 
         <div class="filter-bottom-row">
-          <div class="date-range-group">
-            <span class="fchip-label">Period</span>
-            <div class="range-inputs">
-              <div class="range-field">
-                <label>Month</label>
-                <select class="range-input" [(ngModel)]="selectedMonth" (ngModelChange)="onPeriodChange()">
-                  <option *ngFor="let m of monthOptions" [ngValue]="m.value">{{ m.label }}</option>
-                </select>
-              </div>
-              <div class="range-field">
-                <label>Year</label>
-                <select class="range-input" [(ngModel)]="selectedYear" (ngModelChange)="onPeriodChange()">
-                  <option *ngFor="let y of yearOptions" [ngValue]="y">{{ y }}</option>
-                </select>
-              </div>
-            </div>
-          </div>
-
           <button class="reset-btn" (click)="resetFilters()">
             <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6">
               <path d="M13.5 8a5.5 5.5 0 1 1-1.6-3.9M13.5 2.5v3h-3" stroke-linecap="round" stroke-linejoin="round" />
@@ -333,7 +380,7 @@
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let t of filtered; trackBy: trackByTenant" (click)="openTenant(t)">
+            <tr class="is-clickable" *ngFor="let t of filtered; trackBy: trackByTenant" (click)="openTenant(t)" tabindex="0" (keydown.enter)="openTenant(t)">
               <td>
                 <div class="cust-cell">
                   <div class="cust-av" [style.background]="avatarColor(t.businessName || t.ownerName)">
@@ -371,4 +418,6 @@
       </div>
     </div>
   </main>
+
+  <app-sa-drilldown [request]="drill" (closed)="closeDrill()"></app-sa-drilldown>
 </div>

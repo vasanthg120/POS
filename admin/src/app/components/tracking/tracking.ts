@@ -54,6 +54,10 @@ export class Tracking implements OnInit, OnDestroy {
   dateTo = '';
   minAmount: number | null = null;
   maxAmount: number | null = null;
+  /** Set by the "Overdue" KPI card. */
+  onlyOverdue = false;
+  /** Which KPI card is acting as the current filter (for its active state). */
+  activeKpi = '';
   filtersCollapsed = true;
 
   // ── Sort ──────────────────────────────────────────────────────────────────
@@ -363,7 +367,9 @@ export class Tracking implements OnInit, OnDestroy {
       if (this.minAmount != null) matchAmt = matchAmt && r.amount >= this.minAmount;
       if (this.maxAmount != null) matchAmt = matchAmt && r.amount <= this.maxAmount;
 
-      return matchSearch && matchPay && matchQuot && matchMethod && matchDate && matchAmt;
+      const matchOverdue = !this.onlyOverdue || this.isOverdue(r);
+
+      return matchSearch && matchPay && matchQuot && matchMethod && matchDate && matchAmt && matchOverdue;
     });
 
     const asc = this.sortDir === 'asc';
@@ -390,9 +396,35 @@ export class Tracking implements OnInit, OnDestroy {
     this.pagedRecords = this.filteredRecords.slice(start, start + this.pageSize);
   }
 
-  setPayFilter(v: string): void { this.activePaymentStatus = v; this.applyFilters(); }
-  setQuotFilter(v: string): void { this.activeQuotationStatus = v; this.applyFilters(); }
-  setMethodFilter(v: string): void { this.activePaymentMethod = v; this.applyFilters(); }
+  setPayFilter(v: string): void { this.activePaymentStatus = v; this.activeKpi = ''; this.applyFilters(); }
+  setQuotFilter(v: string): void { this.activeQuotationStatus = v; this.activeKpi = ''; this.applyFilters(); }
+  setMethodFilter(v: string): void { this.activePaymentMethod = v; this.activeKpi = ''; this.applyFilters(); }
+
+  /**
+   * KPI cards and analytics bars filter the table to the records behind the
+   * number, then scroll to it. Clicking the active card again clears it.
+   */
+  drillKpi(key: 'all' | 'paid' | 'pending' | 'overdue' | 'failed' | 'partial'): void {
+    const toggleOff = this.activeKpi === key || key === 'all';
+    this.activePaymentStatus = '';
+    this.activeQuotationStatus = '';
+    this.onlyOverdue = false;
+    this.activeKpi = toggleOff ? '' : key;
+    if (!toggleOff) {
+      if (key === 'overdue') this.onlyOverdue = true;
+      else this.activePaymentStatus = key === 'partial' ? 'partially_paid' : key;
+    }
+    this.applyFilters();
+    this.scrollToTable();
+  }
+
+  drillPay(key: string): void { this.setPayFilter(this.activePaymentStatus === key ? '' : key); this.scrollToTable(); }
+  drillMethod(m: string): void { this.setMethodFilter(this.activePaymentMethod === m ? '' : m); this.scrollToTable(); }
+  drillStage(s: string): void { this.setQuotFilter(this.activeQuotationStatus === s ? '' : s); this.scrollToTable(); }
+
+  private scrollToTable(): void {
+    setTimeout(() => document.getElementById('tracking-table')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 60);
+  }
   toggleFilters(): void { this.filtersCollapsed = !this.filtersCollapsed; }
 
   resetFilters(): void {
@@ -405,6 +437,8 @@ export class Tracking implements OnInit, OnDestroy {
     this.dateTo = '';
     this.minAmount = null;
     this.maxAmount = null;
+    this.onlyOverdue = false;
+    this.activeKpi = '';
     this.filterTrigger$.next();
   }
 
@@ -430,7 +464,7 @@ export class Tracking implements OnInit, OnDestroy {
 
   get activeFilterCount(): number {
     return [
-      this.searchQuery, this.activePaymentStatus, this.activeQuotationStatus,
+      this.searchQuery, this.activePaymentStatus, this.activeQuotationStatus, this.onlyOverdue ? '1' : '',
       this.activePaymentMethod, this.dateFrom, this.dateTo,
       this.minAmount != null ? '1' : '', this.maxAmount != null ? '1' : '',
     ].filter(Boolean).length;

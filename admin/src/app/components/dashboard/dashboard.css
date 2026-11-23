@@ -1603,3 +1603,8 @@
 .dash-session-btn:hover {
   opacity: .9;
 }
+
+
+/* ── Click-through KPI / stat cards ────────────────────────────────────── */
+.kpi-card.is-clickable, .stat-card.is-clickable { transition: transform var(--t-base), box-shadow var(--t-base), border-color var(--t-fast); }
+.kpi-card.is-clickable:hover, .stat-card.is-clickable:hover { transform: translateY(-2px); box-shadow: var(--sh-md); }

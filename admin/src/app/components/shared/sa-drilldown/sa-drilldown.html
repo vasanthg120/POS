@@ -1,0 +1,143 @@
+<app-detail-drawer [open]="!!req" [title]="drawerTitle" [subtitle]="drawerSubtitle" [eyebrow]="eyebrow"
+  [wide]="!!ref" [showBack]="showBack" (back)="backToList()" (closed)="closed.emit()">
+
+  <!-- ══ Detail mode ════════════════════════════════════════════════════════ -->
+  <ng-container *ngIf="ref">
+    <div class="dl-state" *ngIf="detailLoading">
+      <div class="dl-skel dl-skel--hero"></div>
+      <div class="dl-skel"></div><div class="dl-skel"></div><div class="dl-skel dl-skel--short"></div>
+    </div>
+    <div class="dl-state dl-error" *ngIf="!detailLoading && detailError" role="alert">
+      <b>Couldn't load this quotation</b>
+      <span>{{ detailError }}</span>
+      <button class="dl-btn" (click)="retryDetail()">Try again</button>
+    </div>
+    <app-quote-detail *ngIf="!detailLoading && detail" [quote]="detail.quote" [tenantName]="detail.tenant.tenantName"></app-quote-detail>
+  </ng-container>
+
+  <!-- ══ List mode ══════════════════════════════════════════════════════════ -->
+  <ng-container *ngIf="!ref && req">
+
+    <!-- Toolbar -->
+    <div class="dl-toolbar">
+      <div class="dl-search">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="7" cy="7" r="5" /><path d="M13 13l-2.5-2.5" stroke-linecap="round" /></svg>
+        <input type="search" [(ngModel)]="search" placeholder="Search in this list…" aria-label="Search in this list" />
+      </div>
+      <select class="dl-select" [(ngModel)]="sort" *ngIf="kind !== 'tenants'" aria-label="Sort">
+        <option value="date">Newest first</option>
+        <option value="amount">Highest amount</option>
+      </select>
+    </div>
+
+    <!-- Summary -->
+    <div class="dl-summary" *ngIf="!listLoading && !listError && kind !== 'tenants'">
+      <div class="dl-sum-item"><span>Records</span><b>{{ kind === 'payments' ? visiblePayments.length : visibleQuotes.length }}<small *ngIf="totalRecords > (kind === 'payments' ? paymentRows.length : quoteRows.length)"> of {{ totalRecords }}</small></b></div>
+      <div class="dl-sum-item"><span>{{ kind === 'payments' ? 'Collected' : 'Quoted value' }}</span><b>{{ fmtINR(listSum) }}</b></div>
+      <div class="dl-sum-item" *ngIf="kind === 'quotes'"><span>Collected</span><b>{{ fmtINR(collectedSum) }}</b></div>
+    </div>
+    <div class="dl-split" *ngIf="kind === 'quotes' && !listLoading && visibleQuotes.length">
+      <div class="dl-split-bar">
+        <span *ngFor="let s of outcomeSplit" [ngClass]="'seg-' + s.key" [style.width.%]="s.pct" [title]="s.label + ': ' + s.count"></span>
+      </div>
+      <div class="dl-split-legend">
+        <span *ngFor="let s of outcomeSplit"><i [ngClass]="'seg-' + s.key"></i>{{ s.label }} <b>{{ s.count }}</b></span>
+      </div>
+    </div>
+
+    <!-- Loading / error -->
+    <div class="dl-list" *ngIf="listLoading">
+      <div class="dl-skel" *ngFor="let _ of [1,2,3,4,5,6]"></div>
+    </div>
+    <div class="dl-state dl-error" *ngIf="listError" role="alert">
+      <b>Couldn't load these records</b><span>{{ listError }}</span>
+      <button class="dl-btn" (click)="loadList()">Try again</button>
+    </div>
+
+    <!-- Quotations -->
+    <div class="dl-list" *ngIf="kind === 'quotes' && !listLoading && !listError">
+      <div class="dl-empty" *ngIf="!visibleQuotes.length">No quotations here for this period.</div>
+      <button class="dl-row" *ngFor="let r of visibleQuotes; trackBy: trackQuote"
+        (click)="openQuote({ tenantId: r.tenantId, quoteId: r.quoteId, tenantName: r.tenantName })">
+        <div class="dl-row-main">
+          <div class="dl-row-top">
+            <span class="dl-code">#{{ r.quotationNo }}</span>
+            <span class="dl-name">{{ r.relatedDeal || r.customerName || 'Quotation' }}</span>
+          </div>
+          <div class="dl-row-meta">
+            {{ r.customerName || '—' }}<ng-container *ngIf="r.companyName"> · {{ r.companyName }}</ng-container>
+            · {{ fmtDate(r.quotationDate) }}
+          </div>
+          <div class="dl-row-tags">
+            <span class="dl-tag dl-tag--tenant">{{ r.tenantName }}</span>
+            <span class="dl-tag" [ngClass]="'out-' + r.outcome">{{ outcomeLabel(r.outcome) }}</span>
+            <span class="dl-tag" [ngClass]="'pay-' + r.paymentStatus">{{ payLabel(r.paymentStatus) }}</span>
+          </div>
+        </div>
+        <div class="dl-row-side">
+          <b>{{ fmtINR(r.amount) }}</b>
+          <small *ngIf="r.paidAmount">{{ fmtINR(r.paidAmount) }} paid</small>
+          <svg class="dl-chev" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 3l5 5-5 5" stroke-linecap="round" stroke-linejoin="round" /></svg>
+        </div>
+      </button>
+    </div>
+
+    <!-- Payments -->
+    <div class="dl-list" *ngIf="kind === 'payments' && !listLoading && !listError">
+      <div class="dl-empty" *ngIf="!visiblePayments.length">No payments recorded for this period.</div>
+      <button class="dl-row" *ngFor="let r of visiblePayments; trackBy: trackPayment"
+        (click)="openQuote({ tenantId: r.tenantId, quoteId: r.quoteId, tenantName: r.tenantName })">
+        <div class="dl-row-main">
+          <div class="dl-row-top">
+            <span class="dl-code">#{{ r.quotationNo }}</span>
+            <span class="dl-name">{{ r.customerName || 'Customer' }}</span>
+          </div>
+          <div class="dl-row-meta">{{ fmtDate(r.paymentDate) }} · {{ r.paymentMethod || r.paymentSource }}<ng-container *ngIf="r.transactionReference"> · {{ r.transactionReference }}</ng-container></div>
+          <div class="dl-row-tags">
+            <span class="dl-tag dl-tag--tenant">{{ r.tenantName }}</span>
+            <span class="dl-tag" [ngClass]="r.paymentSource === 'Razorpay' ? 'src-rzp' : 'src-manual'">{{ r.paymentSource }}</span>
+          </div>
+        </div>
+        <div class="dl-row-side">
+          <b class="dl-amt-ok">{{ fmtINR(r.paymentAmount) }}</b>
+          <svg class="dl-chev" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 3l5 5-5 5" stroke-linecap="round" stroke-linejoin="round" /></svg>
+        </div>
+      </button>
+    </div>
+
+    <!-- Tenants -->
+    <div class="dl-list" *ngIf="kind === 'tenants'">
+      <div class="dl-empty" *ngIf="!visibleTenants.length">No tenants match.</div>
+      <button class="dl-row" *ngFor="let t of visibleTenants; trackBy: trackTenant" (click)="openTenant(t)">
+        <div class="dl-avatar">{{ initials(t.businessName || t.ownerName) }}</div>
+        <div class="dl-row-main">
+          <div class="dl-row-top"><span class="dl-name">{{ t.businessName || t.ownerName }}</span></div>
+          <div class="dl-row-meta">{{ t.email }}<ng-container *ngIf="t.city"> · {{ t.city }}</ng-container></div>
+          <div class="dl-row-tags">
+            <span class="dl-tag" [ngClass]="t.isActive ? 'out-approved' : 'out-rejectedOrExpired'">{{ t.isActive ? 'Active' : 'Inactive' }}</span>
+            <span class="dl-tag" [ngClass]="t.crm.isConfigured ? 'src-rzp' : 'dl-tag--off'">CRM {{ t.crm.isConfigured ? 'connected' : 'missing' }}</span>
+            <span class="dl-tag" [ngClass]="t.razorpay.isConfigured ? 'src-rzp' : 'dl-tag--off'">Razorpay {{ t.razorpay.isConfigured ? 'connected' : 'missing' }}</span>
+            <span class="dl-tag out-rejectedOrExpired" *ngIf="t.syncStatus === 'error'">Sync error</span>
+          </div>
+        </div>
+        <div class="dl-row-side">
+          <b>{{ t.quotations.total }}</b><small>quotations</small>
+          <svg class="dl-chev" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 3l5 5-5 5" stroke-linecap="round" stroke-linejoin="round" /></svg>
+        </div>
+      </button>
+    </div>
+  </ng-container>
+
+  <!-- ══ Footer ═════════════════════════════════════════════════════════════ -->
+  <div drawer-footer class="dl-foot" *ngIf="(ref && navCount > 1 && navIndex >= 0) || (!ref && fullView)">
+    <ng-container *ngIf="ref && navIndex >= 0">
+      <button class="dl-btn" (click)="step(-1)" [disabled]="navIndex <= 0">‹ Previous</button>
+      <span class="dl-foot-pos">{{ navIndex + 1 }} of {{ navCount }}</span>
+      <button class="dl-btn" (click)="step(1)" [disabled]="navIndex >= navCount - 1">Next ›</button>
+    </ng-container>
+    <ng-container *ngIf="!ref && fullView as fv">
+      <span class="dl-foot-pos">Showing the records behind this number</span>
+      <button class="dl-btn dl-btn--primary" (click)="goFullView(fv)">{{ fv.label }} →</button>
+    </ng-container>
+  </div>
+</app-detail-drawer>

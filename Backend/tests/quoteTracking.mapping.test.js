@@ -188,3 +188,72 @@ describe('fetchAllQuotesWithMeta() — pagination', () => {
     expect(r.reportedCount).toBe(15);
   });
 });
+
+describe('detail-view fields', () => {
+  // Numbers from a real quote: 43,050 of items − 2,000 discount + 999 fee + 5% GST.
+  const priced = () => normalise(crmQuote({
+    quote_amount: 44151.45,
+    discount: [{ discount_name: 'Onboarding Offer', discount_amount: 2000, discount_input: 2000 }],
+    fees: [{ fees_name: 'Setup', fees_amount: 999, fees_input: 999 }],
+    tax: [{ tax_name: 'GST', currency: '%', tax_input: '5', tax_amount: 2102.45 }],
+    client_details: { id: 'c1', name: 'Karthik', company_name: 'Galaxy Cast', city: 'Chennai', country: 'India', email: 'k@example.com' },
+    quote_owner_company: { company_name: 'FP T.nagar', tax_ids: [{ label: 'India GSTIN', value: '33AAA' }] },
+    approvals_feedback: [{ feedback: 'Size M-3', feedback_date: '2026-08-13T03:36:26.167Z', is_client_feedback: true }],
+  }));
+
+  test('price breakdown adds back up to the quote amount', () => {
+    const b = priced().breakdown;
+    expect(b.subtotal).toBe(43050);
+    expect(b.discountTotal).toBe(2000);
+    expect(b.feesTotal).toBe(999);
+    expect(b.taxTotal).toBe(2102.45);
+    expect(b.taxes[0]).toEqual({ name: 'GST', amount: 2102.45, rate: '5%' });
+    expect(b.subtotal - b.discountTotal + b.feesTotal + b.taxTotal).toBeCloseTo(b.total, 2);
+  });
+
+  test('company, address, owner company, tax ids and client feedback', () => {
+    const q = priced();
+    expect(q.companyName).toBe('Galaxy Cast');
+    expect(q.customerAddress).toBe('Chennai, India');
+    expect(q.ownerCompany).toBe('FP T.nagar');
+    expect(q.ownerTaxIds).toEqual([{ label: 'India GSTIN', value: '33AAA' }]);
+    expect(q.clientFeedback).toEqual([{ text: 'Size M-3', date: '2026-08-13T03:36:26.167Z', fromClient: true }]);
+  });
+
+  test('a quote with no adjustments has subtotal = total', () => {
+    const b = normalise(crmQuote({ tax: [], quote_amount: 500 })).breakdown;
+    expect(b).toMatchObject({ subtotal: 500, total: 500, discountTotal: 0, feesTotal: 0, taxTotal: 0 });
+  });
+});
+
+describe('matchesSearch()', () => {
+  const { matchesSearch } = require('../services/quoteTracking.service');
+  const q = normalise(crmQuote({ client_details: { name: 'Asha', company_name: 'Acme Corp', email: 'asha@example.com' } }));
+  test.each([['1042'], ['acme'], ['ASHA@'], ['uniforms'], ['owner']])('finds "%s"', (t) => {
+    expect(matchesSearch(q, t)).toBe(true);
+  });
+  test('no match / empty term', () => {
+    expect(matchesSearch(q, 'zzz')).toBe(false);
+    expect(matchesSearch(q, '  ')).toBe(true);
+  });
+});
+
+describe('resolvePeriod() / inRange() — "All time"', () => {
+  const { resolvePeriod } = require('../services/quoteTracking.service');
+  const { inRange } = require('../services/superAdminAggregation.service');
+
+  test('period=all has no bounds and includes every date (even none)', () => {
+    const { periodStart, periodEnd } = resolvePeriod({ period: 'all', month: 11, year: 2026 });
+    expect(periodStart).toBeNull();
+    expect(periodEnd).toBeNull();
+    expect(inRange('2020-01-01', periodStart, periodEnd)).toBe(true);
+    expect(inRange(null, periodStart, periodEnd)).toBe(true);
+  });
+
+  test('without period it still defaults to one month (existing callers unchanged)', () => {
+    const { periodStart, periodEnd } = resolvePeriod({ month: 4, year: 2026 });
+    expect(periodStart.getMonth()).toBe(3);
+    expect(periodEnd.getMonth()).toBe(3);
+    expect(inRange('2026-05-02', periodStart, periodEnd)).toBe(false);
+  });
+});

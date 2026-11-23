@@ -2653,3 +2653,15 @@
   color: var(--text-muted);
   pointer-events: none;
 }
+
+
+/* ── Click-to-drill KPI cards and analytics bars ───────────────────────── */
+.kpi-card.is-clickable { padding-right: 34px; }
+.kpi-card.is-clickable:hover { transform: translateY(-2px); box-shadow: var(--sh-md); }
+.sbar-row.is-clickable { border-radius: var(--r-sm); padding: 2px 4px; margin: 0 -4px; border: 1px solid transparent; transition: background var(--t-fast); }
+.sbar-row.is-clickable:hover { background: var(--surface-2); }
+.sbar-row.is-active { background: var(--sky-light); box-shadow: none; }
+.pipeline-col.is-clickable { border-radius: var(--r-md); border: 1px solid transparent; transition: background var(--t-fast); }
+.pipeline-col.is-clickable:hover { background: var(--surface-2); }
+.pipeline-col.is-active { background: var(--sky-light); box-shadow: none; }
+#tracking-table { scroll-margin-top: 80px; }

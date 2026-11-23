@@ -114,6 +114,8 @@ const tenantLabel = (tenant) => ({
 });
 
 const inRange = (dateVal, periodStart, periodEnd) => {
+  // No bounds ("All time") → everything counts, even a record with no date.
+  if (!periodStart && !periodEnd) return true;
   if (!dateVal) return false;
   const d = new Date(dateVal);
   if (periodStart && d < periodStart) return false;
@@ -243,6 +245,59 @@ const buildTenantSnapshot = async (tenant, { periodStart, periodEnd, bypassCache
   };
 };
 
+/** A merged quote → one Quotation Monitoring row (list views). */
+const quoteRow = (label, q) => ({
+  ...label,
+  quoteId: q.quoteId,
+  quotationNo: q.quoteNumber,
+  customerName: q.customerName,
+  customerEmail: q.email,
+  customerPhone: q.phone || '',
+  companyName: q.companyName || '',
+  quotationDate: q.createdAt,
+  expiryDate: q.expiryDate || null,
+  isExpired: !!q.isExpired,
+  amount: round2(q.amount ?? 0),
+  currency: q.currency || 'INR',
+  quotationStatus: q.quotationStatus,
+  paymentStatus: q.paymentStatus,
+  approvalStatus: q.approvalStatus,
+  outcome: quoteOutcome(q),
+  paidAmount: round2(q.paidAmount ?? 0),
+  balanceDue: round2(Math.max(0, (q.amount ?? 0) - (q.paidAmount ?? 0))),
+  createdBy: q.ownerName || null,
+  relatedDeal: q.dealName || null,
+  lastUpdated: q.trackingUpdatedAt || q.updatedAt || null,
+});
+
+/**
+ * One merged quote (CRM + tracking + Razorpay) for a detail view, looked up
+ * by CRM id or quote number in that tenant's (cached) quote set.
+ * Returns { tenant, quote } or null when the tenant/quote doesn't exist.
+ */
+const findTenantQuote = async (tenantId, quoteId, { bypassCache = false } = {}) => {
+  const tenant = await Tenant.findOne({ tenantId, ...MONITORED_ACCOUNTS_FILTER })
+    .select('+crm.apiKey +razorpay.keyId +razorpay.keySecret');
+  if (!tenant) return null;
+
+  const { quotes, error, sync } = await fetchTenantQuotes(tenant, { bypassCache });
+  if (error && !quotes.length) {
+    return { tenant: tenantLabel(tenant), quote: null, error };
+  }
+  const id = String(quoteId);
+  const quote = quotes.find(q => String(q.quoteId) === id || String(q.quoteNumber) === id) ?? null;
+  return {
+    tenant: tenantLabel(tenant),
+    quote: quote && {
+      ...quote,
+      outcome: quoteOutcome(quote),
+      balanceDue: round2(Math.max(0, (quote.amount ?? 0) - (quote.paidAmount ?? 0))),
+      payments: eligiblePayments(quote),
+    },
+    lastSyncAt: sync?.lastSuccessAt ?? null,
+  };
+};
+
 /**
  * One row per quotation, across every tenant — spec: Quotation Monitoring.
  * "Created By" / "Related Deal" use the best available CRM fields (the
@@ -261,23 +316,7 @@ const buildAllTenantQuoteRows = async ({ periodStart, periodEnd, bypassCache = f
     const label = tenantLabel(tenant);
     for (const q of quotes) {
       if (!inRange(q.createdAt, periodStart, periodEnd)) continue;
-      rows.push({
-        ...label,
-        quoteId: q.quoteId,
-        quotationNo: q.quoteNumber,
-        customerName: q.customerName,
-        customerEmail: q.email,
-        quotationDate: q.createdAt,
-        amount: round2(q.amount ?? 0),
-        quotationStatus: q.quotationStatus,
-        paymentStatus: q.paymentStatus,
-        approvalStatus: q.approvalStatus,
-        outcome: quoteOutcome(q),
-        paidAmount: round2(q.paidAmount ?? 0),
-        createdBy: q.ownerName || null,
-        relatedDeal: q.dealName || null,
-        lastUpdated: q.trackingUpdatedAt || q.updatedAt || null,
-      });
+      rows.push(quoteRow(label, q));
     }
   }));
 
@@ -438,4 +477,6 @@ module.exports = {
   listTenantsLite,
   invalidateTenantQuoteCache,
   quoteOutcome,
+  findTenantQuote,
+  inRange,
 };

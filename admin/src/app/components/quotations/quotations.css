@@ -2388,3 +2388,11 @@ span.status-tag.stag--payment_completed {
     animation: none !important;
   }
 }
+
+
+/* ── Shared detail view inside the drawer ─────────────────────────────── */
+@media (min-width: 769px) { .detail-drawer { width: 640px; } }
+.dr-body--detail { padding: 0 !important; background: var(--surface-2); }
+.stage-sub { margin-top: 4px; font-size: 11px; color: var(--text-muted); white-space: nowrap; }
+.kpi-card.is-clickable { transition: box-shadow var(--t-base), transform var(--t-base), border-color var(--t-fast); }
+.kpi-card.is-clickable:hover { transform: translateY(-2px); box-shadow: var(--sh-md); }

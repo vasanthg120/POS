@@ -145,3 +145,10 @@
 .pager-btn:hover:not(:disabled) { border-color: var(--sky); color: var(--sky); }
 .pager-btn:disabled { opacity: .4; cursor: not-allowed; }
 .pager-info { font-size: 12px; color: var(--text-muted); font-weight: 600; }
+
+/* ── Clickable KPI cards (source filters) + rows ───────────────────────── */
+button.kpi-card { font: inherit; color: inherit; text-align: left; cursor: pointer; transition: box-shadow var(--t-base), transform var(--t-base), border-color var(--t-fast); }
+button.kpi-card:hover { box-shadow: var(--sh-md); transform: translateY(-1px); }
+.kpi-sub { font-size: 11px; color: var(--text-muted); }
+tbody tr.is-clickable { cursor: pointer; }
+tbody tr.is-clickable:focus-visible { outline: 2px solid var(--sky); outline-offset: -2px; }

@@ -7,17 +7,21 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { Subject, debounceTime, takeUntil } from 'rxjs';
 
-import { SuperAdminService, TenantSnapshot } from '../services/super-admin';
+import { SuperAdminService, TenantSnapshot, QuotationRow, QuotationsFilters } from '../services/super-admin';
+import { PeriodPicker } from '../shared/period-picker/period-picker';
+import { PeriodState, defaultPeriod, periodLabel, periodParams } from '../shared/period';
+import { SaDrilldown, DrillRequest } from '../shared/sa-drilldown/sa-drilldown';
 
-const MONTH_NAMES = [
-  'January', 'February', 'March', 'April', 'May', 'June',
-  'July', 'August', 'September', 'October', 'November', 'December',
-];
+/** Dashboard KPI -> the records behind it. */
+export type DashKpi =
+  | 'tenants' | 'quotations' | 'pendingQuotes' | 'approvedQuotes' | 'rejectedQuotes'
+  | 'invoiced' | 'collected' | 'pendingPayments' | 'failedPayments' | 'royalty'
+  | 'crm' | 'razorpay';
 
 @Component({
   selector: 'app-super-admin-dashboard',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, PeriodPicker, SaDrilldown],
   templateUrl: './super-admin-dashboard.html',
   styleUrls: ['./super-admin-dashboard.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -35,15 +39,16 @@ export class SuperAdminDashboard implements OnInit, OnDestroy {
   filtersCollapsed = true;
 
   // ── Filters ───────────────────────────────────────────────────────────────
-  readonly monthOptions = MONTH_NAMES.map((label, i) => ({ value: i + 1, label }));
-  readonly yearOptions: number[] = (() => {
-    const y = new Date().getFullYear();
-    return [y - 2, y - 1, y, y + 1];
-  })();
-
-  selectedMonth = new Date().getMonth() + 1;
-  selectedYear = new Date().getFullYear();
+  // Defaults to "All time": it used to default to the current month, so only
+  // the quotations created this month (11 of 108) were ever counted.
+  period: PeriodState = defaultPeriod();
   searchQuery = '';
+
+  // ── Drill-down + recent quotations ────────────────────────────────────────
+  drill: DrillRequest | null = null;
+  recent: QuotationRow[] = [];
+  recentLoading = true;
+  recentError = '';
   activeStatus: '' | 'active' | 'inactive' = '';
   activeIntegration: '' | 'crm-missing' | 'razorpay-missing' | 'sync-error' = '';
 
@@ -86,9 +91,10 @@ export class SuperAdminDashboard implements OnInit, OnDestroy {
   }
 
   // ── Data loading ───────────────────────────────────────────────────────────
-  load(showSpinner = true): void {
+  load(showSpinner = true, refresh = false): void {
     if (showSpinner) { this.isLoading = true; this.cdr.markForCheck(); }
-    this.svc.getTenantsOverview({ month: this.selectedMonth, year: this.selectedYear })
+    this.loadRecent(refresh);
+    this.svc.getTenantsOverview({ ...periodParams(this.period), refresh })
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (res) => {
@@ -106,15 +112,29 @@ export class SuperAdminDashboard implements OnInit, OnDestroy {
       });
   }
 
+  private loadRecent(refresh = false): void {
+    this.recentLoading = true; this.recentError = '';
+    this.svc.getQuotations({ ...periodParams(this.period), sort: 'quotationDate', dir: 'desc', page: 1, limit: 8, refresh })
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (res) => { this.recent = res.data.rows; this.recentLoading = false; this.cdr.markForCheck(); },
+        error: (err) => {
+          this.recentError = err?.error?.message || 'Could not load recent quotations.';
+          this.recentLoading = false; this.cdr.markForCheck();
+        },
+      });
+  }
+
+  refresh(): void { this.load(true, true); }
+
   // ── Filters ───────────────────────────────────────────────────────────────
-  onPeriodChange(): void { this.filterTrigger$.next(); }
+  onPeriodChange(p: PeriodState): void { this.period = p; this.filterTrigger$.next(); }
+  get periodText(): string { return periodLabel(this.period); }
   applyFiltersDebounced(): void { this.filterTrigger$.next(); }
   toggleFilters(): void { this.filtersCollapsed = !this.filtersCollapsed; }
 
   resetFilters(): void {
-    const now = new Date();
-    this.selectedMonth = now.getMonth() + 1;
-    this.selectedYear = now.getFullYear();
+    this.period = defaultPeriod();
     this.searchQuery = '';
     this.activeStatus = '';
     this.activeIntegration = '';
@@ -205,6 +225,86 @@ export class SuperAdminDashboard implements OnInit, OnDestroy {
   openTenant(t: TenantSnapshot): void {
     this.router.navigate(['/admin/tenants', t.tenantId]);
   }
+
+  /** Query params that carry the current period to a full list page. */
+  private periodQuery(): Record<string, string | number> {
+    const q: Record<string, string | number> = { preset: this.period.preset };
+    if (this.period.preset === 'month') { q['month'] = this.period.month; q['year'] = this.period.year; }
+    return q;
+  }
+
+  /**
+   * Opens the drawer with the records behind a KPI card. Tenant-scoped
+   * filters (search / status / integration) only narrow tenant lists; the
+   * quotation and payment lists cover every monitored tenant for the period,
+   * matching how the totals are summed.
+   */
+  openKpi(kpi: DashKpi): void {
+    const p = periodParams(this.period);
+    const sub = `${this.periodText} · all tenants`;
+    const quotes = (title: string, extra: QuotationsFilters, query: Record<string, string> = {}): DrillRequest => ({
+      kind: 'quotes', title, subtitle: sub, filters: { ...p, ...extra },
+      fullView: { label: 'Open in Quotations', path: '/admin/quotations', queryParams: { ...this.periodQuery(), ...query } },
+    });
+    const payments = (title: string): DrillRequest => ({
+      kind: 'payments', title, subtitle: sub, filters: { ...p },
+      fullView: { label: 'Open in Payments', path: '/admin/payments', queryParams: this.periodQuery() },
+    });
+    const tenants = (title: string, list: TenantSnapshot[]): DrillRequest => ({
+      kind: 'tenants', title, subtitle: `${list.length} tenant${list.length === 1 ? '' : 's'}`, tenants: list,
+      fullView: { label: 'Manage tenants', path: '/admin/tenants' },
+    });
+
+    const map: Record<DashKpi, () => DrillRequest> = {
+      tenants:         () => tenants('All tenants', this.filtered),
+      crm:             () => tenants('CRM connection status', [...this.filtered].sort((a, b) => Number(a.crm.isConfigured) - Number(b.crm.isConfigured))),
+      razorpay:        () => tenants('Razorpay connection status', [...this.filtered].sort((a, b) => Number(a.razorpay.isConfigured) - Number(b.razorpay.isConfigured))),
+      quotations:      () => quotes('All quotations', {}),
+      invoiced:        () => quotes('Invoiced amount: quotations', {}),
+      pendingQuotes:   () => quotes('Pending quotations', { outcome: 'pending' }, { outcome: 'pending' }),
+      approvedQuotes:  () => quotes('Approved quotations', { outcome: 'approved' }, { outcome: 'approved' }),
+      rejectedQuotes:  () => quotes('Rejected / expired quotations', { outcome: 'rejectedOrExpired' }, { outcome: 'rejectedOrExpired' }),
+      pendingPayments: () => quotes('Payment pending', { paymentStatus: 'pending' }, { paymentStatus: 'pending' }),
+      failedPayments:  () => quotes('Failed / lost payments', { paymentStatus: 'failed' }, { paymentStatus: 'failed' }),
+      collected:       () => payments('Payments received'),
+      royalty:         () => payments('Payments that earn royalty'),
+    };
+    this.drill = map[kpi]();
+    this.cdr.markForCheck();
+  }
+
+  openQuote(r: QuotationRow): void {
+    this.drill = { kind: 'quote', tenantId: r.tenantId, quoteId: r.quoteId, tenantName: r.tenantName };
+    this.cdr.markForCheck();
+  }
+
+  closeDrill(): void { this.drill = null; this.cdr.markForCheck(); }
+
+  get outcomeSplit(): { key: string; label: string; count: number; pct: number }[] {
+    const k = this.kpi;
+    const total = Math.max(1, k.totalQuotations);
+    return [
+      { key: 'approved', label: 'Approved', count: k.approvedQuotations },
+      { key: 'pending', label: 'Pending', count: k.pendingQuotations },
+      { key: 'rejectedOrExpired', label: 'Rejected / expired', count: k.rejectedExpiredQuotations },
+    ].map(x => ({ ...x, pct: Math.round((x.count / total) * 1000) / 10 }));
+  }
+
+  get collectionRate(): number {
+    const k = this.kpi;
+    return k.totalInvoiced > 0 ? Math.round((k.totalCollected / k.totalInvoiced) * 100) : 0;
+  }
+
+  fmtDate(s: string | null): string {
+    if (!s) return '—';
+    return new Date(s).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+  }
+
+  payLabel(s: string): string {
+    return ({ paid: 'Paid', partially_paid: 'Partial', pending: 'Pending', failed: 'Failed', refunded: 'Refunded' } as Record<string, string>)[s] ?? s;
+  }
+
+  trackByRow(_: number, r: QuotationRow): string { return `${r.tenantId}-${r.quoteId}`; }
 
   // ── Display helpers ───────────────────────────────────────────────────────
   fmtINR(n: number): string {
