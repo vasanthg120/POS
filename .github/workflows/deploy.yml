@@ -1,62 +1,178 @@
-name: POS Docker CI
+name: POS CI CD
 
 on:
   push:
     branches:
       - main
+      - chore/security-audit-fixes
   workflow_dispatch:
 
 permissions:
   contents: read
-  packages: write
 
-env:
-  REGISTRY: ghcr.io
-  IMAGE_OWNER: vasanthg120
+concurrency:
+  group: pos-production-deployment
+  cancel-in-progress: false
 
 jobs:
-  build-and-push:
-    name: Build and Publish Docker Images
-    runs-on: ubuntu-latest
+  build-test-package:
+    name: Build, Test and Package POS
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Set image tag
-        id: meta
-        run: echo "tag=${GITHUB_SHA}" >> "$GITHUB_OUTPUT"
-
-      - name: Login to GHCR
-        uses: docker/login-action@v3
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
         with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: |
+            Backend/package-lock.json
+            admin/package-lock.json
 
-      - name: Build and push backend
-        uses: docker/build-push-action@v6
-        with:
-          context: ./Backend
-          file: ./Backend/Dockerfile
-          push: true
-          build-args: |
-            GIT_SHA=${{ github.sha }}
-          tags: |
-            ghcr.io/${{ env.IMAGE_OWNER }}/pos-backend:${{ steps.meta.outputs.tag }}
-            ghcr.io/${{ env.IMAGE_OWNER }}/pos-backend:latest
+      - name: Install backend dependencies
+        working-directory: Backend
+        run: npm ci
 
-      - name: Build and push frontend
-        uses: docker/build-push-action@v6
+      - name: Run backend tests
+        working-directory: Backend
+        run: npm test -- --runInBand --forceExit
+
+      - name: Install frontend dependencies
+        working-directory: admin
+        run: npm ci
+
+      - name: Build Angular frontend
+        working-directory: admin
+        run: npm run build
+
+      - name: Prepare production backend dependencies
+        working-directory: Backend
+        run: npm prune --omit=dev
+
+      - name: Assemble release package
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          test -f Backend/app.js
+          test -d Backend/node_modules
+          test -f admin/dist/admin/browser/index.html
+
+          mkdir -p release/Backend
+
+          rsync -a \
+            --exclude='.env' \
+            --exclude='.env.*' \
+            --exclude='logs/' \
+            Backend/ release/Backend/
+
+          rm -rf release/Backend/admin
+          mkdir -p release/Backend/admin/browser
+
+          cp -a admin/dist/admin/browser/. release/Backend/admin/browser/
+
+          test -f release/Backend/app.js
+          test -d release/Backend/node_modules
+          test -f release/Backend/admin/browser/index.html
+
+          tar -czf "pos-release-${GITHUB_SHA}.tar.gz" -C release Backend
+
+          ls -lh "pos-release-${GITHUB_SHA}.tar.gz"
+
+      - name: Upload release artifact
+        uses: actions/upload-artifact@v4
         with:
-          context: ./admin
-          file: ./admin/Dockerfile
-          push: true
-          build-args: |
-            GIT_SHA=${{ github.sha }}
-          tags: |
-            ghcr.io/${{ env.IMAGE_OWNER }}/pos-frontend:${{ steps.meta.outputs.tag }}
-            ghcr.io/${{ env.IMAGE_OWNER }}/pos-frontend:latest
+          name: pos-release-${{ github.sha }}
+          path: pos-release-${{ github.sha }}.tar.gz
+          if-no-files-found: error
+          retention-days: 7
+
+  deploy-production:
+    name: Deploy to Existing EC2
+    needs: build-test-package
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+
+    steps:
+      - name: Download release artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: pos-release-${{ github.sha }}
+          path: release-artifact
+
+      - name: Configure secure SSH
+        shell: bash
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.EC2_SSH_KEY }}
+        run: |
+          set -euo pipefail
+
+          test -n "$SSH_PRIVATE_KEY"
+
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/pos_deploy
+          chmod 600 ~/.ssh/pos_deploy
+
+          printf '%s\n' \
+            'pos.pantheras.io ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIODNtRvAjEcTqYBQcZaz3K0mNdwy+8tdCGUXWcmOPtaF' \
+            > ~/.ssh/known_hosts
+
+          chmod 600 ~/.ssh/known_hosts
+
+          ssh-keygen -y -f ~/.ssh/pos_deploy > /dev/null
+
+      - name: Upload release to EC2
+        shell: bash
+        env:
+          EC2_HOST: ${{ secrets.EC2_HOST }}
+          EC2_USER: ${{ secrets.EC2_USER }}
+          GITHUB_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+
+          test -n "$EC2_HOST"
+          test -n "$EC2_USER"
+
+          ARCHIVE="release-artifact/pos-release-${GITHUB_SHA}.tar.gz"
+          test -s "$ARCHIVE"
+
+          scp \
+            -i ~/.ssh/pos_deploy \
+            -o IdentitiesOnly=yes \
+            -o StrictHostKeyChecking=yes \
+            -o HostKeyAlias=pos.pantheras.io \
+            "$ARCHIVE" \
+            "${EC2_USER}@${EC2_HOST}:/var/www/pos/incoming/pos-release-${GITHUB_SHA}.tar.gz"
+
+      - name: Activate release and verify production
+        shell: bash
+        env:
+          EC2_HOST: ${{ secrets.EC2_HOST }}
+          EC2_USER: ${{ secrets.EC2_USER }}
+          GITHUB_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+
+          ssh \
+            -i ~/.ssh/pos_deploy \
+            -o IdentitiesOnly=yes \
+            -o StrictHostKeyChecking=yes \
+            -o HostKeyAlias=pos.pantheras.io \
+            "${EC2_USER}@${EC2_HOST}" \
+            "sudo /usr/local/sbin/pos-deploy-release ${GITHUB_SHA}"
+
+          curl \
+            --fail \
+            --silent \
+            --show-error \
+            --retry 5 \
+            --retry-delay 3 \
+            https://pos.pantheras.io/ \
+            > /dev/null
+
+          echo "Production deployment and external health check successful."
