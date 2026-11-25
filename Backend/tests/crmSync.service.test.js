@@ -251,20 +251,93 @@ describe('getSyncedQuotes()', () => {
     await expect(sync.getSyncedQuotes(t, 'k')).rejects.toThrow(/CRM sync failed: ProspectConnect 503/);
   });
 
-  test('stale data is served immediately and refreshed in the background', async () => {
+  const ageState = (t, ms, extra = {}) => {
+    const at = new Date(Date.now() - ms);
+    return CrmSyncState.updateOne({ tenantId: t._id }, { $set: { lastSuccessAt: at, lastAttemptAt: at, ...extra } });
+  };
+
+  test('a read older than the live window pulls from the CRM before answering', async () => {
     const t = newTenant();
     crm.quotes = [mkQuote(1)];
     await sync.syncTenant(t, { apiKey: 'k' });
-    const old = new Date(Date.now() - 60 * 60_000);
-    await CrmSyncState.updateOne({ tenantId: t._id }, { $set: { lastSuccessAt: old, lastAttemptAt: old } });
-    crm.quotes = [mkQuote(1), mkQuote(2)];
+    await ageState(t, 60_000);
+    crm.quotes = [mkQuote(1), mkQuote(2)];             // a quote created in the CRM meanwhile
+    global.fetch.mockClear();
+
+    const { quotes, sync: s } = await sync.getSyncedQuotes(t, 'k');
+
+    expect(global.fetch).toHaveBeenCalled();
+    expect(quotes).toHaveLength(2);                     // the new quote is in this very response
+    expect(new Date(s.lastSuccessAt).getTime()).toBeGreaterThan(Date.now() - 5_000);
+    expect(s.lastTrigger).toBe('live-read');
+  });
+
+  test('a read inside the live window is served from the DB without calling the CRM', async () => {
+    const t = newTenant();
+    crm.quotes = [mkQuote(1)];
+    await sync.syncTenant(t, { apiKey: 'k' });
     global.fetch.mockClear();
 
     const { quotes } = await sync.getSyncedQuotes(t, 'k');
-    expect(quotes).toHaveLength(1);                     // served from the DB right away
-    await sync._internal.inFlight.get(String(t._id));   // let the background refresh finish
+    expect(quotes).toHaveLength(1);
+    expect(global.fetch).not.toHaveBeenCalled();
+  });
+
+  test('concurrent reads share one CRM pull', async () => {
+    const t = newTenant();
+    crm.quotes = [mkQuote(1)];
+    await sync.syncTenant(t, { apiKey: 'k' });
+    await ageState(t, 60_000);
+    crm.delayMs = 30;
+    global.fetch.mockClear();
+
+    const [a, b, c] = await Promise.all([1, 2, 3].map(() => sync.getSyncedQuotes(t, 'k')));
+    expect([a, b, c].every(r => r.quotes.length === 1)).toBe(true);
+    expect(global.fetch).toHaveBeenCalledTimes(1);
+  });
+
+  test('a slow CRM: the stored copy is served after the wait cap, the pull finishes in the background', async () => {
+    const t = newTenant();
+    crm.quotes = [mkQuote(1)];
+    await sync.syncTenant(t, { apiKey: 'k' });
+    await ageState(t, 60_000);
+    crm.quotes = [mkQuote(1), mkQuote(2)];
+    crm.delayMs = 300;
+    process.env.CRM_LIVE_WAIT_MS = '20';
+    try {
+      const started = Date.now();
+      const { quotes } = await sync.getSyncedQuotes(t, 'k');
+      expect(Date.now() - started).toBeLessThan(250);   // did not wait for the CRM
+      expect(quotes).toHaveLength(1);
+      await sync._internal.inFlight.get(String(t._id)); // the pull keeps running
+      expect((await sync.getSyncedQuotes(t, 'k')).quotes).toHaveLength(2);
+    } finally {
+      delete process.env.CRM_LIVE_WAIT_MS;
+    }
+  });
+
+  test('after a failed pull, reads back off instead of calling a down CRM every time', async () => {
+    const t = newTenant();
+    crm.quotes = [mkQuote(1)];
+    await sync.syncTenant(t, { apiKey: 'k' });
+    await ageState(t, 60_000);
+    crm.status = 503;
+
+    const first = await sync.getSyncedQuotes(t, 'k');   // pulls, fails, serves stored data
+    expect(first.quotes).toHaveLength(1);
+    expect(first.sync.lastStatus).toBe('error');
+    global.fetch.mockClear();
+
+    const second = await sync.getSyncedQuotes(t, 'k');
+    expect(second.quotes).toHaveLength(1);
+    expect(global.fetch).not.toHaveBeenCalled();
+
+    // Once the back-off has passed, reads try the CRM again.
+    await CrmSyncState.updateOne({ tenantId: t._id }, { $set: { lastAttemptAt: new Date(Date.now() - 120_000) } });
+    crm.status = 200;
+    const third = await sync.getSyncedQuotes(t, 'k');
     expect(global.fetch).toHaveBeenCalled();
-    expect((await sync.getSyncedQuotes(t, 'k')).quotes).toHaveLength(2);
+    expect(third.sync.lastStatus).toBe('success');
   });
 });
 

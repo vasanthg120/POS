@@ -17,17 +17,34 @@ export interface RoyaltyConfig {
   history: RoyaltyHistoryEntry[];
 }
 
+/**
+ * Why a payment got its rate:
+ *  history    — the rate in force on the payment date
+ *  first-rate — the payment predates the first rate ever set, so that rate applies
+ *  override   — a rate set for this quotation specifically
+ *  unset      — no rate has been configured yet (0%)
+ */
+export type RoyaltyRateBasis = 'history' | 'first-rate' | 'override' | 'unset';
+
 export interface RoyaltyRow {
   quoteId: string;
   quotationNo: string;
+  quotationTitle: string;
   customerName: string;
+  customerEmail: string;
   quotationDate: string | null;
   paymentDate: string;
   paymentReference: string;
   paymentSource: 'Manual' | 'Razorpay';
+  paymentMethod: string;
   paymentAmount: number;
   royaltyPercent: number;
   royaltyAmount: number;
+  rateBasis: RoyaltyRateBasis;
+  rateEffectiveFrom: string | null;
+  quoteAmount: number;
+  paidToDate: number;
+  balanceDue: number;
   paymentStatus: string;
   quotationStatus: string;
   royaltyStatus: string;
@@ -36,15 +53,36 @@ export interface RoyaltyRow {
 export interface RoyaltySummary {
   /** All quotations created within the selected period, regardless of payment status. */
   quotationsInPeriod: number;
+  /** Of those, how many have a payment recorded. */
+  paidQuotationsInPeriod: number;
   totalPayments: number;
   totalEligibleAmount: number;
   royaltyPercentage: number;
+  /** false until the platform admin sets a rate for this tenant. */
+  rateConfigured: boolean;
+  /** When the current rate took effect. */
+  rateSince: string | null;
   totalRoyaltyPayable: number;
+  /** Distinct quotations the period's payments belong to. */
   quotationCount: number;
   manualCount: number;
   razorpayCount: number;
   /** Every quotation matched by the current search, regardless of payment status. */
   scannedQuotations: number;
+}
+
+export interface RoyaltySourceSplit {
+  source: 'Manual' | 'Razorpay';
+  count: number;
+  amount: number;
+  royalty: number;
+}
+
+export interface RoyaltyRateLine {
+  percentage: number;
+  count: number;
+  amount: number;
+  royalty: number;
 }
 
 export interface RoyaltyStatusBreakdownEntry {
@@ -60,10 +98,16 @@ export interface RoyaltyReport {
    *  the report may be empty even when quotations exist (e.g. a quote's
    *  workflow stage says "Payment Completed" but no payment was recorded). */
   statusBreakdown: RoyaltyStatusBreakdownEntry[];
+  /** Manual vs Razorpay, taken before the source filter is applied. */
+  sourceSplit: RoyaltySourceSplit[];
+  /** One line per rate applied in the period (several if the rate changed). */
+  rateBreakdown: RoyaltyRateLine[];
   period: { from: string | null; to: string | null };
 }
 
 export interface RoyaltyReportFilters {
+  /** 'all' → no date bounds */
+  period?: 'all';
   month?: number;   // 1-12
   year?: number;
   dateFrom?: string;

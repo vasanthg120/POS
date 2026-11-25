@@ -20,11 +20,10 @@ router.get ('/',                   readGate, ctrl.getQuotes);
 router.get ('/stats',              readGate, ctrl.getQuoteStats);
 router.post('/search',             readGate, ctrl.searchQuotes);
 
-// ── CRM → POS database sync ───────────────────────────────────────────────
-// Registered before '/:quoteId' so the paths aren't read as quote IDs.
-// Sync only refreshes the local copy of data the caller can already read.
+// ── CRM → POS live-sync health ────────────────────────────────────────────
+// Registered before '/:quoteId' so the path isn't read as a quote ID.
+// There is no manual sync route: quote reads pull from the CRM themselves.
 router.get ('/sync-status',        readGate, ctrl.getSyncStatus);
-router.post('/sync',               readGate, ctrl.syncNow);
 
 // ── Bulk Razorpay sync (on-demand, no webhook needed) ────────────────────
 // POST so it's explicit and doesn't get cached; no body required.

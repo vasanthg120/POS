@@ -81,23 +81,36 @@ exports.setConfigForTenant = asyncHandler(async (req, res) => {
 /* ── Row builder ─────────────────────────────────────────────────────────── */
 
 const buildRow = (quote, payment, config) => {
-  const pct = config.getEffectivePercentage(payment.date, quote.quoteId);
+  const royalty = config.royaltyFor(payment.amount, payment.date, quote.quoteId);
+  const quoteAmount = round2(Number(quote.amount) || 0);
+  const paidToDate = round2(Number(quote.paidAmount) || 0);
   return {
     quoteId: quote.quoteId,
     quotationNo: quote.quoteNumber,
+    quotationTitle: quote.title || '',
     customerName: quote.customerName,
+    customerEmail: quote.email || '',
     quotationDate: quote.createdAt,
     paymentDate: payment.date,
     paymentReference: payment.reference || '—',
     paymentSource: payment.source,
+    paymentMethod: payment.method || '',
     paymentAmount: round2(payment.amount),
-    royaltyPercent: pct,
-    royaltyAmount: round2((payment.amount * pct) / 100),
+    royaltyPercent: royalty.percentage,
+    royaltyAmount: royalty.amount,
+    // Why this rate: in force that day / predates the first rate / override / none set.
+    rateBasis: royalty.basis,
+    rateEffectiveFrom: royalty.effectiveFrom,
+    quoteAmount,
+    paidToDate,
+    balanceDue: round2(Math.max(0, quoteAmount - paidToDate)),
     paymentStatus: quote.paymentStatus,
     quotationStatus: quote.quotationStatus,
-    royaltyStatus: 'Calculated',
+    royaltyStatus: royalty.basis === 'unset' ? 'Rate not set' : 'Calculated',
   };
 };
+
+const sumBy = (rows, key) => round2(rows.reduce((s, r) => s + (r[key] || 0), 0));
 
 /* ══════════════════════════════════════════════════════════════════════════
    GET /tenant/royalty
@@ -109,7 +122,7 @@ exports.getReport = asyncHandler(async (req, res) => {
   const { tenant, apiKey } = loaded;
 
   const {
-    month, year, dateFrom, dateTo,
+    month, year, dateFrom, dateTo, period,
     quoteId, search, source, status,
   } = req.query;
 
@@ -118,8 +131,8 @@ exports.getReport = asyncHandler(async (req, res) => {
     getOrCreateConfig(req.user.tenantId),
   ]);
 
-  // ── Period bounds — default to the current month ──────────────────────
-  const { periodStart, periodEnd } = resolvePeriod({ month, year, dateFrom, dateTo });
+  // ── Period bounds — default to the current month; period=all → no bounds ──
+  const { periodStart, periodEnd } = resolvePeriod({ month, year, dateFrom, dateTo, period });
 
   const searchTerm = String(quoteId ?? search ?? '').trim().toLowerCase();
   const matchesSearch = (q) => {
@@ -177,24 +190,53 @@ exports.getReport = asyncHandler(async (req, res) => {
     if (periodEnd && d > periodEnd) return false;
     return true;
   });
-  if (source) rows = rows.filter(r => r.paymentSource.toLowerCase() === String(source).toLowerCase());
   if (status) rows = rows.filter(r => r.paymentStatus.toLowerCase() === String(status).toLowerCase());
+
+  // Source split is taken before the source filter, so the Manual / Razorpay
+  // toggles keep showing both sides instead of zeroing the one filtered out.
+  const sourceSplit = ['Manual', 'Razorpay'].map(s => {
+    const of = rows.filter(r => r.paymentSource === s);
+    return { source: s, count: of.length, amount: sumBy(of, 'paymentAmount'), royalty: sumBy(of, 'royaltyAmount') };
+  });
+
+  if (source) rows = rows.filter(r => r.paymentSource.toLowerCase() === String(source).toLowerCase());
 
   rows.sort((a, b) => new Date(b.paymentDate) - new Date(a.paymentDate));
 
+  // One line per rate actually applied — normally a single "₹X × 9%", but a
+  // period spanning a rate change shows each rate's share separately.
+  const byRate = new Map();
+  for (const r of rows) {
+    const e = byRate.get(r.royaltyPercent) ?? { percentage: r.royaltyPercent, count: 0, amount: 0, royalty: 0 };
+    e.count++;
+    e.amount += r.paymentAmount;
+    e.royalty += r.royaltyAmount;
+    byRate.set(r.royaltyPercent, e);
+  }
+  const rateBreakdown = [...byRate.values()]
+    .map(e => ({ ...e, amount: round2(e.amount), royalty: round2(e.royalty) }))
+    .sort((a, b) => b.amount - a.amount);
+
+  const current = config.currentEntry();
+  const isPaidStatus = (q) => ['paid', 'partially_paid'].includes(q.paymentStatus);
+
   // ── Summary ──────────────────────────────────────────────────────────────
   const summary = {
-    // "How many quotes this month" — independent of payment status.
+    // "How many quotes this period" — independent of payment status.
     quotationsInPeriod: quotationsInPeriod.length,
-    // "Total payments done this month" — count + amount of actual payment
-    // transactions whose payment date falls in the selected period.
+    // …and how many of *those* have a payment recorded (any date).
+    paidQuotationsInPeriod: quotationsInPeriod.filter(q => isPaidStatus(q) && eligiblePayments(q).length > 0).length,
+    // Payment transactions whose payment date falls in the selected period.
     totalPayments: rows.length,
-    totalEligibleAmount: round2(rows.reduce((s, r) => s + r.paymentAmount, 0)),
-    royaltyPercentage: config.currentPercentage() ?? 0,
-    totalRoyaltyPayable: round2(rows.reduce((s, r) => s + r.royaltyAmount, 0)),
+    totalEligibleAmount: sumBy(rows, 'paymentAmount'),
+    royaltyPercentage: current?.percentage ?? 0,
+    rateConfigured: !!current,
+    rateSince: current?.effectiveFrom ?? null,
+    totalRoyaltyPayable: sumBy(rows, 'royaltyAmount'),
+    // Distinct quotations those payments belong to (may be created in any period).
     quotationCount: new Set(rows.map(r => r.quoteId)).size,
-    manualCount: rows.filter(r => r.paymentSource === 'Manual').length,
-    razorpayCount: rows.filter(r => r.paymentSource === 'Razorpay').length,
+    manualCount: sourceSplit[0].count,
+    razorpayCount: sourceSplit[1].count,
     scannedQuotations: scannedQuotations.length,
   };
 
@@ -202,6 +244,8 @@ exports.getReport = asyncHandler(async (req, res) => {
     summary,
     rows,
     statusBreakdown,
+    sourceSplit,
+    rateBreakdown,
     period: {
       from: periodStart ? periodStart.toISOString() : null,
       to: periodEnd ? periodEnd.toISOString() : null,

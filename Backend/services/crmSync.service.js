@@ -11,11 +11,13 @@
  *                                        │
  *                                        └──▶ crmsyncstates (status, counts, errors, history)
  *
- * Read paths call getSyncedQuotes(): it serves the stored copy, runs a
- * blocking first import when a tenant has never synced, and kicks off a
- * background refresh when the copy is stale. A scheduled job
- * (jobs/crmSyncCron.js) and the "Sync now" endpoint call syncTenant() /
- * syncAllTenants() directly.
+ * Reads are live: getSyncedQuotes() pulls from the CRM before answering
+ * whenever the stored copy is older than CRM_LIVE_MAX_AGE_SECONDS (default
+ * 15), waiting at most CRM_LIVE_WAIT_MS (default 6000) — a slow CRM never
+ * stalls a page; it gets the stored copy and the pull finishes in the
+ * background. A never-synced tenant waits for its first import. A scheduled
+ * job (jobs/crmSyncCron.js) keeps every tenant fresh between page loads.
+ * There is no manual "sync" action.
  *
  * Guarantees:
  *   - Idempotent: one row per (tenantId, crmQuoteId) — re-syncing never
@@ -42,11 +44,14 @@ const intEnv = (name, def, min, max) => {
 };
 
 const LOCK_MS        = 10 * 60_000;   // a crashed run releases its lock after this
-const MIN_RETRY_MS   = 60_000;        // reads won't re-trigger a sync more often than this
+const FAILURE_BACKOFF_MS = 60_000;    // after a failed run, reads wait this long before calling the CRM again
 const RUN_HISTORY    = 20;
 const MAX_ISSUES     = 20;
-const staleAfterMs   = () => intEnv('CRM_SYNC_STALE_MINUTES', 5, 1, 1440) * 60_000;
-const intervalMinutes = () => intEnv('CRM_SYNC_INTERVAL_MINUTES', 10, 1, 59);
+/** A read refreshes from the CRM first when the stored copy is older than this. */
+const liveMaxAgeMs   = () => intEnv('CRM_LIVE_MAX_AGE_SECONDS', 15, 0, 3600) * 1000;
+/** How long a read waits for that refresh before serving the stored copy. */
+const liveWaitMs     = () => intEnv('CRM_LIVE_WAIT_MS', 6000, 0, 30_000);
+const intervalMinutes = () => intEnv('CRM_SYNC_INTERVAL_MINUTES', 1, 1, 59);
 
 /* ── Helpers ─────────────────────────────────────────────────────────────── */
 
@@ -376,18 +381,33 @@ const getSyncStatus = async (tenantObjId, { includeRuns = false } = {}) => {
     ...summariseState(state),
     storedQuotes,
     intervalMinutes: intervalMinutes(),
-    staleAfterMinutes: staleAfterMs() / 60_000,
+    liveMaxAgeSeconds: liveMaxAgeMs() / 1000,
     ...(includeRuns ? { recentRuns: (state?.runs ?? []).slice(0, 10) } : {}),
   };
 };
 
-const isStale = (state) => {
+/**
+ * True when a read should pull from the CRM before answering: the stored
+ * copy is older than the live window, and the CRM isn't in its back-off
+ * after a failed run (a down CRM isn't called on every page load).
+ */
+const needsLiveRefresh = (state) => {
   const now = Date.now();
-  if (state?.lockedUntil && new Date(state.lockedUntil).getTime() > now) return false;
   const lastSuccess = state?.lastSuccessAt ? new Date(state.lastSuccessAt).getTime() : 0;
+  if (now - lastSuccess <= liveMaxAgeMs()) return false;
   const lastAttempt = state?.lastAttemptAt ? new Date(state.lastAttemptAt).getTime() : 0;
-  return now - lastSuccess > staleAfterMs() && now - lastAttempt > MIN_RETRY_MS;
+  if (state?.lastStatus === 'error' && now - lastAttempt < FAILURE_BACKOFF_MS) return false;
+  return true;
 };
+
+/** Resolves with the promise's result, or null after `ms` (the promise keeps running). */
+const within = (promise, ms) => new Promise((resolve) => {
+  const timer = setTimeout(() => resolve(null), ms);
+  promise.then(
+    (r) => { clearTimeout(timer); resolve(r); },
+    () => { clearTimeout(timer); resolve(null); },
+  );
+});
 
 /* ── Read path ───────────────────────────────────────────────────────────── */
 
@@ -397,7 +417,9 @@ const isStale = (state) => {
  *
  * - Never synced → blocks on a first import; if that import fails the CRM's
  *   error is thrown (isCrmError) so the screen shows it instead of zeros.
- * - Stale → returns stored data and refreshes in the background.
+ * - Older than the live window → pulls from the CRM first (concurrent reads
+ *   share one pull), waiting at most liveWaitMs(); past that, or if the pull
+ *   fails, the stored copy is served and the summary carries the failure.
  */
 const getSyncedQuotes = async (tenant, apiKey) => {
   const tenantId = tenant._id;
@@ -407,9 +429,12 @@ const getSyncedQuotes = async (tenant, apiKey) => {
     const result = await syncTenant(tenant, { trigger: 'initial', apiKey });
     if (result.status === 'error') throw crmSyncError(`CRM sync failed: ${result.error}`);
     state = await CrmSyncState.findOne({ tenantId }).lean();
-  } else if (isStale(state)) {
-    syncTenant(tenant, { trigger: 'stale-read', apiKey }).catch(err =>
-      logger.error(`[CRM Sync] tenant=${tenantLabel(tenant)} background refresh crashed: ${err.message}`));
+  } else if (needsLiveRefresh(state)) {
+    const refresh = syncTenant(tenant, { trigger: 'live-read', apiKey });
+    refresh.catch(err =>
+      logger.error(`[CRM Sync] tenant=${tenantLabel(tenant)} live refresh crashed: ${err.message}`));
+    const result = await within(refresh, liveWaitMs());
+    if (result && result.status !== 'skipped') state = await CrmSyncState.findOne({ tenantId }).lean();
   }
 
   const docs = await CrmQuote.find({ tenantId, isDeletedInCrm: false })
@@ -449,5 +474,5 @@ module.exports = {
   purgeTenantCrmData,
   intervalMinutes,
   // exported for tests
-  _internal: { toRecord, isStale, summariseState, inFlight },
+  _internal: { toRecord, needsLiveRefresh, summariseState, inFlight },
 };

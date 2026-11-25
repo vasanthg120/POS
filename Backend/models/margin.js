@@ -2,14 +2,16 @@
 const mongoose = require('mongoose');
 
 /* ── Line Item (embedded) ── */
+// Costs: unitCost, decoUnit (print/decoration per unit), setup, ship.
+// Price: quoteUnit (selling price per unit). All ₹, ex GST, never negative.
 const LineItemSchema = new mongoose.Schema({
-  item      : { type: String, default: '' },
-  qty       : { type: Number, default: 0 },
-  unitCost  : { type: Number, default: 0 },
-  decoUnit  : { type: Number, default: 0 },
-  setup     : { type: Number, default: 0 },
-  ship      : { type: Number, default: 0 },
-  quoteUnit : { type: Number, default: 0 },
+  item      : { type: String, default: '', maxlength: 200 },
+  qty       : { type: Number, default: 0, min: 0 },
+  unitCost  : { type: Number, default: 0, min: 0 },
+  decoUnit  : { type: Number, default: 0, min: 0 },
+  setup     : { type: Number, default: 0, min: 0 },
+  ship      : { type: Number, default: 0, min: 0 },
+  quoteUnit : { type: Number, default: 0, min: 0 },
 }, { _id: false });
 
 /* ── Snapshot of summary (stored so list view needs no recalc) ── */
@@ -30,6 +32,30 @@ const SummarySchema = new mongoose.Schema({
   profitSubtotal : { type: Number, default: 0 },
   incGst         : { type: Number, default: 0 },
   overallMarginPct: { type: Number, default: 0 },
+
+  // Added with the margin engine (services/marginCalc.service.js).
+  // marginPct / lineMarginPct are MARGIN ON COST (profit ÷ cost). The older
+  // totalMarginPct / overallMarginPct above stay profit ÷ revenue.
+  // Undefined metrics (e.g. margin with no cost) are stored as null.
+  lineCost        : { type: Number, default: 0 },
+  lineRevenueGross: { type: Number, default: 0 },
+  discountAmount  : { type: Number, default: 0 },
+  lineRevenue     : { type: Number, default: 0 },
+  lineProfit      : { type: Number, default: 0 },
+  lineMarginPct   : { type: Number, default: null },
+  setupFees       : { type: Number, default: 0 },
+  shippingFee     : { type: Number, default: 0 },
+  taxableValue    : { type: Number, default: 0 },
+  gstAmount       : { type: Number, default: 0 },
+  invoiceTotal    : { type: Number, default: 0 },
+  otherCost       : { type: Number, default: 0 },
+  paymentFee      : { type: Number, default: 0 },
+  allInCost       : { type: Number, default: 0 },
+  netProfit       : { type: Number, default: 0 },
+  marginPct       : { type: Number, default: null },
+  breakEvenTaxable: { type: Number, default: null },
+  lossRows        : { type: Number, default: 0 },
+  unpricedRows    : { type: Number, default: 0 },
 }, { _id: false });
 
 /* ── Main Job Schema ── */
@@ -45,11 +71,21 @@ const MarginJobSchema = new mongoose.Schema({
   tags        : [{ type: String, trim: true }],
   notes       : { type: String, default: '', trim: true },
 
-  // Job config
-  setupCount  : { type: Number, default: 1 },
-  setupUnit   : { type: Number, default: 0 },
-  shipping    : { type: Number, default: 0 },
-  gstRate     : { type: Number, default: 18 },
+  // Job config — charges BILLED TO THE CLIENT (revenue). Their costs are
+  // entered on the line items (setup / ship columns).
+  setupCount  : { type: Number, default: 1, min: 0 },     // number of screens / setups billed
+  setupUnit   : { type: Number, default: 0, min: 0 },     // setup fee billed per screen (₹)
+  shipping    : { type: Number, default: 0, min: 0 },     // shipping / delivery billed (₹)
+  gstRate     : { type: Number, default: 18, min: 0, max: 100 },
+  discountPct : { type: Number, default: 0, min: 0, max: 100 },   // job discount on line items
+
+  // Job-level costs not on any line item.
+  otherCost     : { type: Number, default: 0, min: 0 },           // design, packaging, courier… (₹)
+  paymentFeePct : { type: Number, default: 0, min: 0, max: 20 },  // gateway fee on the collected amount
+
+  // Pricing target used for suggested prices: margin on cost, in %.
+  targetPct     : { type: Number, default: 50, min: 0, max: 1000 },
+  priceRounding : { type: Number, enum: [0.01, 1, 5, 10], default: 1 },
 
   // Line items
   rows        : [LineItemSchema],

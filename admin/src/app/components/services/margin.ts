@@ -16,12 +16,19 @@ export interface LineItemPayload {
 
 export interface MarginJobPayload {
   jobName    : string;
+  /** Billed to the client: setups × fee per setup, and shipping. */
   setupCount : number;
   setupUnit  : number;
   shipping   : number;
   gstRate    : number;
+  discountPct?  : number;
+  /** Job costs not on a line item. */
+  otherCost?    : number;
+  paymentFeePct?: number;
+  /** Target margin on cost, in % (50 = cost + 50%). */
+  targetPct?    : number;
+  priceRounding?: number;
   rows       : LineItemPayload[];
-  summary    : Record<string, number>;
   status?    : 'draft' | 'finalised' | 'archived';
   tags?      : string[];
   notes?     : string;
@@ -29,6 +36,8 @@ export interface MarginJobPayload {
 
 export interface MarginJobRecord extends MarginJobPayload {
   _id      : string;
+  /** Computed by the server on every save (the client never sends it). */
+  summary  : Record<string, number | null>;
   createdAt: string;
   updatedAt: string;
   status   : 'draft' | 'finalised' | 'archived';
@@ -47,6 +56,7 @@ export interface ListResponse {
   meta   : ListMeta;
 }
 
+/** Active (non-archived) jobs. Revenue is ex GST; avgMarginPct is margin on cost (Σ profit ÷ Σ cost). */
 export interface JobStats {
   totalJobs     : number;
   totalRevenue  : number;
@@ -54,11 +64,13 @@ export interface JobStats {
   avgMarginPct  : number;
   draftCount    : number;
   finalisedCount: number;
+  archivedCount?: number;
 }
 
 export interface ListQuery {
   page?  : number;
   limit? : number;
+  /** draft | finalised | archived | all — omitted = everything except archived */
   status?: string;
   q?     : string;
 }
@@ -66,7 +78,8 @@ export interface ListQuery {
 @Injectable({ providedIn: 'root' })
 export class Margin {
    private http = inject(HttpClient);
-  private base = `${Environment.API_URL}/tenant/margin-jobs`;
+  // Under /api/: production nginx forwards /api/* to the backend.
+  private base = `${Environment.API_URL}/api/tenant/margin-jobs`;
 
   /* Reactive list cache — components subscribe to this */
   private _jobs$ = new BehaviorSubject<MarginJobRecord[]>([]);

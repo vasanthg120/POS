@@ -9,11 +9,11 @@ const run = (trigger) => {
 };
 
 /**
- * Keeps every connected CRM mirrored into MongoDB: one pass shortly after
- * startup (catch-up after downtime), then every CRM_SYNC_INTERVAL_MINUTES
- * (default 10, allowed 1–59). Disable with ENABLE_CRM_SYNC_CRON=false.
- * Each tenant still refreshes on demand ("Sync now", or a read that finds
- * its data older than CRM_SYNC_STALE_MINUTES).
+ * Keeps every connected CRM mirrored into MongoDB between page loads: one
+ * pass shortly after startup (catch-up after downtime), then every
+ * CRM_SYNC_INTERVAL_MINUTES (default 1, allowed 1–59). Disable with
+ * ENABLE_CRM_SYNC_CRON=false. Page reads also pull live from the CRM when
+ * the stored copy is older than CRM_LIVE_MAX_AGE_SECONDS (crmSync.service.js).
  */
 const start = () => {
   const minutes = intervalMinutes();

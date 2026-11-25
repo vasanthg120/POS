@@ -21,6 +21,8 @@ export interface CrmSyncStatus {
   consecutiveFailures: number;
   storedQuotes?      : number;
   intervalMinutes?   : number;
+  /** A quotes read pulls from the CRM first when the POS copy is older than this. */
+  liveMaxAgeSeconds? : number;
 }
 
 export interface QuotesApiResponse {
@@ -73,14 +75,12 @@ export class Crm {
     return this.http.post<QuotesApiResponse>(`${this.base}/tenant/quotes/search`, body);
   }
 
-  /** GET /tenant/quotes/sync-status — last sync result, counts and errors. */
+  /**
+   * GET /tenant/quotes/sync-status — last sync result, counts and errors.
+   * There is no manual sync: every quotes read pulls from the CRM when the
+   * POS copy is older than `liveMaxAgeSeconds`.
+   */
   getSyncStatus(): Observable<{ success: boolean; data: CrmSyncStatus }> {
     return this.http.get<{ success: boolean; data: CrmSyncStatus }>(`${this.base}/tenant/quotes/sync-status`);
-  }
-
-  /** POST /tenant/quotes/sync — pull every quote from the CRM into the POS now. */
-  syncNow(): Observable<{ success: boolean; message: string; data: { status: CrmSyncStatus } }> {
-    return this.http.post<{ success: boolean; message: string; data: { status: CrmSyncStatus } }>(
-      `${this.base}/tenant/quotes/sync`, {});
   }
 }

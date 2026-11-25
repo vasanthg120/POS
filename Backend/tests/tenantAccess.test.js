@@ -354,6 +354,49 @@ describe('tenant isolation', () => {
   });
 });
 
+describe('session refresh', () => {
+  const refreshWith = async (token) => {
+    const res = await fetch(`${base}/api/auth/refresh`, { method: 'POST', headers: { Cookie: `refreshToken=${token}` } });
+    const cookie = res.headers.get('set-cookie') || '';
+    return { status: res.status, body: await res.json(), newRefresh: /refreshToken=([^;]+)/.exec(cookie)?.[1] ?? null };
+  };
+  const storedTokens = async (account) =>
+    (await Tenant.findById(account._id).select('+refreshTokens')).refreshTokens.map(t => t.token);
+
+  // Refresh used to $pull and $push refreshTokens in one update, which
+  // MongoDB rejects ("would create a conflict"): every refresh was a 500 and
+  // the app signed the user out ~14 minutes after each login.
+  test('rotates a valid refresh token and keeps the session going', async () => {
+    const other = jwt.generateRefreshToken({ sub: String(acct.superAdmin._id), role: 'superadmin', n: 'other-device' });
+    const current = jwt.generateRefreshToken({ sub: String(acct.superAdmin._id), role: 'superadmin', n: 'this-device' });
+    await Tenant.updateOne({ _id: acct.superAdmin._id }, { $set: { refreshTokens: [{ token: other }, { token: current }] } });
+
+    const r = await refreshWith(current);
+
+    expect(r.status).toBe(200);
+    expect(r.body.accessToken).toBeTruthy();
+    expect(r.newRefresh).toBeTruthy();
+    expect(r.newRefresh).not.toBe(current);
+    const stored = await storedTokens(acct.superAdmin);
+    expect(stored).toEqual([other, r.newRefresh]);      // replaced in place; other sessions untouched
+
+    // The new access token works, and the new refresh token can refresh again.
+    const me = await call('GET', '/api/auth/me', { token: r.body.accessToken });
+    expect(me.status).toBe(200);
+    const again = await refreshWith(r.newRefresh);
+    expect(again.status).toBe(200);
+  });
+
+  test('a refresh token that was already rotated is refused', async () => {
+    const current = jwt.generateRefreshToken({ sub: String(acct.tenantB._id), role: 'tenant', n: 'b-device' });
+    await Tenant.updateOne({ _id: acct.tenantB._id }, { $set: { refreshTokens: [{ token: current }] } });
+    expect((await refreshWith(current)).status).toBe(200);
+
+    const reused = await refreshWith(current);
+    expect(reused.status).toBe(401);
+  });
+});
+
 describe('account invariants (database level)', () => {
   test('a second Super Admin cannot exist', async () => {
     await expect(mkAccount({ email: 'second@org.test', tenantId: 'SUPERADMIN-2', role: 'superadmin' }))

@@ -606,12 +606,11 @@
               <div class="icc-info">
                 <strong>CRM connected</strong>
                 <span *ngIf="crmSync()?.lastSuccessAt; else notSyncedYet">
-                  {{ crmSync()?.storedQuotes ?? 0 }} quotes in POS · last synced
-                  {{ crmSync()?.lastSuccessAt | date:'d MMM y, h:mm a' }}
-                  · auto-sync every {{ crmSync()?.intervalMinutes ?? 10 }} min
+                  {{ crmSync()?.storedQuotes ?? 0 }} quotes · live from your CRM · last updated
+                  {{ crmSync()?.lastSuccessAt | date:'d MMM y, h:mm:ss a' }}
                 </span>
                 <ng-template #notSyncedYet>
-                  <span *ngIf="!crmSyncError(); else syncStatusUnavailable">Quotes have not been synced into the POS yet — use “Sync now”.</span>
+                  <span *ngIf="!crmSyncError(); else syncStatusUnavailable">Importing quotes from your CRM — they appear automatically, no action needed.</span>
                   <ng-template #syncStatusUnavailable><span>Sync status unavailable — see the message below.</span></ng-template>
                 </ng-template>
               </div>
@@ -622,7 +621,7 @@
                 <span class="meta-value">{{ crmProviderLabel() }}</span>
               </div>
               <div class="icc-meta-item">
-                <span class="meta-label">Sync</span>
+                <span class="meta-label">Live sync</span>
                 <span class="meta-value" [class.live]="crmSync()?.status === 'success' || crmSync()?.status === 'running'">{{ crmSyncLabel() }}</span>
               </div>
               <div class="icc-meta-item" *ngIf="crmSync()?.lastStats as st">
@@ -644,12 +643,6 @@
               Last sync completed with warnings: {{ crmSync()?.lastIssues?.[0] }}
             </div>
             <div class="icc-actions">
-              <button class="btn-test-sm" (click)="syncCRMNow()" [disabled]="syncingCRM()" type="button">
-                <svg viewBox="0 0 24 24">
-                  <path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
-                </svg>
-                {{ syncingCRM() ? 'Syncing…' : 'Sync now' }}
-              </button>
               <button class="btn-test-sm" (click)="testCRM()" [disabled]="testingCRM()" type="button">
                 <svg viewBox="0 0 24 24">
                   <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />

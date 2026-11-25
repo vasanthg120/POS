@@ -504,6 +504,7 @@ const eligiblePayments = (quote) => {
       amount: mp.amount,
       date: mp.paymentDate,
       reference: mp.referenceNumber,
+      method: mp.method || '',
     }));
   }
   if (quote._paymentId) {
@@ -512,6 +513,7 @@ const eligiblePayments = (quote) => {
       amount: quote.paidAmount,
       date: quote.paidAt,
       reference: quote._paymentId,
+      method: quote.paymentMethod || '',
     }];
   }
   if (quote.paidAmount > 0) {
@@ -520,6 +522,7 @@ const eligiblePayments = (quote) => {
       amount: quote.paidAmount,
       date: quote.paidAt ?? quote.trackingUpdatedAt,
       reference: quote.bankTransferRef || 'Recorded in Tracking',
+      method: quote.paymentMethod || '',
     }];
   }
   return [];

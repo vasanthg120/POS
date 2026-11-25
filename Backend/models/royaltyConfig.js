@@ -42,36 +42,80 @@ const royaltyConfigSchema = new mongoose.Schema(
   { timestamps: true },
 );
 
-/** Current rate = the most recent history entry, or null if never configured. */
-royaltyConfigSchema.methods.currentPercentage = function () {
+/**
+ * Start of the UTC calendar day containing `d`. Rates are compared on whole
+ * days, not timestamps: a payment recorded with a plain date (Tracking's date
+ * picker stores "2026-11-24" as 2026-11-24T00:00Z) must still get a rate set
+ * at 3 pm that same day. Comparing raw timestamps made every such payment
+ * resolve to "no rate yet" → 0%.
+ */
+const dayStart = (d) => {
+  const t = new Date(d);
+  t.setUTCHours(0, 0, 0, 0);
+  return t;
+};
+
+const round2 = (n) => Math.round((n + Number.EPSILON) * 100) / 100;
+
+/** The latest history entry (the rate in force today), or null. */
+royaltyConfigSchema.methods.currentEntry = function () {
   if (!this.history.length) return null;
   return this.history.reduce((latest, h) =>
     !latest || h.effectiveFrom > latest.effectiveFrom ? h : latest
-  ).percentage;
+  );
+};
+
+/** Current rate = the most recent history entry, or null if never configured. */
+royaltyConfigSchema.methods.currentPercentage = function () {
+  return this.currentEntry()?.percentage ?? null;
 };
 
 /**
- * The percentage that was actually in effect on `date` — a quotation-level
- * override wins if one exists for that date, otherwise the tenant-wide
- * history entry with the latest `effectiveFrom` at or before `date`.
- * Returns 0 if nothing was configured yet as of that date (safe default:
- * no configured rate means no royalty is computed, not an error).
+ * Which rate applies to a payment made on `date`, and why:
+ *   - `override`   — a quotation-level rate in force on that day
+ *   - `history`    — the tenant rate in force on that day
+ *   - `first-rate` — the payment predates the first rate ever set, so that
+ *                    first rate applies. "Not configured yet" is an admin
+ *                    data-entry gap, not a 0% agreement: treating it as 0%
+ *                    zeroed out every payment recorded before the platform
+ *                    admin got round to entering the rate.
+ *   - `unset`      — no rate has ever been configured → 0%.
+ * Later rate *changes* still only apply from the day they were made, so past
+ * periods keep the rate that was actually in force.
  */
-royaltyConfigSchema.methods.getEffectivePercentage = function (date, quoteId = null) {
+royaltyConfigSchema.methods.resolveRate = function (date, quoteId = null) {
   const at = date instanceof Date ? date : new Date(date);
+  const onOrBefore = (e) => dayStart(e.effectiveFrom) <= at;
+  const newestFirst = (a, b) => b.effectiveFrom - a.effectiveFrom;
 
   if (quoteId) {
-    const overrides = this.quotationOverrides
-      .filter(o => o.quoteId === String(quoteId) && o.effectiveFrom <= at)
-      .sort((a, b) => b.effectiveFrom - a.effectiveFrom);
-    if (overrides.length) return overrides[0].percentage;
+    const override = this.quotationOverrides
+      .filter(o => o.quoteId === String(quoteId) && onOrBefore(o))
+      .sort(newestFirst)[0];
+    if (override) return { percentage: override.percentage, effectiveFrom: override.effectiveFrom, basis: 'override' };
   }
 
-  const applicable = this.history
-    .filter(h => h.effectiveFrom <= at)
-    .sort((a, b) => b.effectiveFrom - a.effectiveFrom);
+  if (!this.history.length) return { percentage: 0, effectiveFrom: null, basis: 'unset' };
 
-  return applicable.length ? applicable[0].percentage : 0;
+  const inForce = this.history.filter(onOrBefore).sort(newestFirst)[0];
+  if (inForce) return { percentage: inForce.percentage, effectiveFrom: inForce.effectiveFrom, basis: 'history' };
+
+  const first = [...this.history].sort((a, b) => a.effectiveFrom - b.effectiveFrom)[0];
+  return { percentage: first.percentage, effectiveFrom: first.effectiveFrom, basis: 'first-rate' };
+};
+
+/** The percentage in effect on `date` (see resolveRate for the rules). */
+royaltyConfigSchema.methods.getEffectivePercentage = function (date, quoteId = null) {
+  return this.resolveRate(date, quoteId).percentage;
+};
+
+/**
+ * Royalty owed on one payment — the single calculation the Royalty page and
+ * the Super Admin dashboard both use, so their totals always reconcile.
+ */
+royaltyConfigSchema.methods.royaltyFor = function (amount, date, quoteId = null) {
+  const rate = this.resolveRate(date, quoteId);
+  return { ...rate, amount: round2(((Number(amount) || 0) * rate.percentage) / 100) };
 };
 
 module.exports = mongoose.model('RoyaltyConfig', royaltyConfigSchema);

@@ -213,15 +213,19 @@ const buildTenantSnapshot = async (tenant, { periodStart, periodEnd, bypassCache
   }
 
   // Payments/royalty use each payment's own date (not the quote's
-  // createdAt) — identical eligibility rule Royalty uses, so the two
-  // pages' totals for the same tenant always agree.
+  // createdAt) and the rate in force on that date (royaltyFor) — the exact
+  // calculation the tenant's Royalty page uses, so the two pages' totals for
+  // the same tenant always agree. (This used to apply today's rate to every
+  // payment while the Royalty page used the historical one.)
   for (const q of merged) {
     if (!['paid', 'partially_paid'].includes(q.paymentStatus)) continue;
+    // The Royalty page charges no royalty on cancelled quotations either.
+    const earnsRoyalty = !!royaltyConfig && q.quotationStatus !== 'Cancelled';
     for (const p of eligiblePayments(q)) {
       if (!p.date || !(p.amount > 0) || !inRange(p.date, periodStart, periodEnd)) continue;
       payments.count++;
       payments.totalCollected += p.amount;
-      royaltyPayable += (p.amount * pct) / 100;
+      if (earnsRoyalty) royaltyPayable += royaltyConfig.royaltyFor(p.amount, p.date, q.quoteId).amount;
     }
   }
 

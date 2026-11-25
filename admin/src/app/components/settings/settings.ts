@@ -1,5 +1,5 @@
 // settings.component.ts
-import { Component, OnInit, signal, computed, inject } from '@angular/core';
+import { Component, OnInit, signal, computed, inject, DestroyRef } from '@angular/core';
 import { CommonModule, DOCUMENT, TitleCasePipe } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import {
@@ -56,9 +56,11 @@ export class Settings implements OnInit {
   // ── CRM sync status (Settings → CRM) ────────────────────────────────────
   private crm = inject(Crm);
   crmSync = signal<CrmSyncStatus | null>(null);
-  syncingCRM = signal(false);
   /** Why the sync status could not be loaded — shown instead of "not synced yet". */
   crmSyncError = signal<string | null>(null);
+  /** The CRM syncs itself (live on every read + a background pass), so the card just re-reads its status. */
+  private static readonly CRM_STATUS_REFRESH_MS = 30_000;
+  private readonly destroyRef = inject(DestroyRef);
 
   // ── API Integration (Settings → API Integration, Haive AI Agent) ───────
   private apiIntegration = inject(ApiIntegration);
@@ -190,6 +192,12 @@ export class Settings implements OnInit {
         }
       },
     });
+
+    // Keep the CRM card current while it is on screen.
+    const statusTimer = setInterval(() => {
+      if (this.activeTab() === 'crm' && !document.hidden) this.loadCrmSyncStatus();
+    }, Settings.CRM_STATUS_REFRESH_MS);
+    this.destroyRef.onDestroy(() => clearInterval(statusTimer));
   }
 
   setTab(tab: SettingsTab): void {
@@ -297,30 +305,12 @@ export class Settings implements OnInit {
     });
   }
 
-  syncCRMNow(): void {
-    this.syncingCRM.set(true);
-    this.clearMessages();
-    this.crm.syncNow().subscribe({
-      next: (res) => {
-        this.success.set(res.message || 'CRM sync complete.');
-        this.crmSync.set(res.data?.status ?? null);
-        this.crmSyncError.set(null);
-        this.syncingCRM.set(false);
-      },
-      error: (err) => {
-        this.error.set(apiMessage(err, 'CRM sync failed.'));
-        if (err?.error?.data?.status) this.crmSync.set(err.error.data.status);
-        this.syncingCRM.set(false);
-      },
-    });
-  }
-
   crmSyncLabel(): string {
     const s = this.crmSync();
     if (!s) return this.crmSyncError() ? '● Unavailable' : '—';
     switch (s.status) {
       case 'running': return '● Syncing…';
-      case 'success': return '● Healthy';
+      case 'success': return '● Live';
       case 'partial': return '● Partial';
       case 'error':   return '● Failing';
       default:        return 'Not synced yet';

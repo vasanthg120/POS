@@ -97,6 +97,9 @@ const paymentsPublic = require('./routes/payments.public.routes');
 app.use('/payments', paymentsPublic);
 
 const marginJobRouter = require('./routes/margin');
+// Also under /api/ — production nginx forwards /api/* to the backend, while
+// /tenant/* needs the extra snippet in deploy/nginx. The frontend uses /api/.
+app.use('/api/tenant/margin-jobs', marginJobRouter);
 app.use('/tenant/margin-jobs', marginJobRouter);
 
 const royaltyRouter = require('./routes/royalty');

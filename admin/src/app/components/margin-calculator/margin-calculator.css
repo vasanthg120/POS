@@ -1440,3 +1440,180 @@
   font-size: 0.8rem;
   color: var(--text-muted);
 }
+
+/* ════════════════════════════════════════════════════════════════
+   MARGIN / MARKUP ENGINE UI (v2)
+   ════════════════════════════════════════════════════════════════ */
+
+.icon-btn--on { background: var(--sky-light); color: var(--blue); border-color: var(--sky-mid); }
+.topbar-center { gap: 8px; }
+
+/* Help panel */
+.help-panel {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px;
+  padding: 16px 24px;
+  background: var(--info-bg);
+  border-bottom: 1px solid var(--info-border);
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+.help-col h4 { margin: 0 0 6px; font-size: 0.8rem; color: var(--text-primary); }
+.help-col p { margin: 0 0 6px; line-height: 1.5; }
+.help-col ul { margin: 0 0 6px; padding-left: 16px; line-height: 1.5; }
+@media (max-width: 1100px) { .help-panel { grid-template-columns: 1fr; } }
+
+/* Left panel extras */
+.left-panel { width: 320px; }
+.heading-tag {
+  margin-left: 6px;
+  padding: 1px 6px;
+  border-radius: var(--r-full);
+  font-size: 0.6rem;
+  letter-spacing: 0.05em;
+  vertical-align: middle;
+}
+.heading-tag--rev { background: var(--success-bg); color: var(--success); }
+.heading-tag--cost { background: var(--warning-bg); color: var(--warning); }
+.field-hint { margin: 4px 0 0; font-size: 0.7rem; color: var(--text-muted); line-height: 1.4; }
+
+.chip-row { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.chip {
+  padding: 5px 10px;
+  border-radius: var(--r-full);
+  border: 1.5px solid var(--border);
+  background: var(--surface-2);
+  font: 600 0.72rem sans-serif;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+.chip:hover { border-color: var(--border-2); }
+.chip.chip--on { background: var(--btn-bg); border-color: var(--btn-bg); color: #fff; }
+.chip-row--filters { margin: 12px 0 10px; }
+.input--sm { width: 72px; padding: 6px 8px; }
+.input--select { width: auto; min-width: 74px; padding-right: 6px; }
+.input-suffix { position: relative; flex: 1; min-width: 70px; }
+.input-suffix .input { padding-right: 24px; width: 100%; }
+.input-suffix span { position: absolute; right: 9px; top: 50%; transform: translateY(-50%); font-size: 0.78rem; color: var(--text-muted); }
+.field-row--target { display: flex; gap: 8px; align-items: center; margin-bottom: 4px; }
+
+/* Profit summary */
+.stat-row--loss .stat-val--profit { color: #fca5a5; }
+.health-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.health-note { font-size: 0.72rem; color: var(--error); font-weight: 600; }
+
+/* Target pricing */
+.panel-block--target { background: linear-gradient(180deg, var(--indigo-light), var(--white)); }
+.target-result {
+  margin: 10px 0 8px;
+  padding: 10px 12px;
+  border-radius: var(--r-md);
+  background: var(--warning-bg);
+  border: 1px solid var(--warning-border);
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+.target-result b { color: var(--text-primary); }
+.target-result--met { background: var(--success-bg); border-color: var(--success-border); color: var(--success); }
+.target-gap { display: block; font-weight: 700; color: var(--warning); }
+.target-sub { display: block; font-size: 0.72rem; color: var(--text-muted); margin-bottom: 8px; }
+.target-result .target-sub { margin-bottom: 0; }
+
+/* Breakdown */
+.breakdown-row--sub { border-top: 1px dashed var(--border); padding-top: 8px; }
+
+/* Table extras */
+.table-sub { font-size: 0.75rem; color: var(--text-muted); margin-left: 10px; }
+.table-note { margin: 10px 4px 0; font-size: 0.72rem; color: var(--text-muted); }
+.data-table tbody tr.row--loss td { background: #fff5f5; }
+.row-hint { display: block; margin-top: 3px; font-size: 0.66rem; font-weight: 600; color: var(--warning); }
+.row-hint--loss { color: var(--error); }
+.cell-input--invalid { border-color: var(--error) !important; background: var(--error-bg) !important; }
+.cell-input--price { font-weight: 700; }
+.num--loss { color: var(--error) !important; }
+.cell-sub { display: block; font-size: 0.66rem; color: var(--text-muted); font-weight: 500; }
+.cell-muted { color: var(--text-light); }
+.target-chip {
+  border: 1.5px dashed var(--indigo);
+  background: var(--indigo-light);
+  color: var(--indigo);
+  border-radius: var(--r-sm);
+  padding: 3px 8px;
+  font: 700 0.75rem sans-serif;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.target-chip:hover:not(:disabled) { background: var(--indigo); color: #fff; border-style: solid; }
+.target-chip--same, .target-chip:disabled { border-style: solid; border-color: var(--success-border); background: var(--success-bg); color: var(--success); cursor: default; }
+.row-actions { display: flex; gap: 2px; justify-content: center; }
+.del-btn--neutral:hover { color: var(--blue) !important; background: var(--sky-light) !important; border-color: var(--sky-mid) !important; }
+
+
+/* ════════════════════════════════════════════════════════════════
+   MARGIN COLOURS — one scale everywhere (margin on cost)
+   loss  < 0  · poor < 25% · fair 25–50% · good 50–100% · excellent ≥ 100%
+   Explicit colours (not theme tokens) so every state is readable on the
+   light panels: dark text on tinted backgrounds, white on solid ones.
+   ════════════════════════════════════════════════════════════════ */
+.margin-pill, .health-status, .jc-margin-pill { border: 1px solid transparent; }
+
+.margin-pill[data-health="loss"], .health-status[data-health="loss"], .jc-margin-pill[data-health="loss"],
+.margin-card[data-health="loss"] {
+  background: #dc2626; color: #ffffff; border-color: #b91c1c;
+}
+.margin-pill[data-health="poor"], .health-status[data-health="poor"], .jc-margin-pill[data-health="poor"],
+.margin-card[data-health="poor"] {
+  background: #fef2f2; color: #b91c1c; border-color: #fca5a5;
+}
+.margin-pill[data-health="fair"], .health-status[data-health="fair"], .jc-margin-pill[data-health="fair"],
+.margin-card[data-health="fair"] {
+  background: #fffbeb; color: #b45309; border-color: #fcd34d;
+}
+.margin-pill[data-health="good"], .health-status[data-health="good"], .jc-margin-pill[data-health="good"],
+.margin-card[data-health="good"] {
+  background: #f0fdf4; color: #15803d; border-color: #86efac;
+}
+.margin-pill[data-health="excellent"], .health-status[data-health="excellent"], .jc-margin-pill[data-health="excellent"],
+.margin-card[data-health="excellent"] {
+  background: #16a34a; color: #ffffff; border-color: #15803d;
+}
+.margin-pill[data-health="none"], .health-status[data-health="none"], .jc-margin-pill[data-health="none"],
+.margin-card[data-health="none"] {
+  background: #f1f5f9; color: #64748b; border-color: #cbd5e1;
+}
+.margin-pill { min-width: 62px; text-align: center; font-size: 0.75rem; padding: 3px 10px; }
+
+/* Gauge: solid colour of the current band; full bar = 100% margin */
+.gauge-fill { background: #94a3b8; }
+.gauge-fill[data-health="loss"] { width: 0 !important; }
+.gauge-fill[data-health="poor"] { background: #ef4444; }
+.gauge-fill[data-health="fair"] { background: #f59e0b; }
+.gauge-fill[data-health="good"] { background: #22c55e; }
+.gauge-fill[data-health="excellent"] { background: #16a34a; }
+.gauge-pct { width: 60px; }
+
+/* Band legend in the same scale */
+.band--poor  { background: #fef2f2; color: #b91c1c; border: 1px solid #fca5a5; }
+.band--fair  { background: #fffbeb; color: #b45309; border: 1px solid #fcd34d; }
+.band--ok    { background: #f0fdf4; color: #15803d; border: 1px solid #86efac; }
+.band--great { background: #16a34a; color: #ffffff; border: 1px solid #15803d; }
+
+/* Summary margin card */
+.margin-card {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 12px;
+  padding: 12px 14px;
+  border-radius: var(--r-md);
+  border: 1.5px solid;
+}
+.margin-card-val { font: 800 1.5rem/1 sans-serif; letter-spacing: -0.02em; }
+.margin-card-lbl { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; }
+.margin-card-lbl small { font-weight: 500; text-transform: none; letter-spacing: 0; opacity: .85; }
+
+.label--inline { margin: 0; white-space: nowrap; }

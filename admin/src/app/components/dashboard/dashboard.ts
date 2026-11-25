@@ -8,7 +8,7 @@ import {
 } from '@angular/core';
 import { CommonModule, DatePipe, DecimalPipe } from '@angular/common';
 import { Router } from '@angular/router';
-import { interval } from 'rxjs';
+import { filter, interval } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DashboardService, getToken } from '../services/dashboard';
 import { Auth } from '../services/auth';
@@ -126,8 +126,10 @@ export class Dashboard implements OnInit, OnDestroy {
       return;
     }
     this.fetchAll();
-    interval(120_000)
-      .pipe(takeUntilDestroyed(this.destroyRef))
+    // Live CRM data: silent re-read every 30 s while the tab is visible (the
+    // server pulls from the CRM when its copy is stale).
+    interval(30_000)
+      .pipe(filter(() => !document.hidden), takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.fetchAll(true));
   }
 

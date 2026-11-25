@@ -13,6 +13,7 @@ import {
 } from '../services/billing';
 import { SubscriptionPlansService, SubscriptionPlan } from '../services/subscription-plans';
 import { BillingSettingsService, BillingSettings } from '../services/billing-settings';
+import { describeHttpError } from '../services/api-error';
 
 const MONTH_NAMES = [
   'January', 'February', 'March', 'April', 'May', 'June',
@@ -158,7 +159,12 @@ export class SuperAdminBilling implements OnInit, OnDestroy {
         this.lastRefreshedAt = new Date();
         this.cdr.markForCheck();
       },
-      error: () => { this.isLoading = false; this.cdr.markForCheck(); },
+      // Used to fail silently, leaving an empty billing page with no reason.
+      error: (err) => {
+        this.isLoading = false;
+        this.showToastMsg(describeHttpError(err, 'Could not load billing.'), 'error');
+        this.cdr.markForCheck();
+      },
     });
   }
 

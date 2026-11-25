@@ -334,10 +334,19 @@ exports.refresh = async (req, res) => {
     const newRefresh = jwt.generateRefreshToken(newPayload);
     const newAccess = jwt.generateAccessToken(newPayload);
 
-    await Tenant.findByIdAndUpdate(tenant._id, {
-      $pull: { refreshTokens: { token } },
-      $push: { refreshTokens: { $each: [{ token: newRefresh, ip: req.ip, userAgent: req.headers['user-agent'] }], $slice: -5 } },
-    });
+    // Rotate in place: the used token's entry becomes the new one, in one
+    // atomic update. This was a $pull plus a $push on refreshTokens, which
+    // MongoDB refuses ("Updating the path 'refreshTokens' would create a
+    // conflict"), so every refresh was a 500 and the app signed the user out
+    // ~14 minutes after each login. Matching on the token also makes a second,
+    // concurrent refresh with the same token fail instead of minting a twin.
+    const rotated = await Tenant.updateOne(
+      { _id: tenant._id, 'refreshTokens.token': token },
+      { $set: { 'refreshTokens.$': { token: newRefresh, ip: req.ip, userAgent: req.headers['user-agent'], createdAt: new Date() } } },
+    );
+    if (rotated.matchedCount === 0) {
+      return res.status(401).json({ success: false, message: 'Session expired. Please log in again.' });
+    }
 
     setRefreshCookie(res, newRefresh);
     return res.status(200).json({

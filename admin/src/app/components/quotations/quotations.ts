@@ -112,6 +112,9 @@ export class Quotations implements OnInit, OnDestroy {
   private startAfter    = 0;
   private readonly PAGE = 25;
   private searchTimeout: ReturnType<typeof setTimeout> | null = null;
+  private static readonly LIVE_REFRESH_MS = 30_000;
+  private liveTimer?: ReturnType<typeof setInterval>;
+  private refreshing = false;
 
   /* ── Stats (computed) ─────────────────────────────────────────── */
   stats = computed(() => {
@@ -234,11 +237,40 @@ export class Quotations implements OnInit, OnDestroy {
   constructor(private crm: Crm, public auth: Auth) {}
 
   ngOnInit(): void {
-    if (this.auth.currentTenant()?.crm?.isConfigured) this.loadQuotes();
+    if (!this.auth.currentTenant()?.crm?.isConfigured) return;
+    this.loadQuotes();
+    // Live CRM data: re-read every 30 s while the tab is visible (the server
+    // pulls from the CRM when its copy is stale).
+    this.liveTimer = setInterval(() => {
+      if (!document.hidden) this.refreshSilently();
+    }, Quotations.LIVE_REFRESH_MS);
   }
 
   ngOnDestroy(): void {
     if (this.searchTimeout) clearTimeout(this.searchTimeout);
+    if (this.liveTimer) clearInterval(this.liveTimer);
+  }
+
+  /**
+   * Background re-read: swaps in the latest quotes without a spinner and keeps
+   * the page, filters and sort. A failed tick is ignored; the next one retries.
+   */
+  private refreshSilently(): void {
+    if (this.loading() || this.refreshing) return;
+    this.refreshing = true;
+    this.crm.getQuotes('', this.PAGE, 0).subscribe({
+      next: (res) => {
+        const incoming = res.data?.quotes;
+        if (res.success && Array.isArray(incoming)) {
+          this.quotes.set(incoming);
+          this.totalCount.set(res.data?.total ?? null);
+          this.error.set('');
+          if (this.currentPage() > this.totalPages()) this.currentPage.set(this.totalPages());
+        }
+        this.refreshing = false;
+      },
+      error: () => { this.refreshing = false; },
+    });
   }
 
   /* ── Load ─────────────────────────────────────────────────────── */

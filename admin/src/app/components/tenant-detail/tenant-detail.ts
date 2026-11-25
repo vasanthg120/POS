@@ -215,6 +215,14 @@ export class TenantDetail implements OnInit, OnDestroy {
         next: (res) => {
           if (this.tenant) this.tenant = { ...this.tenant, royalty: { ...this.tenant.royalty, percentage: res.data.percentage } };
           this.royaltyEditing = false;
+          // The payable total depends on the rate — re-read it rather than
+          // leaving the old figure next to the new percentage.
+          this.svc.getTenantOverview(this.tenantId, periodParams(this.period))
+            .pipe(takeUntil(this.destroy$))
+            .subscribe({
+              next: (o) => { this.tenant = o.data.tenant; this.cdr.markForCheck(); },
+              error: () => {},
+            });
         },
         error: (err) => {
           this.royaltyErr = err.error?.message || 'Failed to update royalty percentage.';

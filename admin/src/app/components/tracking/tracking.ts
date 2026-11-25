@@ -213,7 +213,8 @@ export class Tracking implements OnInit, OnDestroy {
     this.loadAll();
     this.updateTimestamp();
 
-    // FIX: Only auto-refresh when tab is visible, and guard against overlapping loads
+    // Live CRM data: re-read every 30 s (the server pulls from the CRM when its
+    // copy is stale). Only while the tab is visible, never overlapping a load.
     this.refreshTimer = setInterval(() => {
       // Skip if tab is hidden (prevents background hammering)
       if (document.hidden) return;
@@ -221,7 +222,7 @@ export class Tracking implements OnInit, OnDestroy {
       if (this.isLoadingInProgress) return;
       this.loadAll(false); // silent refresh — no loading spinner
       this.updateTimestamp();
-    }, 60_000);
+    }, 30_000);
   }
 
   ngOnDestroy(): void {
@@ -235,7 +236,7 @@ export class Tracking implements OnInit, OnDestroy {
 
   /**
    * FIX: Added `showSpinner` param. Auto-refresh uses `false` so the table
-   * doesn't flash on every 60s tick. Manual refresh uses `true` (default).
+   * doesn't flash on every 30s tick. Manual refresh uses `true` (default).
    */
   loadAll(showSpinner = true): void {
     // FIX: Guard — if already loading, don't start another request

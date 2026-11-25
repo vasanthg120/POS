@@ -7,20 +7,16 @@
       <span class="brand-text">MarginIQ</span>
     </div>
 
-    <div class="topbar-center" id="job-display">
+    <div class="topbar-center">
       <span class="job-label" [class.has-name]="hasJobName">{{ jobDisplay }}</span>
+      <span *ngIf="currentJobStatus" class="status-badge" [ngClass]="statusBadgeClass(currentJobStatus)">{{ currentJobStatus }}</span>
       <span *ngIf="currentJobId" class="autosave-badge" [class.saved]="isSaved">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-          <polyline *ngIf="isSaved" points="20 6 9 17 4 12"/>
-          <circle *ngIf="!isSaved" cx="12" cy="12" r="3"/>
-        </svg>
-        {{ isSaved ? 'Autosaved' : 'Unsaved changes' }}
+        {{ isSaved ? 'All changes saved' : 'Unsaved changes' }}
       </span>
     </div>
 
     <div class="topbar-actions">
-      <!-- Stats pill -->
-      <div class="stats-pill" *ngIf="jobStats">
+      <div class="stats-pill" *ngIf="jobStats" title="Active (non-archived) saved jobs. Revenue is ex GST; margin is total profit ÷ total cost.">
         <span class="stats-item">
           <span class="stats-num">{{ jobStats.totalJobs }}</span>
           <span class="stats-lbl">Jobs</span>
@@ -32,180 +28,252 @@
         </span>
         <span class="stats-divider"></span>
         <span class="stats-item">
-          <span class="stats-num">{{ fmtPct(jobStats.avgMarginPct) }}</span>
-          <span class="stats-lbl">Avg Margin</span>
+          <span class="stats-num">{{ fmtPct(statsPct) }}</span>
+          <span class="stats-lbl">Avg margin</span>
         </span>
       </div>
 
-      <div class="live-pill">
-        <span class="live-dot"></span>
-        Live
-      </div>
-
-      <!-- Jobs Drawer toggle -->
-      <button class="icon-btn icon-btn--accent" (click)="openDrawer()" title="All Jobs">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-          <rect x="2" y="7" width="20" height="14" rx="2"/>
-          <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/>
-          <line x1="12" y1="12" x2="12" y2="16"/>
-          <line x1="10" y1="14" x2="14" y2="14"/>
-        </svg>
+      <button class="icon-btn" [class.icon-btn--on]="showHelp" (click)="showHelp = !showHelp" title="How the numbers are calculated">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
       </button>
 
-      <!-- Save -->
-      <button
-        class="btn btn--save"
-        *ngIf="auth.canAccess('margin-calculator', 'create')"
-        (click)="saveJob()"
-        [disabled]="isSaving"
-        title="Save job to database"
-      >
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
-          <polyline points="17 21 17 13 7 13 7 21"/>
-          <polyline points="7 3 7 8 15 8"/>
-        </svg>
+      <button class="icon-btn icon-btn--accent" (click)="openDrawer()" title="Saved jobs">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+      </button>
+
+      <button class="btn btn--save" *ngIf="canSave" (click)="saveJob()" [disabled]="isSaving" title="Save this job">
         {{ saveLabel }}
       </button>
 
-      <!-- Finalise -->
-      <button
-        class="btn btn--finalise"
-        *ngIf="currentJobId && auth.canAccess('margin-calculator', 'create')"
-        (click)="finaliseJob()"
-        title="Mark as finalised"
-      >
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <polyline points="20 6 9 17 4 12"/>
-        </svg>
-        Finalise
+      <button class="btn btn--finalise" *ngIf="currentJobId && canSave" (click)="toggleFinalised()"
+        [title]="currentJobStatus === 'finalised' ? 'Move back to draft' : 'Mark as finalised'">
+        {{ currentJobStatus === 'finalised' ? 'Reopen' : 'Finalise' }}
       </button>
 
       <button class="icon-btn" (click)="exportCsv()" title="Export CSV">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-          <polyline points="7 10 12 15 17 10"/>
-          <line x1="12" y1="15" x2="12" y2="3"/>
-        </svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
       </button>
-      <button class="icon-btn icon-btn--danger" (click)="resetAll()" title="Reset all">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-          <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
-          <path d="M3 3v5h5"/>
-        </svg>
+      <button class="icon-btn icon-btn--danger" (click)="resetAll()" title="Clear the calculator">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
       </button>
     </div>
   </header>
+
+  <!-- ── HOW IT WORKS ── -->
+  <section class="help-panel" *ngIf="showHelp">
+    <div class="help-col">
+      <h4>How margin is calculated</h4>
+      <p><b>Margin % = profit ÷ cost.</b></p>
+      <ul>
+        <li>Cost ₹100, sold at ₹200 → profit ₹100 → <b>100% margin</b>.</li>
+        <li>Cost ₹100, sold at ₹150 → profit ₹50 → <b>50% margin</b>.</li>
+        <li>Selling below cost gives a negative margin (a loss).</li>
+      </ul>
+    </div>
+    <div class="help-col">
+      <h4>Costs vs charges</h4>
+      <ul>
+        <li><b>Line items</b>: your costs (item, print/unit, setup, shipping) and your selling price per unit.</li>
+        <li><b>All-in cost/unit</b> spreads setup and shipping over the quantity — it is your break-even price.</li>
+        <li><b>Billed to client</b> (setup fees, shipping, discount) changes revenue, not cost.</li>
+        <li><b>Job costs</b> (other costs, payment gateway fee) are costs that aren’t on a line item.</li>
+      </ul>
+    </div>
+    <div class="help-col">
+      <h4>Target pricing</h4>
+      <p>Set a target margin. The calculator works out the price you need — including discount, GST and the payment fee — and suggests unit prices (rounded up) that reach it. Apply one row or all at once.</p>
+    </div>
+  </section>
 
   <div class="workspace">
 
     <!-- ── LEFT PANEL ── -->
     <aside class="left-panel">
 
-      <!-- Job Config -->
+      <!-- Job -->
       <div class="panel-block">
         <p class="panel-heading">Project / Job</p>
         <div class="field">
-          <label class="label">Client / Job Name</label>
-          <input type="text" class="input" placeholder="e.g. V‑Mart Clothing"
-            [(ngModel)]="jobName" (ngModelChange)="recalc()"/>
+          <label class="label" for="mc-job">Client / job name</label>
+          <input id="mc-job" type="text" class="input" placeholder="e.g. V-Mart Clothing" maxlength="120"
+            [(ngModel)]="jobName" (ngModelChange)="recalc()" />
+        </div>
+      </div>
+
+      <!-- Billed to client -->
+      <div class="panel-block">
+        <p class="panel-heading">Billed to client <span class="heading-tag heading-tag--rev">revenue</span></p>
+        <div class="field-row">
+          <div class="field">
+            <label class="label" for="mc-setups">Setups / screens</label>
+            <input id="mc-setups" type="number" class="input" min="0" step="1" placeholder="0"
+              [(ngModel)]="setupCount" (ngModelChange)="recalc()" />
+          </div>
+          <div class="field">
+            <label class="label" for="mc-setupfee">Fee per setup (₹)</label>
+            <input id="mc-setupfee" type="number" class="input" min="0" step="0.01" placeholder="0.00"
+              [(ngModel)]="setupUnit" (ngModelChange)="recalc()" />
+          </div>
         </div>
         <div class="field-row">
           <div class="field">
-            <label class="label">Setup Fees</label>
-            <input type="number" class="input" placeholder="1" min="0"
-              [(ngModel)]="setupCount" (ngModelChange)="recalc()"/>
+            <label class="label" for="mc-ship">Shipping charged (₹)</label>
+            <input id="mc-ship" type="number" class="input" min="0" step="0.01" placeholder="0.00"
+              [(ngModel)]="shipping" (ngModelChange)="recalc()" />
           </div>
           <div class="field">
-            <label class="label">Cost Per Screen (₹)</label>
-            <input type="number" class="input" placeholder="0.00" min="0" step="0.01"
-              [(ngModel)]="setupUnit" (ngModelChange)="recalc()"/>
+            <label class="label" for="mc-disc">Discount (%)</label>
+            <input id="mc-disc" type="number" class="input" min="0" max="100" step="0.1" placeholder="0"
+              [(ngModel)]="discountPct" (ngModelChange)="recalc()" />
+          </div>
+        </div>
+        <p class="field-hint">Their costs go on the line items (setup / ship columns).</p>
+      </div>
+
+      <!-- Job costs -->
+      <div class="panel-block">
+        <p class="panel-heading">Job costs <span class="heading-tag heading-tag--cost">cost</span></p>
+        <div class="field-row">
+          <div class="field">
+            <label class="label" for="mc-other">Other costs (₹)</label>
+            <input id="mc-other" type="number" class="input" min="0" step="0.01" placeholder="0.00"
+              title="Design, packaging, courier, commission… anything not on a line item"
+              [(ngModel)]="otherCost" (ngModelChange)="recalc()" />
+          </div>
+          <div class="field">
+            <label class="label" for="mc-fee">Payment fee (%)</label>
+            <input id="mc-fee" type="number" class="input" min="0" max="20" step="0.01" placeholder="0"
+              title="Gateway fee on the amount collected (incl. GST), e.g. Razorpay ~2%"
+              [(ngModel)]="paymentFeePct" (ngModelChange)="recalc()" />
           </div>
         </div>
         <div class="field">
-          <label class="label">Shipping Total (₹)</label>
-          <input type="number" class="input" placeholder="0.00" min="0" step="0.01"
-            [(ngModel)]="shipping" (ngModelChange)="recalc()"/>
-        </div>
-        <div class="field">
-          <label class="label">GST Rate (%)</label>
-          <input type="number" class="input" placeholder="18" min="0" step="0.1"
-            [(ngModel)]="gstRate" (ngModelChange)="recalc()"/>
-        </div>
-
-        <!-- DB status strip -->
-        <div class="db-strip" *ngIf="currentJobId">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-            <ellipse cx="12" cy="5" rx="9" ry="3"/>
-            <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/>
-            <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/>
-          </svg>
-          <span>ID: {{ currentJobId | slice:0:8 }}…</span>
+          <label class="label">GST rate</label>
+          <div class="chip-row">
+            <button type="button" class="chip" *ngFor="let g of gstPresets" [class.chip--on]="gstRate === g" (click)="setGst(g)">{{ g }}%</button>
+            <input type="number" class="input input--sm" min="0" max="100" step="0.1" aria-label="Custom GST rate"
+              [(ngModel)]="gstRate" (ngModelChange)="recalc()" />
+          </div>
         </div>
       </div>
 
-      <!-- Summary Stats -->
+      <!-- Profit summary -->
       <div class="panel-block panel-block--dark">
-        <p class="panel-heading">Summary</p>
+        <p class="panel-heading">Profit</p>
         <div class="stat-list">
           <div class="stat-row">
-            <span class="stat-name">Total Revenue</span>
-            <span class="stat-val">{{ fmt(summary.totalQuote) }}</span>
+            <span class="stat-name">Revenue (ex GST)</span>
+            <span class="stat-val">{{ fmt(summary.taxableValue) }}</span>
           </div>
           <div class="stat-row">
-            <span class="stat-name">Total Expenses</span>
-            <span class="stat-val">{{ fmt(summary.totalCost) }}</span>
+            <span class="stat-name">− Line item costs</span>
+            <span class="stat-val">{{ fmt(summary.lineCost) }}</span>
           </div>
-          <div class="stat-row stat-row--sep">
-            <span class="stat-name">GST Amount ({{ fmtPct(gstRate / 100) }})</span>
-            <span class="stat-val">{{ gstAmount }}</span>
+          <div class="stat-row" *ngIf="summary.otherCost">
+            <span class="stat-name">− Other job costs</span>
+            <span class="stat-val">{{ fmt(summary.otherCost) }}</span>
           </div>
-          <div class="stat-row stat-row--profit">
-            <span class="stat-name">Net Profit</span>
-            <span class="stat-val stat-val--profit">{{ fmt(summary.profitSubtotal) }}</span>
+          <div class="stat-row" *ngIf="summary.paymentFee">
+            <span class="stat-name">− Payment fee</span>
+            <span class="stat-val">{{ fmt(summary.paymentFee) }}</span>
+          </div>
+          <div class="stat-row stat-row--profit" [class.stat-row--loss]="summary.netProfit < 0">
+            <span class="stat-name">= Net profit</span>
+            <span class="stat-val stat-val--profit">{{ fmt(summary.netProfit) }}</span>
+          </div>
+          <div class="margin-card" [attr.data-health]="health(summary.marginPct)" title="Net profit ÷ all-in cost">
+            <span class="margin-card-val">{{ fmtPct(summary.marginPct) }}</span>
+            <span class="margin-card-lbl">Margin <small>(profit ÷ cost)</small></span>
           </div>
         </div>
       </div>
 
-      <!-- Margin Health -->
+      <!-- Health -->
       <div class="panel-block">
-        <p class="panel-heading">Profit Health</p>
+        <p class="panel-heading">Profit health</p>
         <div class="health-gauge">
           <div class="gauge-bar">
-            <div class="gauge-fill" [style.width]="gaugeWidth(summary.overallMarginPct)"></div>
+            <div class="gauge-fill" [attr.data-health]="health(summary.marginPct)" [style.width]="gaugeWidth(summary.marginPct)"></div>
           </div>
-          <div class="gauge-pct">{{ fmtPct(summary.overallMarginPct) }}</div>
+          <div class="gauge-pct">{{ fmtPct(summary.marginPct) }}</div>
         </div>
         <div class="health-bands">
-          <div class="band band--poor">Poor &lt;20%</div>
-          <div class="band band--fair">Fair 20–35%</div>
-          <div class="band band--ok">Good 35–50%</div>
-          <div class="band band--great">Excellent &gt;50%</div>
+          <div class="band" *ngFor="let b of bandLabels" [ngClass]="b.cls">{{ b.text }}</div>
         </div>
-        <div class="health-status" [attr.data-health]="health(summary.overallMarginPct)">
-          {{ healthLabel(summary.overallMarginPct) }}
+        <div class="health-row">
+          <div class="health-status" [attr.data-health]="health(summary.marginPct)">{{ healthLabel(summary.marginPct) }}</div>
+          <span class="health-note" *ngIf="summary.lossRows">{{ summary.lossRows }} item{{ summary.lossRows === 1 ? '' : 's' }} below cost</span>
+          <span class="health-note" *ngIf="!summary.lossRows && summary.unpricedRows">{{ summary.unpricedRows }} item{{ summary.unpricedRows === 1 ? '' : 's' }} without a price</span>
         </div>
       </div>
 
-      <!-- Price Breakdown -->
+      <!-- Target pricing -->
+      <div class="panel-block panel-block--target">
+        <p class="panel-heading">Target pricing</p>
+        <div class="field-row field-row--target">
+          <label class="label label--inline" for="mc-target">Target margin</label>
+          <div class="input-suffix">
+            <input id="mc-target" type="number" class="input" min="0" max="1000" step="1"
+              [(ngModel)]="targetPct" (ngModelChange)="recalc()" />
+            <span>%</span>
+          </div>
+          <select class="input input--select" [(ngModel)]="priceRounding" (ngModelChange)="recalc()" aria-label="Round prices up to">
+            <option *ngFor="let s of roundingSteps" [ngValue]="s">↑ ₹{{ s }}</option>
+          </select>
+        </div>
+        <p class="field-hint">Selling price = all-in cost + {{ fmtPct(target.marginPct, 0) }}. Prices round up to the step chosen.</p>
+
+        <div class="target-result" *ngIf="!target.reachable">
+          This target can’t be reached with the current payment fee — lower the target or the fee.
+        </div>
+        <ng-container *ngIf="target.reachable && summary.lineCost > 0">
+          <div class="target-result target-result--met" *ngIf="target.met">
+            ✓ Target met — current revenue {{ fmt(summary.taxableValue) }} is above the {{ fmt(target.requiredTaxable) }} needed.
+          </div>
+          <div class="target-result" *ngIf="!target.met">
+            Revenue needed (ex GST): <b>{{ fmt(target.requiredTaxable) }}</b>
+            <span class="target-gap">{{ fmt(target.shortfall) }} more than now</span>
+            <span class="target-sub">Invoice incl. GST: {{ fmt(target.requiredInvoiceTotal) }}</span>
+          </div>
+          <div class="target-sub">Break-even revenue (ex GST): {{ fmt(summary.breakEvenTaxable) }}</div>
+          <button type="button" class="btn btn--primary btn--full" [disabled]="!canApplySuggestions" (click)="applySuggestedPrices()">
+            Apply suggested prices to all items
+          </button>
+        </ng-container>
+        <p class="field-hint" *ngIf="target.reachable && summary.lineCost === 0">Add line-item costs to get suggested prices.</p>
+      </div>
+
+      <!-- Invoice breakdown -->
       <div class="panel-block panel-block--accent">
-        <p class="panel-heading">Price Breakdown</p>
+        <p class="panel-heading">Invoice breakdown</p>
         <div class="breakdown-list">
           <div class="breakdown-row">
-            <span>Subtotal (ex. GST)</span>
-            <strong>{{ fmt(summary.subtotal) }}</strong>
+            <span>Line items</span>
+            <strong>{{ fmt(summary.lineRevenueGross) }}</strong>
           </div>
-          <div class="breakdown-row">
+          <div class="breakdown-row" *ngIf="summary.discountAmount">
+            <span>− Discount ({{ discountPct || 0 }}%)</span>
+            <strong>{{ fmt(-summary.discountAmount) }}</strong>
+          </div>
+          <div class="breakdown-row" *ngIf="summary.setupFees">
+            <span>+ Setup fees ({{ setupCount || 0 }} × {{ fmt(setupUnit || 0) }})</span>
+            <strong>{{ fmt(summary.setupFees) }}</strong>
+          </div>
+          <div class="breakdown-row" *ngIf="summary.shippingFee">
             <span>+ Shipping</span>
-            <strong>{{ fmt(summary.inclDelivery - summary.subtotal) }}</strong>
+            <strong>{{ fmt(summary.shippingFee) }}</strong>
+          </div>
+          <div class="breakdown-row breakdown-row--sub">
+            <span>Taxable value</span>
+            <strong>{{ fmt(summary.taxableValue) }}</strong>
           </div>
           <div class="breakdown-row">
-            <span>+ Setup Fees</span>
-            <strong>{{ fmt(summary.setupTotal) }}</strong>
+            <span>+ GST ({{ gstRate || 0 }}%)</span>
+            <strong>{{ fmt(summary.gstAmount) }}</strong>
           </div>
           <div class="breakdown-row breakdown-row--total">
-            <span>Grand Total (incl. GST)</span>
-            <strong>{{ fmt(summary.incGst) }}</strong>
+            <span>Invoice total (incl. GST)</span>
+            <strong>{{ fmt(summary.invoiceTotal) }}</strong>
           </div>
         </div>
       </div>
@@ -215,288 +283,205 @@
     <!-- ── MAIN TABLE AREA ── -->
     <main class="main">
 
-      <!-- Table Toolbar -->
       <div class="table-toolbar">
-        <h2 class="table-title">Line Items</h2>
+        <h2 class="table-title">Line items</h2>
+        <span class="table-sub" *ngIf="summary.discountAmount">Revenue and profit are after the {{ discountPct }}% discount</span>
         <div class="toolbar-right">
-          <button class="btn btn--ghost" *ngIf="auth.canAccess('margin-calculator', 'create')" (click)="newJob()">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-              <path d="M12 5v14M5 12h14"/>
-            </svg>
-            New Job
-          </button>
-          <button class="btn btn--ghost" (click)="clearRows()">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-              <polyline points="3 6 5 6 21 6"/>
-              <path d="M19 6l-1 14H6L5 6"/>
-              <path d="M9 6V4h6v2"/>
-            </svg>
-            Clear All
-          </button>
-          <button class="btn btn--primary" (click)="addRow()">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <line x1="12" y1="5" x2="12" y2="19"/>
-              <line x1="5" y1="12" x2="19" y2="12"/>
-            </svg>
-            Add Item
-          </button>
+          <button class="btn btn--ghost" *ngIf="canSave" (click)="newJob()">New Job</button>
+          <button class="btn btn--ghost" (click)="clearRows()">Clear All</button>
+          <button class="btn btn--primary" (click)="addRow()">+ Add Item</button>
         </div>
       </div>
 
-      <!-- Table -->
       <div class="table-wrap" *ngIf="rows.length > 0">
         <table class="data-table">
           <thead>
-          <tr>
-            <th class="col-item">Product / Service</th>
-            <th class="col-num">Qty</th>
-            <th class="col-num">Cost/Unit</th>
-            <th class="col-num col-calc">Item Cost</th>
-            <th class="col-num">Print/Unit</th>
-            <th class="col-num col-calc">Print Total</th>
-            <th class="col-num">Setup</th>
-            <th class="col-num">Ship</th>
-            <th class="col-num col-calc col-key">Expense</th>
-            <th class="col-num">Sell Price/Unit</th>
-            <th class="col-num col-calc col-key">Revenue</th>
-            <th class="col-num col-calc">Profit/Unit</th>
-            <th class="col-num col-calc">Total Profit</th>
-            <th class="col-num col-calc">Profit %</th>
-            <th class="col-del"></th>
-          </tr>
+            <tr>
+              <th class="col-item">Product / service</th>
+              <th class="col-num">Qty</th>
+              <th class="col-num" title="Your cost per unit">Cost/unit</th>
+              <th class="col-num" title="Print / decoration cost per unit">Print/unit</th>
+              <th class="col-num" title="Setup cost for this item (once)">Setup cost</th>
+              <th class="col-num" title="Shipping cost for this item (once)">Ship cost</th>
+              <th class="col-num col-calc col-key">Total cost</th>
+              <th class="col-num col-calc" title="Total cost ÷ qty — your break-even price per unit">All-in cost/unit</th>
+              <th class="col-num">Sell price/unit</th>
+              <th class="col-num col-calc col-key">Revenue</th>
+              <th class="col-num col-calc">Profit</th>
+              <th class="col-num col-calc" title="Profit ÷ cost">Margin</th>
+              <th class="col-num col-calc" [title]="'Price per unit to reach the ' + fmtPct(target.marginPct, 0) + ' margin target for the whole job'">Target price</th>
+              <th class="col-del"></th>
+            </tr>
           </thead>
           <tbody>
-          <tr *ngFor="let row of rows; let i = index; trackBy: trackById">
-            <td class="col-item">
-              <input type="text" class="cell-input cell-input--text"
-                placeholder="T‑Shirt, Hoodie, Banner…"
-                [(ngModel)]="rows[i].item" (ngModelChange)="recalc()"/>
-            </td>
-            <td class="col-num">
-              <input type="number" class="cell-input" min="0" placeholder="0"
-                [(ngModel)]="rows[i].qty" (ngModelChange)="recalc()"/>
-            </td>
-            <td class="col-num">
-              <input type="number" class="cell-input" min="0" step="0.01" placeholder="0.00"
-                [(ngModel)]="rows[i].unitCost" (ngModelChange)="recalc()"/>
-            </td>
-            <td class="col-num col-calc">
-              <span>{{ fmt(calced[i]?.cog ?? 0) }}</span>
-            </td>
-            <td class="col-num">
-              <input type="number" class="cell-input" min="0" step="0.01" placeholder="0.00"
-                [(ngModel)]="rows[i].decoUnit" (ngModelChange)="recalc()"/>
-            </td>
-            <td class="col-num col-calc">
-              <span>{{ fmt(calced[i]?.decoCost ?? 0) }}</span>
-            </td>
-            <td class="col-num">
-              <input type="number" class="cell-input" min="0" step="0.01" placeholder="0.00"
-                [(ngModel)]="rows[i].setup" (ngModelChange)="recalc()"/>
-            </td>
-            <td class="col-num">
-              <input type="number" class="cell-input" min="0" step="0.01" placeholder="0.00"
-                [(ngModel)]="rows[i].ship" (ngModelChange)="recalc()"/>
-            </td>
-            <td class="col-num col-calc col-key">
-              <span>{{ fmt(calced[i]?.totalCost ?? 0) }}</span>
-            </td>
-            <td class="col-num">
-              <input type="number" class="cell-input" min="0" step="0.01" placeholder="0.00"
-                [(ngModel)]="rows[i].quoteUnit" (ngModelChange)="recalc()"/>
-            </td>
-            <td class="col-num col-calc col-key">
-              <span>{{ fmt(calced[i]?.quoteCost ?? 0) }}</span>
-            </td>
-            <td class="col-num col-calc">
-              <span>{{ fmt(calced[i]?.marginUnit ?? 0) }}</span>
-            </td>
-            <td class="col-num col-calc">
-              <span>{{ fmt(calced[i]?.totalMargin ?? 0) }}</span>
-            </td>
-            <td class="col-num col-calc">
-              <span class="margin-pill" [attr.data-health]="health(calced[i]?.marginPct ?? 0)">
-                {{ fmtPct(calced[i]?.marginPct ?? 0) }}
-              </span>
-            </td>
-            <td class="col-del">
-              <button class="del-btn" (click)="deleteRow(row.id)" title="Remove">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <line x1="18" y1="6" x2="6" y2="18"/>
-                  <line x1="6" y1="6" x2="18" y2="18"/>
-                </svg>
-              </button>
-            </td>
-          </tr>
+            <tr *ngFor="let row of rows; let i = index; trackBy: trackById"
+              [class.row--loss]="calcRow(i)?.state === 'loss'">
+              <td class="col-item">
+                <input type="text" class="cell-input cell-input--text" placeholder="T-Shirt, Hoodie, Banner…" maxlength="200"
+                  [(ngModel)]="row.item" (ngModelChange)="recalc()" />
+                <span class="row-hint" *ngIf="rowStateHint(i) as hint" [class.row-hint--loss]="calcRow(i)?.state === 'loss'">{{ hint }}</span>
+              </td>
+              <td class="col-num">
+                <input type="number" class="cell-input" min="0" placeholder="0" [class.cell-input--invalid]="(row.qty ?? 0) < 0"
+                  [(ngModel)]="row.qty" (ngModelChange)="recalc()" />
+              </td>
+              <td class="col-num">
+                <input type="number" class="cell-input" min="0" step="0.01" placeholder="0.00" [class.cell-input--invalid]="(row.unitCost ?? 0) < 0"
+                  [(ngModel)]="row.unitCost" (ngModelChange)="recalc()" />
+              </td>
+              <td class="col-num">
+                <input type="number" class="cell-input" min="0" step="0.01" placeholder="0.00" [class.cell-input--invalid]="(row.decoUnit ?? 0) < 0"
+                  [(ngModel)]="row.decoUnit" (ngModelChange)="recalc()" />
+              </td>
+              <td class="col-num">
+                <input type="number" class="cell-input" min="0" step="0.01" placeholder="0.00" [class.cell-input--invalid]="(row.setup ?? 0) < 0"
+                  [(ngModel)]="row.setup" (ngModelChange)="recalc()" />
+              </td>
+              <td class="col-num">
+                <input type="number" class="cell-input" min="0" step="0.01" placeholder="0.00" [class.cell-input--invalid]="(row.ship ?? 0) < 0"
+                  [(ngModel)]="row.ship" (ngModelChange)="recalc()" />
+              </td>
+              <td class="col-num col-calc col-key"
+                [title]="'Items ' + fmt(calcRow(i)?.cog) + ' + print ' + fmt(calcRow(i)?.decoCost) + ' + setup + shipping'">
+                {{ fmt(calcRow(i)?.totalCost) }}
+              </td>
+              <td class="col-num col-calc">{{ fmt(calcRow(i)?.costPerUnit) }}</td>
+              <td class="col-num">
+                <input type="number" class="cell-input cell-input--price" min="0" step="0.01" placeholder="0.00"
+                  [class.cell-input--invalid]="(row.quoteUnit ?? 0) < 0"
+                  [(ngModel)]="row.quoteUnit" (ngModelChange)="recalc()" />
+              </td>
+              <td class="col-num col-calc col-key">{{ fmt(calcRow(i)?.revenue) }}</td>
+              <td class="col-num col-calc" [class.num--loss]="(calcRow(i)?.profit ?? 0) < 0">
+                {{ fmt(calcRow(i)?.profit) }}
+                <span class="cell-sub" *ngIf="calcRow(i)?.profitPerUnit !== null">{{ fmt(calcRow(i)?.profitPerUnit) }}/unit</span>
+              </td>
+              <td class="col-num col-calc">
+                <span class="margin-pill" [attr.data-health]="health(calcRow(i)?.marginPct)">
+                  {{ fmtPct(calcRow(i)?.marginPct) }}
+                </span>
+              </td>
+              <td class="col-num col-calc">
+                <button type="button" class="target-chip" *ngIf="calcRow(i)?.suggestedUnitPrice as sp; else noTarget"
+                  [class.target-chip--same]="sp === row.quoteUnit" [disabled]="sp === row.quoteUnit"
+                  (click)="applySuggestedPrice(i)" [title]="sp === row.quoteUnit ? 'Already at the target price' : 'Use this price'">
+                  {{ fmt(sp) }}
+                </button>
+                <ng-template #noTarget><span class="cell-muted">—</span></ng-template>
+              </td>
+              <td class="col-del">
+                <div class="row-actions">
+                  <button class="del-btn del-btn--neutral" (click)="duplicateRow(i)" title="Duplicate row" aria-label="Duplicate row">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                  </button>
+                  <button class="del-btn" (click)="deleteRow(row.id)" title="Remove row" aria-label="Remove row">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                  </button>
+                </div>
+              </td>
+            </tr>
           </tbody>
           <tfoot>
-          <tr>
-            <td class="col-item">GRAND TOTAL</td>
-            <td class="col-num">{{ summary.totalQty || "—" }}</td>
-            <td class="col-num"></td>
-            <td class="col-num col-calc">{{ fmt(summary.totalCog) }}</td>
-            <td class="col-num"></td>
-            <td class="col-num col-calc">{{ fmt(summary.totalDecoCost) }}</td>
-            <td class="col-num col-calc">{{ fmt(summary.totalSetup) }}</td>
-            <td class="col-num col-calc">{{ fmt(summary.totalShip) }}</td>
-            <td class="col-num col-calc col-key">{{ fmt(summary.totalCost) }}</td>
-            <td class="col-num"></td>
-            <td class="col-num col-calc col-key">{{ fmt(summary.totalQuote) }}</td>
-            <td class="col-num col-calc">{{ fmt(summary.totalMargin) }}</td>
-            <td class="col-num col-calc">{{ fmt(summary.totalMargin) }}</td>
-            <td class="col-num col-calc">{{ fmtPct(summary.totalMarginPct) }}</td>
-            <td class="col-del"></td>
-          </tr>
+            <tr>
+              <td class="col-item">TOTAL</td>
+              <td class="col-num">{{ summary.totalQty || '—' }}</td>
+              <td class="col-num"></td>
+              <td class="col-num"></td>
+              <td class="col-num col-calc">{{ fmt(summary.totalSetup) }}</td>
+              <td class="col-num col-calc">{{ fmt(summary.totalShip) }}</td>
+              <td class="col-num col-calc col-key">{{ fmt(summary.lineCost) }}</td>
+              <td class="col-num col-calc" title="Average all-in cost per unit">{{ summary.totalQty ? fmt(summary.lineCost / summary.totalQty) : '—' }}</td>
+              <td class="col-num"></td>
+              <td class="col-num col-calc col-key">{{ fmt(summary.lineRevenue) }}</td>
+              <td class="col-num col-calc" [class.num--loss]="summary.lineProfit < 0">
+                {{ fmt(summary.lineProfit) }}
+                <span class="cell-sub" *ngIf="summary.totalQty">{{ fmt(summary.lineProfit / summary.totalQty) }}/unit</span>
+              </td>
+              <td class="col-num col-calc">
+                <span class="margin-pill" [attr.data-health]="health(summary.lineMarginPct)">{{ fmtPct(summary.lineMarginPct) }}</span>
+              </td>
+              <td class="col-num"></td>
+              <td class="col-del"></td>
+            </tr>
           </tfoot>
         </table>
+        <p class="table-note">Line-item totals only. The profit panel adds billed setup fees and shipping, other job costs and the payment fee.</p>
       </div>
 
-      <!-- Empty State -->
       <div class="empty-state" *ngIf="rows.length === 0">
         <div class="empty-icon">◈</div>
         <p class="empty-text">No line items yet</p>
-        <p class="empty-sub">Click <strong>Add Item</strong> to begin or <strong>load</strong> a saved job</p>
-        <button class="btn btn--primary mt-16" (click)="openDrawer()">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <rect x="2" y="7" width="20" height="14" rx="2"/>
-            <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/>
-          </svg>
-          Open Saved Jobs
-        </button>
+        <p class="empty-sub">Click <strong>Add Item</strong> to begin, or open a saved job</p>
+        <button class="btn btn--primary mt-16" (click)="openDrawer()">Open Saved Jobs</button>
       </div>
     </main>
   </div>
 
-  <!-- ════════════════════════════════════════
-       JOBS DRAWER (slides in from right)
-       ═════════════════════════════════════════ -->
+  <!-- ════════ JOBS DRAWER ════════ -->
   <div class="drawer-backdrop" *ngIf="drawerOpen" (click)="closeDrawer()"></div>
 
-  <aside class="jobs-drawer" [class.open]="drawerOpen">
-
-    <!-- Drawer Header -->
+  <aside class="jobs-drawer" [class.open]="drawerOpen" aria-label="Saved jobs">
     <div class="drawer-header">
       <div class="drawer-title-row">
         <h3 class="drawer-title">Saved Jobs</h3>
-        <button class="icon-btn" (click)="closeDrawer()">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <line x1="18" y1="6" x2="6" y2="18"/>
-            <line x1="6" y1="6" x2="18" y2="18"/>
-          </svg>
+        <button class="icon-btn" (click)="closeDrawer()" aria-label="Close">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
         </button>
       </div>
 
-      <!-- Stats mini bar -->
       <div class="drawer-stats" *ngIf="jobStats">
-        <div class="ds-card">
-          <span class="ds-val">{{ jobStats.totalJobs }}</span>
-          <span class="ds-lbl">Total</span>
-        </div>
-        <div class="ds-card">
-          <span class="ds-val">{{ jobStats.draftCount }}</span>
-          <span class="ds-lbl">Drafts</span>
-        </div>
-        <div class="ds-card">
-          <span class="ds-val">{{ jobStats.finalisedCount }}</span>
-          <span class="ds-lbl">Finalised</span>
-        </div>
-        <div class="ds-card ds-card--highlight">
-          <span class="ds-val">{{ fmtPct(jobStats.avgMarginPct) }}</span>
-          <span class="ds-lbl">Avg Margin</span>
-        </div>
+        <div class="ds-card"><span class="ds-val">{{ jobStats.totalJobs }}</span><span class="ds-lbl">Active</span></div>
+        <div class="ds-card"><span class="ds-val">{{ jobStats.draftCount }}</span><span class="ds-lbl">Drafts</span></div>
+        <div class="ds-card"><span class="ds-val">{{ jobStats.finalisedCount }}</span><span class="ds-lbl">Finalised</span></div>
+        <div class="ds-card ds-card--highlight"><span class="ds-val">{{ fmtPct(statsPct) }}</span><span class="ds-lbl">Avg margin</span></div>
       </div>
 
-      <!-- Search -->
+      <div class="chip-row chip-row--filters" role="tablist">
+        <button type="button" class="chip" [class.chip--on]="jobFilter === 'active'" (click)="setJobFilter('active')">Active</button>
+        <button type="button" class="chip" [class.chip--on]="jobFilter === 'draft'" (click)="setJobFilter('draft')">Drafts</button>
+        <button type="button" class="chip" [class.chip--on]="jobFilter === 'finalised'" (click)="setJobFilter('finalised')">Finalised</button>
+        <button type="button" class="chip" [class.chip--on]="jobFilter === 'archived'" (click)="setJobFilter('archived')">
+          Archived<ng-container *ngIf="jobStats?.archivedCount"> ({{ jobStats?.archivedCount }})</ng-container>
+        </button>
+      </div>
+
       <div class="drawer-search">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-          <circle cx="11" cy="11" r="8"/>
-          <line x1="21" y1="21" x2="16.65" y2="16.65"/>
-        </svg>
-        <input
-          type="text"
-          class="drawer-search-input"
-          placeholder="Search jobs…"
-          [(ngModel)]="jobSearchQuery"
-          (ngModelChange)="onJobSearch()"
-        />
+        <input type="text" class="drawer-search-input" placeholder="Search jobs…" aria-label="Search jobs"
+          [(ngModel)]="jobSearchQuery" (ngModelChange)="onJobSearch()" />
       </div>
 
-      <!-- New Job CTA -->
-      <button class="btn btn--primary btn--full" *ngIf="auth.canAccess('margin-calculator', 'create')" (click)="newJob()">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <line x1="12" y1="5" x2="12" y2="19"/>
-          <line x1="5" y1="12" x2="19" y2="12"/>
-        </svg>
-        Start New Job
-      </button>
+      <button class="btn btn--primary btn--full" *ngIf="canSave" (click)="newJob()">Start New Job</button>
     </div>
 
-    <!-- Loading Skeleton -->
     <div class="drawer-loading" *ngIf="jobsListLoading">
       <div class="skeleton-job" *ngFor="let i of [1,2,3,4]"></div>
     </div>
 
-    <!-- Jobs List -->
     <div class="drawer-list" *ngIf="!jobsListLoading">
-      <div
-        class="job-card"
-        *ngFor="let job of jobsList"
-        (click)="loadJobFromDrawer(job)"
-        [class.job-card--active]="job._id === currentJobId"
-      >
+      <div class="job-card" *ngFor="let job of jobsList" (click)="loadJobFromDrawer(job)"
+        [class.job-card--active]="job._id === currentJobId" role="button" tabindex="0" (keydown.enter)="loadJobFromDrawer(job)">
         <div class="job-card-top">
-          <div class="job-card-name">
-            {{ job.jobName || 'Untitled Job' }}
-          </div>
-          <span class="status-badge" [class]="statusBadgeClass(job.status)">
-            {{ job.status }}
-          </span>
+          <div class="job-card-name">{{ job.jobName || 'Untitled job' }}</div>
+          <span class="status-badge" [ngClass]="statusBadgeClass(job.status)">{{ job.status }}</span>
         </div>
-
         <div class="job-card-meta">
-          <span class="jc-meta-item">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-              <rect x="3" y="4" width="18" height="18" rx="2"/>
-              <line x1="16" y1="2" x2="16" y2="6"/>
-              <line x1="8" y1="2" x2="8" y2="6"/>
-              <line x1="3" y1="10" x2="21" y2="10"/>
-            </svg>
-            {{ formatDate(job.createdAt) }}
-          </span>
-          <span class="jc-meta-item" *ngIf="job.summary['grandTotal']">
-            {{ fmt(job.summary['grandTotal']) }}
-          </span>
-          <span class="jc-margin-pill" *ngIf="job.summary['overallMarginPct'] !== undefined"
-            [attr.data-health]="health(job.summary['overallMarginPct'])">
-            {{ fmtPct(job.summary['overallMarginPct']) }}
+          <span class="jc-meta-item">{{ formatDate(job.updatedAt || job.createdAt) }}</span>
+          <span class="jc-meta-item" *ngIf="job.summary['grandTotal']">{{ fmt(job.summary['grandTotal']) }} ex GST</span>
+          <span class="jc-margin-pill" *ngIf="jobMargin(job) !== null" [attr.data-health]="health(jobMargin(job))">
+            {{ fmtPct(jobMargin(job)) }} margin
           </span>
         </div>
-
-        <!-- Quick actions -->
-        <div class="job-card-actions" *ngIf="auth.canAccess('margin-calculator', 'create')">
-          <button class="jca-btn" (click)="duplicateJob(job, $event)" title="Duplicate">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-              <rect x="9" y="9" width="13" height="13" rx="2"/>
-              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
-            </svg>
-            Duplicate
-          </button>
-          <button class="jca-btn jca-btn--danger" (click)="archiveJob(job, $event)" title="Archive">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-              <polyline points="21 8 21 21 3 21 3 8"/>
-              <rect x="1" y="3" width="22" height="5"/>
-              <line x1="10" y1="12" x2="14" y2="12"/>
-            </svg>
-            Archive
-          </button>
+        <div class="job-card-actions" *ngIf="canSave">
+          <button class="jca-btn" (click)="duplicateJob(job, $event)" title="Duplicate">Duplicate</button>
+          <button class="jca-btn jca-btn--danger" *ngIf="job.status !== 'archived'" (click)="setJobStatus(job, 'archived', $event)" title="Archive">Archive</button>
+          <button class="jca-btn" *ngIf="job.status === 'archived'" (click)="setJobStatus(job, 'draft', $event)" title="Restore to drafts">Restore</button>
         </div>
       </div>
 
-      <!-- Empty drawer state -->
       <div class="drawer-empty" *ngIf="jobsList.length === 0">
         <div class="drawer-empty-icon">📋</div>
         <p>No jobs found</p>
-        <span>Click "Start New Job" above</span>
+        <span *ngIf="jobFilter === 'active' && !jobSearchQuery">Save a job to see it here.</span>
       </div>
     </div>
   </aside>
@@ -504,9 +489,7 @@
 </div>
 
 <!-- Toast -->
-<div class="toast" [class.show]="toastVisible">
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-    <polyline points="20 6 9 17 4 12"/>
-  </svg>
+<div class="toast" [class.show]="toastVisible" role="status" aria-live="polite">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
   <span>{{ toastMessage }}</span>
 </div>

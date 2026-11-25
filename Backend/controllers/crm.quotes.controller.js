@@ -18,7 +18,6 @@ const {
   getSyncedQuotes,
   getSyncStatus: getCrmSyncStatus,
   findSyncedQuote,
-  syncTenant,
 } = require('../services/crmSync.service');
 
 /* ── Tiny helpers ────────────────────────────────────────────────────────── */
@@ -454,34 +453,9 @@ exports.syncAllRazorpay = asyncHandler(async (req, res) => {
 });
 
 /* ══════════════════════════════════════════════════════════════════════════
-   POST /tenant/quotes/sync
-   "Sync now": pulls every quote from the CRM into the POS database right
-   away and returns what the run did.
-   ══════════════════════════════════════════════════════════════════════════ */
-exports.syncNow = asyncHandler(async (req, res) => {
-  const loaded = await loadTenant(req.user.id, res);
-  if (!loaded) return;
-
-  const { tenant, apiKey } = loaded;
-  const result = await syncTenant(tenant, { trigger: 'manual', apiKey });
-  const status = await getCrmSyncStatus(tenant._id);
-
-  if (result.status === 'skipped') {
-    return res.status(409).json({ success: false, message: result.reason, data: { result, status } });
-  }
-  if (result.status === 'error') {
-    return res.status(502).json({ success: false, message: `CRM sync failed: ${result.error}`, data: { result, status } });
-  }
-
-  const s = result.stats;
-  const message = `Synced ${s.fetched} quote${s.fetched === 1 ? '' : 's'} from CRM`
-    + ` (${s.inserted} new, ${s.updated + s.restored} updated, ${s.unchanged} unchanged`
-    + `${s.markedDeleted ? `, ${s.markedDeleted} removed` : ''}${s.failed ? `, ${s.failed} failed` : ''}).`;
-  return ok(res, { result, status }, message);
-});
-
-/* ══════════════════════════════════════════════════════════════════════════
    GET /tenant/quotes/sync-status
+   Live-sync health for Settings → CRM. There is no manual sync endpoint:
+   every quotes read pulls from the CRM when the stored copy is stale.
    ══════════════════════════════════════════════════════════════════════════ */
 exports.getSyncStatus = asyncHandler(async (req, res) => {
   const loaded = await loadTenant(req.user.id, res);
